@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset='utf-8' />
+    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
+    <meta name="description" content="parson : Small json parser and reader written in C." />
+
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>parson</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/kgabis/parson">View on GitHub</a>
+
+          <h1 id="project_title">parson</h1>
+          <h2 id="project_tagline">Small json parser and reader written in C.</h2>
+
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/kgabis/parson/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/kgabis/parson/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        <h2>About</h2>
+
+<p>Parson is a small json parser and reader written in C.</p>
+
+<h2>Features</h2>
+
+<ul>
+<li>Small (only 2 files)</li>
+<li>Simple API</li>
+<li>Addressing json values with dot notation (similiar to C structs or objects in most OO languages, e.g. "objectA.objectB.value")</li>
+<li>C89 compatible</li>
+<li>Test suites</li>
+</ul><h2>Installation</h2>
+
+<p>Run the following code:</p>
+
+<pre><code>git clone http://github.com/kgabis/parson.git
+</code></pre>
+
+<p>and copy parson.h and parson.c to you source code tree.</p>
+
+<h2>Example</h2>
+
+<p>Here is a function, which prints basic commit info (date, sha and author) from a github repository.  It's also included in tests.c file, you can just uncomment and run it.</p>
+
+<div class="highlight"><pre><span class="kt">void</span> <span class="nf">print_commit_info</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">username</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span> <span class="n">repo</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">JSON_Value</span> <span class="o">*</span><span class="n">root_value</span><span class="p">;</span>
+    <span class="n">JSON_Array</span> <span class="o">*</span><span class="n">commits</span><span class="p">;</span>
+    <span class="n">JSON_Object</span> <span class="o">*</span><span class="n">commit</span><span class="p">;</span>
+    <span class="kt">int</span> <span class="n">i</span><span class="p">;</span>
+
+    <span class="kt">char</span> <span class="n">curl_command</span><span class="p">[</span><span class="mi">512</span><span class="p">];</span>
+    <span class="kt">char</span> <span class="n">cleanup_command</span><span class="p">[</span><span class="mi">256</span><span class="p">];</span>
+    <span class="kt">char</span> <span class="o">*</span><span class="n">output_filename</span> <span class="o">=</span> <span class="s">"commits.json"</span><span class="p">;</span>
+
+    <span class="cm">/* it ain't pretty, but it's not a libcurl tutorial */</span>
+    <span class="n">sprintf</span><span class="p">(</span><span class="n">curl_command</span><span class="p">,</span> <span class="s">"curl </span><span class="se">\"</span><span class="s">https://api.github.com/repos/%s/%s/commits</span><span class="se">\"</span><span class="s">\</span>
+<span class="s">            &gt; %s 2&gt; /dev/null"</span><span class="p">,</span> <span class="n">username</span><span class="p">,</span> <span class="n">repo</span><span class="p">,</span> <span class="n">output_filename</span><span class="p">);</span>
+    <span class="n">sprintf</span><span class="p">(</span><span class="n">cleanup_command</span><span class="p">,</span> <span class="s">"rm -f %s"</span><span class="p">,</span> <span class="n">output_filename</span><span class="p">);</span>
+    <span class="n">system</span><span class="p">(</span><span class="n">curl_command</span><span class="p">);</span>
+
+    <span class="cm">/* parsing json and validating output */</span>
+    <span class="n">root_value</span> <span class="o">=</span> <span class="n">json_parse_file</span><span class="p">(</span><span class="n">output_filename</span><span class="p">);</span>    
+    <span class="k">if</span> <span class="p">(</span><span class="n">root_value</span> <span class="o">==</span> <span class="nb">NULL</span> <span class="o">||</span> <span class="n">json_value_get_type</span><span class="p">(</span><span class="n">root_value</span><span class="p">)</span> <span class="o">!=</span> <span class="n">JSONArray</span><span class="p">)</span> <span class="p">{</span>        
+        <span class="n">system</span><span class="p">(</span><span class="n">cleanup_command</span><span class="p">);</span>
+        <span class="k">return</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="cm">/* getting array from root value and printing commit info */</span>
+    <span class="n">commits</span> <span class="o">=</span> <span class="n">json_value_get_array</span><span class="p">(</span><span class="n">root_value</span><span class="p">);</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">"%-10.10s %-10.10s %s</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="s">"Date"</span><span class="p">,</span> <span class="s">"SHA"</span><span class="p">,</span> <span class="s">"Author"</span><span class="p">);</span>
+    <span class="k">for</span> <span class="p">(</span><span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">json_array_get_count</span><span class="p">(</span><span class="n">commits</span><span class="p">);</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">commit</span> <span class="o">=</span> <span class="n">json_array_get_object</span><span class="p">(</span><span class="n">commits</span><span class="p">,</span> <span class="n">i</span><span class="p">);</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">"%.10s %.10s %s</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span>
+               <span class="n">json_object_dotget_string</span><span class="p">(</span><span class="n">commit</span><span class="p">,</span> <span class="s">"commit.author.date"</span><span class="p">),</span>
+               <span class="n">json_object_get_string</span><span class="p">(</span><span class="n">commit</span><span class="p">,</span> <span class="s">"sha"</span><span class="p">),</span>
+               <span class="n">json_object_dotget_string</span><span class="p">(</span><span class="n">commit</span><span class="p">,</span> <span class="s">"commit.author.name"</span><span class="p">));</span>
+    <span class="p">}</span>
+
+    <span class="cm">/* cleanup code */</span>
+    <span class="n">json_value_free</span><span class="p">(</span><span class="n">root_value</span><span class="p">);</span>
+    <span class="n">system</span><span class="p">(</span><span class="n">cleanup_command</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+
+<p>Calling <code>print_commit_info("torvalds", "linux");</code> prints:  </p>
+
+<pre><code>Date       SHA        Author
+2012-10-15 dd8e8c4a2c David Rientjes
+2012-10-15 3ce9e53e78 Michal Marek
+2012-10-14 29bb4cc5e0 Randy Dunlap
+2012-10-15 325adeb55e Ralf Baechle
+2012-10-14 68687c842c Russell King
+2012-10-14 ddffeb8c4d Linus Torvalds
+...
+</code></pre>
+
+<h2>License</h2>
+
+<p><a href="http://opensource.org/licenses/mit-license.php">The MIT License (MIT)</a></p>
+      </section>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">parson maintained by <a href="https://github.com/kgabis">kgabis</a></p>
+        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+              <script type="text/javascript">
+            var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+            document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+          </script>
+          <script type="text/javascript">
+            try {
+              var pageTracker = _gat._getTracker("UA-35563760-2");
+            pageTracker._trackPageview();
+            } catch(err) {}
+          </script>
+
+
+  </body>
+</html>
