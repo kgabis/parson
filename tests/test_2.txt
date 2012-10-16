@@ -1,0 +1,19 @@
+{
+	"string" : "lorem ipsum",
+	"utf string" : "\u006corem\u0020ipsum",
+	"positive one" : 1,
+	"negative one" : -1,
+	"pi" : 3.14,
+	"hard to parse number" : -3.14e-4,
+	"bool true" : true,
+	"bool false" : false,
+	"null" : null,
+	"string array" : ["lorem", "ipsum"],
+	"x^2 array" : [0, 1, 4, 9, 16, 25, 36, 49, 64, 81, 100],
+	"object" : { "nested string" : "str",
+				 "nested true" : true,
+				 "nested false" : false,
+				 "nested null" : null,
+				 "nested number" : 123,
+				 "nested array" : ["lorem", "ipsum"] }
+}
