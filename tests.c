@@ -27,7 +27,7 @@
 #define TEST(A) printf("%-72s-",#A);              \
                 if(A){puts(" OK");tests_passed++;} \
                 else{puts(" FAIL");tests_failed++;}
-#define STREQ(A, B) (strcmp(A, B) == 0)
+#define STREQ(A, B) (A && B ? strcmp(A, B) == 0 : 0)
 
 void test_suite_1();
 void test_suite_2();
@@ -92,8 +92,8 @@ void test_suite_2() {
     TEST(json_object_get_number(object, "positive one") == 1.0);
     TEST(json_object_get_number(object, "negative one") == -1.0);
     TEST(json_object_get_number(object, "hard to parse number") == -0.000314);
-    TEST(json_object_get_bool(object, "bool true"));
-    TEST(!json_object_get_bool(object, "bool false"));    
+    TEST(json_object_get_boolean(object, "boolean true") == 1);
+    TEST(json_object_get_boolean(object, "boolean false") == 0);
     TEST(json_value_get_type(json_object_get_value(object, "null")) == JSONNull);
     
     array = json_object_get_array(object, "string array");
@@ -115,8 +115,8 @@ void test_suite_2() {
     
     TEST(json_object_get_array(object, "non existent array") == NULL);
     TEST(STREQ(json_object_dotget_string(object, "object.nested string"), "str"));
-    TEST(json_object_dotget_bool(object, "object.nested true"));
-    TEST(!json_object_dotget_bool(object, "object.nested false"));
+    TEST(json_object_dotget_boolean(object, "object.nested true"));
+    TEST(!json_object_dotget_boolean(object, "object.nested false"));
     TEST(json_object_dotget_value(object, "object.nested null") != NULL);
     TEST(json_object_dotget_number(object, "object.nested number") == 123);
     
@@ -132,7 +132,7 @@ void test_suite_2() {
     } else {
         tests_failed++;
     }
-    TEST(json_object_dotget_bool(object, "nested true"));
+    TEST(json_object_dotget_boolean(object, "nested true"));
 
     json_value_free(root_value);
 }

@@ -41,7 +41,7 @@ enum json_value_type {
     JSONNumber = 3,
     JSONObject = 4,
     JSONArray = 5,
-    JSONBool = 6
+    JSONBoolean = 6
 };
 
 /* Parses first JSON value in a file, returns NULL in case of error */
@@ -56,7 +56,7 @@ const char * json_object_get_string(const JSON_Object *object, const char *name)
 double json_object_get_number(const JSON_Object *object, const char *name);
 JSON_Object * json_object_get_object(const JSON_Object *object, const char *name);
 JSON_Array * json_object_get_array(const JSON_Object *object, const char *name);
-int json_object_get_bool(const JSON_Object *object, const char *name);
+int json_object_get_boolean(const JSON_Object *object, const char *name);
 
 /* dotget functions enable addressing values with dot notation in nested objects,
   just like in structs or c++/java/c# objects (e.g. objectA.objectB.value). 
@@ -67,7 +67,7 @@ const char * json_object_dotget_string(const JSON_Object *object, const char *na
 double json_object_dotget_number(const JSON_Object *object, const char *name);
 JSON_Object * json_object_dotget_object(const JSON_Object *object, const char *name);
 JSON_Array * json_object_dotget_array(const JSON_Object *object, const char *name);
-int json_object_dotget_bool(const JSON_Object *object, const char *name);
+int json_object_dotget_boolean(const JSON_Object *object, const char *name);
     
 /* JSON Array */
 JSON_Value * json_array_get_value(const JSON_Array *array, size_t index);
@@ -75,7 +75,7 @@ const char * json_array_get_string(const JSON_Array *array, size_t index);
 double json_array_get_number(const JSON_Array *array, size_t index);
 JSON_Object * json_array_get_object(const JSON_Array *array, size_t index);
 JSON_Array * json_array_get_array(const JSON_Array *array, size_t index);
-int json_array_get_bool(const JSON_Array *array, size_t index);
+int json_array_get_boolean(const JSON_Array *array, size_t index);
 size_t json_array_get_count(const JSON_Array *array);
 
 /* JSON Value */
@@ -84,7 +84,7 @@ JSON_Object * json_value_get_object(const JSON_Value *value);
 JSON_Array * json_value_get_array(const JSON_Value *value);
 const char * json_value_get_string(const JSON_Value *value);
 double json_value_get_number(const JSON_Value *value);
-int json_value_get_bool(const JSON_Value *value);
+int json_value_get_boolean(const JSON_Value *value);
 void json_value_free(JSON_Value *value);
 
 #ifdef __cplusplus

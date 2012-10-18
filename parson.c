@@ -35,7 +35,7 @@ union json_value_value {
     double number;
     JSON_Object *object;
     JSON_Array *array;
-    int bool;
+    int boolean;
     int null;
 };
 
@@ -72,7 +72,7 @@ static JSON_Value * json_value_init_object();
 static JSON_Value * json_value_init_array();
 static JSON_Value * json_value_init_string(const char *string);
 static JSON_Value * json_value_init_number(double number);
-static JSON_Value * json_value_init_bool(int bool);
+static JSON_Value * json_value_init_boolean(int boolean);
 static JSON_Value * json_value_init_null();
 
 /* Parser */
@@ -84,7 +84,7 @@ static const char * get_string(const char **string);
 static JSON_Value * parse_object_value(const char **string);
 static JSON_Value * parse_array_value(const char **string);
 static JSON_Value * parse_string_value(const char **string);
-static JSON_Value * parse_bool_value(const char **string);
+static JSON_Value * parse_boolean_value(const char **string);
 static JSON_Value * parse_number_value(const char **string);
 static JSON_Value * parse_null_value(const char **string);
 static JSON_Value * parse_value(const char **string);
@@ -183,10 +183,10 @@ static JSON_Value * json_value_init_number(double number) {
     return new_value;
 }
 
-static JSON_Value * json_value_init_bool(int bool) {
+static JSON_Value * json_value_init_boolean(int boolean) {
     JSON_Value *new_value = (JSON_Value*)malloc(sizeof(JSON_Value));
-    new_value->type = JSONBool;
-    new_value->value.bool = bool;
+    new_value->type = JSONBoolean;
+    new_value->value.boolean = boolean;
     return new_value;
 }
 
@@ -329,7 +329,7 @@ static JSON_Value * parse_value(const char **string) {
             break;
         case 'f':
         case 't':
-            output_value = parse_bool_value(string);
+            output_value = parse_boolean_value(string);
             break;
         case '-':
         case '0': case '1': case '2': case '3': case '4':
@@ -411,15 +411,15 @@ static JSON_Value * parse_string_value(const char **string) {
     return json_value_init_string(new_string);
 }
 
-static JSON_Value * parse_bool_value(const char **string) {
+static JSON_Value * parse_boolean_value(const char **string) {
     size_t true_token_size = sizeof_token("true");
     size_t false_token_size = sizeof_token("false");    
     if (strncmp("true", *string, true_token_size) == 0) {        
         *string += true_token_size;
-        return json_value_init_bool(1);
+        return json_value_init_boolean(1);
     } else if (strncmp("false", *string, false_token_size) == 0) {
         *string += false_token_size;
-        return json_value_init_bool(0);
+        return json_value_init_boolean(0);
     }
     return NULL;
 }
@@ -494,8 +494,8 @@ JSON_Array * json_object_get_array(const JSON_Object *object, const char *name) 
     return json_value_get_array(json_object_get_value(object, name));
 }
 
-int json_object_get_bool(const JSON_Object *object, const char *name) {
-    return json_value_get_bool(json_object_get_value(object, name));
+int json_object_get_boolean(const JSON_Object *object, const char *name) {
+    return json_value_get_boolean(json_object_get_value(object, name));
 }
 
 JSON_Value * json_object_dotget_value(const JSON_Object *object, const char *name) {
@@ -525,8 +525,8 @@ JSON_Array * json_object_dotget_array(const JSON_Object *object, const char *nam
     return json_value_get_array(json_object_dotget_value(object, name));
 }
 
-int json_object_dotget_bool(const JSON_Object *object, const char *name) {
-    return json_value_get_bool(json_object_dotget_value(object, name));
+int json_object_dotget_boolean(const JSON_Object *object, const char *name) {
+    return json_value_get_boolean(json_object_dotget_value(object, name));
 }
 
 /* JSON Array API */
@@ -551,8 +551,8 @@ JSON_Array * json_array_get_array(const JSON_Array *array, size_t index) {
     return json_value_get_array(json_array_get_value(array, index));
 }
 
-int json_array_get_bool(const JSON_Array *array, size_t index) {
-    return json_value_get_bool(json_array_get_value(array, index));
+int json_array_get_boolean(const JSON_Array *array, size_t index) {
+    return json_value_get_boolean(json_array_get_value(array, index));
 }
 
 size_t json_array_get_count(const JSON_Array *array) {
@@ -584,9 +584,9 @@ double json_value_get_number(const JSON_Value *value) {
     return value->value.number;
 }
 
-int json_value_get_bool(const JSON_Value *value) {
-    if (value == NULL || value->type != JSONBool) { return -1; }
-    return value->value.bool;
+int json_value_get_boolean(const JSON_Value *value) {
+    if (value == NULL || value->type != JSONBoolean) { return -1; }
+    return value->value.boolean;
 }
 
 void json_value_free(JSON_Value *value) {
