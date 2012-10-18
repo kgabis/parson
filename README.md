@@ -1,7 +1,5 @@
-#parson
-
 ##About
-Parson is a small json parser and reader written in C.
+Parson is a small [json](http://json.org) parser and reader written in C.  
 
 ##Features
 * Small (only 2 files)
@@ -13,7 +11,7 @@ Parson is a small json parser and reader written in C.
 ##Installation
 Run the following code:
 ```
-git clone http://github.com/kgabis/parson.git
+git clone https://github.com/kgabis/parson.git
 ```
 and copy parson.h and parson.c to you source code tree.
 
@@ -70,6 +68,9 @@ Date       SHA        Author
 2012-10-14 ddffeb8c4d Linus Torvalds
 ...
 ```
+
+##Important
+Parson currently supports hexadecimal and octal numbers, but they're not a part of JSON standard, so you shouldn't use them.
 
 ##License
 [The MIT License (MIT)](http://opensource.org/licenses/mit-license.php)
