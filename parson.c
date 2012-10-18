@@ -94,7 +94,7 @@ static JSON_Value * parse_value(const char **string);
 /* JSON Object */
 static JSON_Object * json_object_init() {
     JSON_Object *new_object = (JSON_Object*)malloc(sizeof(JSON_Object));
-    new_object->names = (const char**)malloc(sizeof(const char*) * STARTING_CAPACITY);
+    new_object->names = (const char**)malloc(sizeof(char*) * STARTING_CAPACITY);
     new_object->values = (JSON_Value**)malloc(sizeof(JSON_Value*) * STARTING_CAPACITY);
     new_object->capacity = STARTING_CAPACITY;
     new_object->count = 0;
@@ -105,7 +105,7 @@ static int json_object_add(JSON_Object *object, const char *name, JSON_Value *va
     size_t index;
     if (object->count >= object->capacity) {
         size_t new_capacity = object->capacity * 2;
-        object->names = (const char**)realloc(object->names, new_capacity * sizeof(const char*));
+        object->names = (const char**)realloc((void*)object->names, new_capacity * sizeof(char*));
         object->values = (JSON_Value**)realloc(object->values, new_capacity * sizeof(JSON_Value*));
         object->capacity = new_capacity;
     }    
@@ -118,12 +118,12 @@ static int json_object_add(JSON_Object *object, const char *name, JSON_Value *va
 }
 
 static void json_object_free(JSON_Object *object) {
-    int i;
+    size_t i;
     for (i = 0; i < object->count; i++) {
         free((void*)object->names[i]);
         json_value_free(object->values[i]);
     }
-    free(object->names);
+    free((void*)object->names);
     free(object->values);
     free(object);
 }
@@ -148,7 +148,7 @@ static void json_array_add(JSON_Array *array, JSON_Value *value) {
 }
 
 static void json_array_free(JSON_Array *array) {
-    int i;
+    size_t i;
     for (i = 0; i < array->count; i++) {
         json_value_free(array->items[i]);
     }
@@ -482,7 +482,7 @@ JSON_Value * json_parse_string(const char *string) {
 
 /* JSON Object API */
 JSON_Value * json_object_get_value(const JSON_Object *object, const char *name) {
-    int i;
+    size_t i;
     if (object == NULL) { return NULL; }
     for (i = 0; i < object->count; i++) {
         if (strcmp(object->names[i], name) == 0) { return object->values[i]; }
