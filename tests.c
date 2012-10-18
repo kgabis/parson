@@ -177,7 +177,7 @@ void print_commit_info(const char *username, const char * repo) {
     
     char curl_command[512];
     char cleanup_command[256];
-    char *output_filename = "commits.json";
+    char output_filename[] = "commits.json";
     
     /* it ain't pretty, but it's not a libcurl tutorial */
     sprintf(curl_command, "curl \"https://api.github.com/repos/%s/%s/commits\"\

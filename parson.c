@@ -76,6 +76,8 @@ static JSON_Value * json_value_init_boolean(int boolean);
 static JSON_Value * json_value_init_null();
 
 /* Parser */
+char * parson_strndup(const char *string, size_t n);
+char * parson_strdup(const char *string);
 static const char * skip_string(const char *string);
 static char * copy_and_remove_whitespaces(const char *string);
 static int is_utf_string(const char *string);
@@ -103,13 +105,13 @@ static int json_object_add(JSON_Object *object, const char *name, JSON_Value *va
     size_t index;
     if (object->count >= object->capacity) {
         size_t new_capacity = object->capacity * 2;
-        object->names = realloc(object->names, new_capacity * sizeof(const char*));
-        object->values = realloc(object->values, new_capacity * sizeof(JSON_Value*));
+        object->names = (const char**)realloc(object->names, new_capacity * sizeof(const char*));
+        object->values = (JSON_Value**)realloc(object->values, new_capacity * sizeof(JSON_Value*));
         object->capacity = new_capacity;
     }    
     if (json_object_get_value(object, name) != NULL) { return 0; }    
     index = object->count;
-    object->names[index] = strdup(name);
+    object->names[index] = parson_strdup(name);
     object->values[index] = value;
     object->count++;
     return 1;
@@ -138,7 +140,7 @@ static JSON_Array * json_array_init() {
 static void json_array_add(JSON_Array *array, JSON_Value *value) {
     if (array->count >= array->capacity) {
         size_t new_capacity = array->capacity * 2;
-        array->items = realloc(array->items, new_capacity * sizeof(JSON_Value*));
+        array->items = (JSON_Value**)realloc(array->items, new_capacity * sizeof(JSON_Value*));
         array->capacity = new_capacity;
     }
     array->items[array->count] = value;
@@ -197,6 +199,16 @@ static JSON_Value * json_value_init_null() {
 }
 
 /* Parser */
+char * parson_strndup(const char *string, size_t n) {
+    char *output_string = (char*)calloc(n + 1, 1);
+    strncpy(output_string, string, n);
+    return output_string;
+}
+
+char * parson_strdup(const char *string) {
+    return parson_strndup(string, strlen(string));
+}
+
 static const char * skip_string(const char *string) {
     string++;
     while (*string != '\0' && *string != '\"') {
@@ -234,7 +246,7 @@ static char *copy_and_remove_whitespaces(const char *string) {
         }
     }
     *output_string_ptr = '\0';
-    output_string = realloc(output_string, strlen(output_string) + 1);
+    output_string = (char*)realloc(output_string, strlen(output_string) + 1);
     return output_string;
 }
 
@@ -295,7 +307,7 @@ static const char * parse_escaped_characters(const char *string) {
         string_ptr++;
     }
     *output_string_ptr = '\0';
-    output_string = realloc(output_string, strlen(output_string) + 1);
+    output_string = (char*)realloc(output_string, strlen(output_string) + 1);
     return output_string;
 }
 
@@ -307,7 +319,7 @@ static const char * get_string(const char **string) {
     const char *parsed_string;
     const char *after_closing_quote_ptr = skip_string(*string);    
     if (after_closing_quote_ptr == NULL) { return NULL; }
-    quote_contents = strndup(*string + 1, after_closing_quote_ptr - *string - 2);
+    quote_contents = parson_strndup(*string + 1, after_closing_quote_ptr - *string - 2);
     *string = after_closing_quote_ptr;
     parsed_string = parse_escaped_characters(quote_contents);
     free(quote_contents);
@@ -502,7 +514,7 @@ JSON_Value * json_object_dotget_value(const JSON_Object *object, const char *nam
     const char *object_name, *dot_position = strchr(name, '.');
     JSON_Value *output_value;
     if (dot_position == NULL) { return json_object_get_value(object, name); }
-    object_name = strndup(name, dot_position - name);
+    object_name = parson_strndup(name, dot_position - name);
     output_value = json_object_dotget_value(json_object_get_object(object, object_name),
                                     dot_position + 1);
     free((void*)object_name);
@@ -561,7 +573,7 @@ size_t json_array_get_count(const JSON_Array *array) {
 
 /* JSON Value API */
 enum json_value_type json_value_get_type(const JSON_Value *value) {
-    return value != NULL ? value->type : 0;
+    return value != NULL ? value->type : JSONError;
 }
 
 JSON_Object * json_value_get_object(const JSON_Value *value) {

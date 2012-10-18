@@ -36,6 +36,7 @@ struct json_value_t;
 typedef struct json_value_t JSON_Value;
 
 enum json_value_type {
+    JSONError = 0,
     JSONNull = 1,
     JSONString = 2,
     JSONNumber = 3,
