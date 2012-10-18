@@ -56,7 +56,7 @@
 
 <p>Here is a function, which prints basic commit info (date, sha and author) from a github repository.  It's also included in tests.c file, you can just uncomment and run it.</p>
 
-<div class="highlight"><pre><span class="kt">void</span> <span class="nf">print_commit_info</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">username</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span> <span class="n">repo</span><span class="p">)</span> <span class="p">{</span>
+<div class="highlight"><pre><span class="kt">void</span> <span class="nf">print_commit_info</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">username</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">repo</span><span class="p">)</span> <span class="p">{</span>
     <span class="n">JSON_Value</span> <span class="o">*</span><span class="n">root_value</span><span class="p">;</span>
     <span class="n">JSON_Array</span> <span class="o">*</span><span class="n">commits</span><span class="p">;</span>
     <span class="n">JSON_Object</span> <span class="o">*</span><span class="n">commit</span><span class="p">;</span>
