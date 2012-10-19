@@ -29,11 +29,11 @@
                 else{puts(" FAIL");tests_failed++;}
 #define STREQ(A, B) (A && B ? strcmp(A, B) == 0 : 0)
 
-void test_suite_1();
-void test_suite_2();
-void test_suite_3();
+void test_suite_1(void);
+void test_suite_2(void);
+void test_suite_3(void);
 
-void print_commit_info(const char *username, const char * repo);
+void print_commit_info(const char *username, const char *repo);
 
 static int tests_passed;
 static int tests_failed;
@@ -50,22 +50,18 @@ int main(int argc, const char * argv[]) {
 }
 
 /* 3 test files from json.org */
-void test_suite_1() {
-    int i;
-    JSON_Value *root_value;
-    char filename[128];
-    for (i = 1; i <= 3; i++) {
-        filename[0] = '\0';
-        sprintf(filename, "tests/test_1_%d.txt", i);
-        printf("Testing %s:\n", filename);
-        root_value = json_parse_file(filename);
-        TEST(root_value != NULL);
-        if (root_value != NULL) { json_value_free(root_value); }
-    }
+void test_suite_1(void) {
+    JSON_Value *val;
+    TEST((val = json_parse_file("tests/test_1_1.txt")) != NULL);
+    if (val) { json_value_free(val); }
+    TEST((val = json_parse_file("tests/test_1_2.txt")) != NULL);
+    if (val) { json_value_free(val); }
+    TEST((val = json_parse_file("tests/test_1_3.txt")) != NULL);
+    if (val) { json_value_free(val); }
 }
 
 /* Testing correctness of parsed values */
-void test_suite_2() {
+void test_suite_2(void) {
     JSON_Value *root_value;
     JSON_Object *object;
     JSON_Array *array;
@@ -138,7 +134,8 @@ void test_suite_2() {
 }
 
 /* Testing values, on which parsing should fail */
-void test_suite_3() {
+void test_suite_3(void) {
+    const char nested_20x[] = "[[[[[[[[[[[[[[[[[[[[\"hi\"]]]]]]]]]]]]]]]]]]]]";
     TEST(json_parse_string(NULL) == NULL);
     TEST(json_parse_string("") == NULL); /* empty string */
     TEST(json_parse_string("[\"lorem\",]") == NULL);
@@ -167,9 +164,10 @@ void test_suite_3() {
     TEST(json_parse_string("[\"\n\"]") == NULL); /* control character */
     TEST(json_parse_string("[\"\f\"]") == NULL); /* control character */
     TEST(json_parse_string("[\"\r\"]") == NULL); /* control character */
+    TEST(json_parse_string(nested_20x) == NULL); /* too deep */
 }
 
-void print_commit_info(const char *username, const char * repo) {
+void print_commit_info(const char *username, const char *repo) {
     JSON_Value *root_value;
     JSON_Array *commits;
     JSON_Object *commit;
