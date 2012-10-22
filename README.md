@@ -20,7 +20,7 @@ Run tests.sh to compile and run tests.
 ##Example
 Here is a function, which prints basic commit info (date, sha and author) from a github repository.  It's also included in tests.c file, you can just uncomment and run it.
 ```c
-void print_commit_info(const char *username, const char *repo) {
+void print_commits_info(const char *username, const char *repo) {
     JSON_Value *root_value;
     JSON_Array *commits;
     JSON_Object *commit;
