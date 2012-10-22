@@ -33,14 +33,14 @@ void test_suite_1(void);
 void test_suite_2(void);
 void test_suite_3(void);
 
-void print_commit_info(const char *username, const char *repo);
+void print_commits_info(const char *username, const char *repo);
 
 static int tests_passed;
 static int tests_failed;
 
 int main(int argc, const char * argv[]) {
-    /* Example function from readme file:      */
-    /* print_commit_info("torvalds", "linux"); */
+    /* Example function from readme file:       */
+    /* print_commits_info("torvalds", "linux"); */
     test_suite_1();
     test_suite_2();
     test_suite_3();
@@ -67,22 +67,11 @@ void test_suite_2(void) {
     JSON_Array *array;
     int i;
     const char *filename = "tests/test_2.txt";
-    
+    printf("Testing %s:\n", filename); 
     root_value = json_parse_file(filename);
-    if(root_value == NULL) {
-        tests_failed++;
-        return;
-    }
-    if (json_value_get_type(root_value) != JSONObject) {
-        printf("Root is not a JSON object.\n");
-        tests_failed++;
-        json_value_free(root_value);
-        return;
-    }
-
-    object = json_value_get_object(root_value);
-    printf("Testing %s:\n", filename);
-    
+    TEST(root_value);
+    TEST(json_value_get_type(root_value) == JSONObject);    
+    object = json_value_get_object(root_value);       
     TEST(STREQ(json_object_get_string(object, "string"), "lorem ipsum"));
     TEST(STREQ(json_object_get_string(object, "utf string"), "lorem ipsum"));
     TEST(json_object_get_number(object, "positive one") == 1.0);
@@ -111,8 +100,8 @@ void test_suite_2(void) {
     
     TEST(json_object_get_array(object, "non existent array") == NULL);
     TEST(STREQ(json_object_dotget_string(object, "object.nested string"), "str"));
-    TEST(json_object_dotget_boolean(object, "object.nested true"));
-    TEST(!json_object_dotget_boolean(object, "object.nested false"));
+    TEST(json_object_dotget_boolean(object, "object.nested true") == 1);
+    TEST(json_object_dotget_boolean(object, "object.nested false") == 0);
     TEST(json_object_dotget_value(object, "object.nested null") != NULL);
     TEST(json_object_dotget_number(object, "object.nested number") == 123);
     
@@ -135,7 +124,7 @@ void test_suite_2(void) {
 
 /* Testing values, on which parsing should fail */
 void test_suite_3(void) {
-    const char nested_20x[] = "[[[[[[[[[[[[[[[[[[[[\"hi\"]]]]]]]]]]]]]]]]]]]]";
+    char nested_20x[] = "[[[[[[[[[[[[[[[[[[[[\"hi\"]]]]]]]]]]]]]]]]]]]]";
     TEST(json_parse_string(NULL) == NULL);
     TEST(json_parse_string("") == NULL); /* empty string */
     TEST(json_parse_string("[\"lorem\",]") == NULL);
@@ -167,7 +156,7 @@ void test_suite_3(void) {
     TEST(json_parse_string(nested_20x) == NULL); /* too deep */
 }
 
-void print_commit_info(const char *username, const char *repo) {
+void print_commits_info(const char *username, const char *repo) {
     JSON_Value *root_value;
     JSON_Array *commits;
     JSON_Object *commit;
@@ -178,8 +167,8 @@ void print_commit_info(const char *username, const char *repo) {
     char output_filename[] = "commits.json";
     
     /* it ain't pretty, but it's not a libcurl tutorial */
-    sprintf(curl_command, "curl \"https://api.github.com/repos/%s/%s/commits\"\
-            > %s 2> /dev/null", username, repo, output_filename);
+    sprintf(curl_command, "curl -s \"https://api.github.com/repos/%s/%s/commits\"\
+            > %s", username, repo, output_filename);
     sprintf(cleanup_command, "rm -f %s", output_filename);
     system(curl_command);
     
