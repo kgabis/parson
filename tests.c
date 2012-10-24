@@ -144,6 +144,8 @@ void test_suite_3(void) {
     TEST(json_parse_string("{:\"no name\"}") == NULL);
     TEST(json_parse_string("[,\"no first value\"]") == NULL);
     TEST(json_parse_string("[\"\\u00zz\"]") == NULL); /* invalid utf value */
+    TEST(json_parse_string("[\"\\u00\"]") == NULL); /* invalid utf value */
+    TEST(json_parse_string("[\"\\u\"]") == NULL); /* invalid utf value */
     TEST(json_parse_string("[\"\\\"]") == NULL); /* control character */
     TEST(json_parse_string("[\"\"\"]") == NULL); /* control character */
     TEST(json_parse_string("[\"\0\"]") == NULL); /* control character */
@@ -154,6 +156,14 @@ void test_suite_3(void) {
     TEST(json_parse_string("[\"\f\"]") == NULL); /* control character */
     TEST(json_parse_string("[\"\r\"]") == NULL); /* control character */
     TEST(json_parse_string(nested_20x) == NULL); /* too deep */
+    TEST(json_parse_string("[0x2]") == NULL);    /* hex */
+    TEST(json_parse_string("[0X2]") == NULL);    /* HEX */
+    TEST(json_parse_string("[07]") == NULL);     /* octals */
+    TEST(json_parse_string("[0070]") == NULL);
+    TEST(json_parse_string("[07.0]") == NULL);
+    TEST(json_parse_string("[-07]") == NULL);
+    TEST(json_parse_string("[-007]") == NULL);
+    TEST(json_parse_string("[-07.0]") == NULL);
 }
 
 void print_commits_info(const char *username, const char *repo) {

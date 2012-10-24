@@ -72,8 +72,5 @@ Date       SHA        Author
 ...
 ```
 
-##Important
-Parson currently supports hexadecimal and octal numbers, but they're not a part of JSON standard, so you shouldn't use them.
-
 ##License
 [The MIT License (MIT)](http://opensource.org/licenses/mit-license.php)
