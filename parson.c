@@ -33,6 +33,7 @@
 
 #define parson_malloc(a) malloc(a)
 #define parson_free(a) free(a)
+#define parson_realloc(a, b) realloc(a, b)
 
 /* Type definitions */
 union json_value_value {
@@ -106,7 +107,7 @@ static JSON_Object * json_object_init(void) {
     if (!new_obj->names) { parson_free(new_obj); return NULL; }
     new_obj->values = (JSON_Value**)parson_malloc(sizeof(JSON_Value*) *
                                                             STARTING_CAPACITY);
-    if (!new_obj->names) { parson_free(new_obj->names); parson_free(new_obj); return NULL; }
+    if (!new_obj->values) { parson_free(new_obj->names); parson_free(new_obj); return NULL; }
     new_obj->capacity = STARTING_CAPACITY;
     new_obj->count = 0;
     return new_obj;
@@ -117,9 +118,9 @@ static int json_object_add(JSON_Object *object, const char *name, JSON_Value *va
     if (object->count >= object->capacity) {
         size_t new_capacity = object->capacity * 2;
         if (new_capacity > MAX_CAPACITY) { return 0; }
-        object->names = (const char**)realloc((void*)object->names,
+        object->names = (const char**)parson_realloc((void*)object->names,
                                               new_capacity * sizeof(char*));
-        object->values = (JSON_Value**)realloc(object->values,
+        object->values = (JSON_Value**)parson_realloc(object->values,
                                                new_capacity * sizeof(JSON_Value*));
         object->capacity = new_capacity;
     }    
@@ -158,7 +159,7 @@ static int json_array_add(JSON_Array *array, JSON_Value *value) {
     if (array->count >= array->capacity) {
         size_t new_capacity = array->capacity * 2;
         if (new_capacity > MAX_CAPACITY) { return 0; }
-        array->items = (JSON_Value**)realloc(array->items,
+        array->items = (JSON_Value**)parson_realloc(array->items,
                                              new_capacity * sizeof(JSON_Value*));
         array->capacity = new_capacity;
     }
@@ -275,7 +276,7 @@ static char * copy_and_remove_whitespaces(const char *string) {
         }
     }
     *output_string_ptr = '\0';
-    output_string = (char*)realloc(output_string, strlen(output_string) + 1);
+    output_string = (char*)parson_realloc(output_string, strlen(output_string) + 1);
     return output_string;
 }
 
@@ -345,7 +346,7 @@ static const char * parse_escaped_characters(const char *string) {
         string_ptr++;
     }
     *output_string_ptr = '\0';
-    output_string = (char*)realloc(output_string, strlen(output_string) + 1);
+    output_string = (char*)parson_realloc(output_string, strlen(output_string) + 1);
     return output_string;
 }
 
