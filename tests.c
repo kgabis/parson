@@ -19,10 +19,12 @@
  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  THE SOFTWARE.
 */
+
+#include "parson.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "parson.h"
 
 #define TEST(A) printf("%-72s-",#A);              \
                 if(A){puts(" OK");tests_passed++;} \

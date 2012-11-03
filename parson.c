@@ -1,16 +1,16 @@
 /*
  Copyright (c) 2012 Krzysztof Gabis
- 
+
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated documentation files (the "Software"), to deal
  in the Software without restriction, including without limitation the rights
  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  copies of the Software, and to permit persons to whom the Software is
  furnished to do so, subject to the following conditions:
- 
+
  The above copyright notice and this permission notice shall be included in
  all copies or substantial portions of the Software.
- 
+
  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -19,59 +19,60 @@
  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  THE SOFTWARE.
 */
+
+#include "parson.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include <stddef.h>
-#include "parson.h"
 
-#define STARTING_CAPACITY 10
-#define MAX_CAPACITY 10000
-#define MAX_NESTING 19
-#define sizeof_token(a) (sizeof(a) - 1)
+#define STARTING_CAPACITY       10
+#define MAX_CAPACITY         10000
+#define MAX_NESTING             19
+#define sizeof_token(a)      (sizeof(a) - 1)
 
-#define parson_malloc(a) malloc(a)
-#define parson_free(a) free((void*)a)
+#define parson_malloc(a)     malloc(a)
+#define parson_free(a)       free((void*)a)
 #define parson_realloc(a, b) realloc(a, b)
 
 /* Type definitions */
-union json_value_value {
-    const char * string;
-    double number;
+typedef union json_value_value {
+    const char  *string;
+    double       number;
     JSON_Object *object;
-    JSON_Array *array;
-    int boolean;
-    int null;
-};
+    JSON_Array  *array;
+    int          boolean;
+    int          null;
+} json_value_value;
 
-struct json_value_t {
-    enum json_value_type type;
-    union json_value_value value;
-};
+typedef struct json_value_t {
+    JSON_value_t     type;
+    json_value_value value;
+} json_value_t;
 
-struct json_object_t {
+typedef struct json_object_t {
     const char **names;
     JSON_Value **values;
-    size_t count;
-    size_t capacity;
-};
+    size_t       count;
+    size_t       capacity;
+} json_object_t;
 
-struct json_array_t {
+typedef struct json_array_t {
     JSON_Value **items;
-    size_t count;
-    size_t capacity;
-};
+    size_t       count;
+    size_t       capacity;
+} json_array_t;
 
 /* JSON Object */
 static JSON_Object * json_object_init(void);
-static int json_object_add(JSON_Object *object, const char *name, JSON_Value *value);
-static void json_object_free(JSON_Object *object);
+static int           json_object_add(JSON_Object *object, const char *name, JSON_Value *value);
+static void          json_object_free(JSON_Object *object);
 
 /* JSON Array */
 static JSON_Array * json_array_init(void);
-static int json_array_add(JSON_Array *array, JSON_Value *value);
-static void json_array_free(JSON_Array *array);
+static int          json_array_add(JSON_Array *array, JSON_Value *value);
+static void         json_array_free(JSON_Array *array);
 
 /* JSON Value */
 static JSON_Value * json_value_init_object(void);
@@ -124,8 +125,8 @@ static int json_object_add(JSON_Object *object, const char *name, JSON_Value *va
         if (!reallocated_ptr) { return 0;}
         object->values = (JSON_Value**)reallocated_ptr;
         object->capacity = new_capacity;
-    }    
-    if (json_object_get_value(object, name) != NULL) { return 0; }    
+    }
+    if (json_object_get_value(object, name) != NULL) { return 0; }
     index = object->count;
     object->names[index] = parson_strdup(name);
     if (!object->names[index]) { return 0; }
@@ -260,7 +261,7 @@ static char * copy_and_remove_whitespaces(const char *string) {
     char current_char;
     if (!output_string) { return NULL; }
     while (*string_ptr) {
-        current_char = *string_ptr;        
+        current_char = *string_ptr;
         switch (current_char) {
             case ' ': case '\r': case '\n': case '\t':
                 string_ptr++;
@@ -338,16 +339,16 @@ static const char * parse_escaped_characters(const char *string) {
                         current_char = ((utf_val | 0x80) & 0xBF);
                     }
                     string_ptr += 3;
- 					break;
+                    break;
                 default:
                     parson_free(output_string);
                     return NULL;
                     break;
             }
         } else if (iscntrl(current_char)) { /* no control characters allowed */
-            parson_free(output_string); 
+            parson_free(output_string);
             return NULL;
-        }                   
+        }
         *output_string_ptr = current_char;
         output_string_ptr++;
         string_ptr++;
@@ -365,7 +366,7 @@ static const char * parse_escaped_characters(const char *string) {
 static const char * get_string(const char **string) {
     char *quote_contents;
     const char *parsed_string;
-    const char *after_closing_quote_ptr = skip_string(*string);    
+    const char *after_closing_quote_ptr = skip_string(*string);
     if (!after_closing_quote_ptr) { return NULL; }
     quote_contents = parson_strndup(*string + 1, after_closing_quote_ptr - *string - 2);
     if (!quote_contents) { return NULL; }
@@ -431,7 +432,7 @@ static JSON_Value * parse_object_value(const char **string, size_t nesting) {
             json_value_free(output_value);
             return NULL;
         }
-        parson_free(new_key);        
+        parson_free(new_key);
         if (**string != ',') { break; }
         (*string)++;
     }
@@ -461,7 +462,7 @@ static JSON_Value * parse_array_value(const char **string, size_t nesting) {
             return NULL;
         }
         if (**string != ',') { break; }
-        (*string)++; 
+        (*string)++;
     }
     if (**string != ']') {
         json_value_free(output_value);
@@ -479,8 +480,8 @@ static JSON_Value * parse_string_value(const char **string) {
 
 static JSON_Value * parse_boolean_value(const char **string) {
     size_t true_token_size = sizeof_token("true");
-    size_t false_token_size = sizeof_token("false");    
-    if (strncmp("true", *string, true_token_size) == 0) {        
+    size_t false_token_size = sizeof_token("false");
+    if (strncmp("true", *string, true_token_size) == 0) {
         *string += true_token_size;
         return json_value_init_boolean(1);
     } else if (strncmp("false", *string, false_token_size) == 0) {
@@ -504,7 +505,7 @@ static JSON_Value * parse_number_value(const char **string) {
         output_value = NULL;
     }
     free((void*)number_string);
-    return output_value;    
+    return output_value;
 }
 
 static JSON_Value * parse_null_value(const char **string) {
@@ -521,7 +522,7 @@ JSON_Value * json_parse_file(const char *filename) {
     FILE *fp = fopen(filename, "r");
     size_t file_size;
     char *file_contents;
-    JSON_Value *output_value;    
+    JSON_Value *output_value;
     if (!fp) { return NULL; }
     fseek(fp, 0L, SEEK_END);
     file_size = ftell(fp);
@@ -641,7 +642,7 @@ size_t json_array_get_count(const JSON_Array *array) {
 }
 
 /* JSON Value API */
-enum json_value_type json_value_get_type(const JSON_Value *value) {
+JSON_value_t json_value_get_type(const JSON_Value *value) {
     return value ? value->type : JSONError;
 }
 
