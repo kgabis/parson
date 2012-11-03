@@ -1,4 +1,5 @@
 /*
+ Parson ( http://kgabis.github.com/parson/ )
  Copyright (c) 2012 Krzysztof Gabis
  
  Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -69,11 +70,11 @@ void test_suite_2(void) {
     JSON_Array *array;
     int i;
     const char *filename = "tests/test_2.txt";
-    printf("Testing %s:\n", filename); 
+    printf("Testing %s:\n", filename);
     root_value = json_parse_file(filename);
     TEST(root_value);
-    TEST(json_value_get_type(root_value) == JSONObject);    
-    object = json_value_get_object(root_value);       
+    TEST(json_value_get_type(root_value) == JSONObject);
+    object = json_value_get_object(root_value);
     TEST(STREQ(json_object_get_string(object, "string"), "lorem ipsum"));
     TEST(STREQ(json_object_get_string(object, "utf string"), "lorem ipsum"));
     TEST(json_object_get_number(object, "positive one") == 1.0);
@@ -119,8 +120,7 @@ void test_suite_2(void) {
     } else {
         tests_failed++;
     }
-    TEST(json_object_dotget_boolean(object, "nested true"));
-
+    TEST(json_object_dotget_boolean(object, "nested true"));    
     json_value_free(root_value);
 }
 

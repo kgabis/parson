@@ -1,16 +1,17 @@
 /*
+ Parson ( http://kgabis.github.com/parson/ )
  Copyright (c) 2012 Krzysztof Gabis
-
+ 
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated documentation files (the "Software"), to deal
  in the Software without restriction, including without limitation the rights
  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  copies of the Software, and to permit persons to whom the Software is
  furnished to do so, subject to the following conditions:
-
+ 
  The above copyright notice and this permission notice shall be included in
  all copies or substantial portions of the Software.
-
+ 
  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -44,25 +45,25 @@ typedef union json_value_value {
     JSON_Array  *array;
     int          boolean;
     int          null;
-} json_value_value;
+} JSON_Value_Value;
 
-typedef struct json_value_t {
-    JSON_value_t     type;
-    json_value_value value;
-} json_value_t;
+struct json_value_t {
+    JSON_Value_Type     type;
+    JSON_Value_Value    value;
+};
 
-typedef struct json_object_t {
+struct json_object_t {
     const char **names;
     JSON_Value **values;
     size_t       count;
     size_t       capacity;
-} json_object_t;
+};
 
-typedef struct json_array_t {
+struct json_array_t {
     JSON_Value **items;
     size_t       count;
     size_t       capacity;
-} json_array_t;
+};
 
 /* JSON Object */
 static JSON_Object * json_object_init(void);
@@ -586,7 +587,7 @@ JSON_Value * json_object_dotget_value(const JSON_Object *object, const char *nam
     object_name = parson_strndup(name, dot_position - name);
     if (!object_name) { return NULL; }
     output_value = json_object_dotget_value(json_object_get_object(object, object_name),
-                                    dot_position + 1);
+                                            dot_position + 1);
     parson_free(object_name);
     return output_value;
 }
@@ -642,7 +643,7 @@ size_t json_array_get_count(const JSON_Array *array) {
 }
 
 /* JSON Value API */
-JSON_value_t json_value_get_type(const JSON_Value *value) {
+JSON_Value_Type json_value_get_type(const JSON_Value *value) {
     return value ? value->type : JSONError;
 }
 
