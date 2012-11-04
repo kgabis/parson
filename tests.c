@@ -127,6 +127,7 @@ void test_suite_2(void) {
 /* Testing values, on which parsing should fail */
 void test_suite_3(void) {
     char nested_20x[] = "[[[[[[[[[[[[[[[[[[[[\"hi\"]]]]]]]]]]]]]]]]]]]]";
+    puts("Testing invalid strings:");
     TEST(json_parse_string(NULL) == NULL);
     TEST(json_parse_string("") == NULL); /* empty string */
     TEST(json_parse_string("[\"lorem\",]") == NULL);
