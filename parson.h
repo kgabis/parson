@@ -71,6 +71,10 @@ JSON_Array  * json_object_dotget_array  (const JSON_Object *object, const char *
 double        json_object_dotget_number (const JSON_Object *object, const char *name);
 int           json_object_dotget_boolean(const JSON_Object *object, const char *name);
 
+/* Functions to get available names */
+size_t        json_object_get_count(const JSON_Object *object);
+const char  * json_object_get_name (const JSON_Object *object, size_t index);
+    
 /* JSON Array */
 JSON_Value  * json_array_get_value  (const JSON_Array *array, size_t index);
 const char  * json_array_get_string (const JSON_Array *array, size_t index);
