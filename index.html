@@ -69,14 +69,15 @@
     <span class="kt">char</span> <span class="n">output_filename</span><span class="p">[]</span> <span class="o">=</span> <span class="s">"commits.json"</span><span class="p">;</span>
 
     <span class="cm">/* it ain't pretty, but it's not a libcurl tutorial */</span>
-    <span class="n">sprintf</span><span class="p">(</span><span class="n">curl_command</span><span class="p">,</span> <span class="s">"curl -s </span><span class="se">\"</span><span class="s">https://api.github.com/repos/%s/%s/commits</span><span class="se">\"</span><span class="s">\</span>
-<span class="s">            &gt; %s"</span><span class="p">,</span> <span class="n">username</span><span class="p">,</span> <span class="n">repo</span><span class="p">,</span> <span class="n">output_filename</span><span class="p">);</span>
+    <span class="n">sprintf</span><span class="p">(</span><span class="n">curl_command</span><span class="p">,</span> 
+            <span class="s">"curl -s </span><span class="se">\"</span><span class="s">https://api.github.com/repos/%s/%s/commits</span><span class="se">\"</span><span class="s"> &gt; %s"</span><span class="p">,</span>
+            <span class="n">username</span><span class="p">,</span> <span class="n">repo</span><span class="p">,</span> <span class="n">output_filename</span><span class="p">);</span>
     <span class="n">sprintf</span><span class="p">(</span><span class="n">cleanup_command</span><span class="p">,</span> <span class="s">"rm -f %s"</span><span class="p">,</span> <span class="n">output_filename</span><span class="p">);</span>
     <span class="n">system</span><span class="p">(</span><span class="n">curl_command</span><span class="p">);</span>
 
     <span class="cm">/* parsing json and validating output */</span>
     <span class="n">root_value</span> <span class="o">=</span> <span class="n">json_parse_file</span><span class="p">(</span><span class="n">output_filename</span><span class="p">);</span>
-    <span class="k">if</span> <span class="p">(</span><span class="n">root_value</span> <span class="o">==</span> <span class="nb">NULL</span> <span class="o">||</span> <span class="n">json_value_get_type</span><span class="p">(</span><span class="n">root_value</span><span class="p">)</span> <span class="o">!=</span> <span class="n">JSONArray</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">json_value_get_type</span><span class="p">(</span><span class="n">root_value</span><span class="p">)</span> <span class="o">!=</span> <span class="n">JSONArray</span><span class="p">)</span> <span class="p">{</span>
         <span class="n">system</span><span class="p">(</span><span class="n">cleanup_command</span><span class="p">);</span>
         <span class="k">return</span><span class="p">;</span>
     <span class="p">}</span>
