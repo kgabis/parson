@@ -70,8 +70,8 @@
 
     <span class="cm">/* it ain't pretty, but it's not a libcurl tutorial */</span>
     <span class="n">sprintf</span><span class="p">(</span><span class="n">curl_command</span><span class="p">,</span> 
-           <span class="s">"curl -s </span><span class="se">\"</span><span class="s">https://api.github.com/repos/%s/%s/commits</span><span class="se">\"</span><span class="s"> &gt; %s"</span><span class="p">,</span>
-           <span class="n">username</span><span class="p">,</span> <span class="n">repo</span><span class="p">,</span> <span class="n">output_filename</span><span class="p">);</span>
+         <span class="s">"curl -s </span><span class="se">\"</span><span class="s">https://api.github.com/repos/%s/%s/commits</span><span class="se">\"</span><span class="s"> &gt; %s"</span><span class="p">,</span>
+         <span class="n">username</span><span class="p">,</span> <span class="n">repo</span><span class="p">,</span> <span class="n">output_filename</span><span class="p">);</span>
     <span class="n">sprintf</span><span class="p">(</span><span class="n">cleanup_command</span><span class="p">,</span> <span class="s">"rm -f %s"</span><span class="p">,</span> <span class="n">output_filename</span><span class="p">);</span>
     <span class="n">system</span><span class="p">(</span><span class="n">curl_command</span><span class="p">);</span>
 
