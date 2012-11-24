@@ -31,14 +31,15 @@ void print_commits_info(const char *username, const char *repo) {
     char output_filename[] = "commits.json";
     
     /* it ain't pretty, but it's not a libcurl tutorial */
-    sprintf(curl_command, "curl -s \"https://api.github.com/repos/%s/%s/commits\"\
-            > %s", username, repo, output_filename);
+    sprintf(curl_command, 
+        "curl -s \"https://api.github.com/repos/%s/%s/commits\" > %s",
+        username, repo, output_filename);
     sprintf(cleanup_command, "rm -f %s", output_filename);
     system(curl_command);
     
     /* parsing json and validating output */
     root_value = json_parse_file(output_filename);
-    if (root_value == NULL || json_value_get_type(root_value) != JSONArray) {
+    if (json_value_get_type(root_value) != JSONArray) {
         system(cleanup_command);
         return;
     }
