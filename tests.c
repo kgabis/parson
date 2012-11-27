@@ -1,17 +1,17 @@
 /*
  Parson ( http://kgabis.github.com/parson/ )
  Copyright (c) 2012 Krzysztof Gabis
- 
+
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated documentation files (the "Software"), to deal
  in the Software without restriction, including without limitation the rights
  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  copies of the Software, and to permit persons to whom the Software is
  furnished to do so, subject to the following conditions:
- 
+
  The above copyright notice and this permission notice shall be included in
  all copies or substantial portions of the Software.
- 
+
  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -31,10 +31,12 @@
                 if(A){puts(" OK");tests_passed++;} \
                 else{puts(" FAIL");tests_failed++;}
 #define STREQ(A, B) (A && B ? strcmp(A, B) == 0 : 0)
+#define RESERIALIZE(A) (strcmp(json_serialize(json_parse_string(A)), A) == 0)
 
 void test_suite_1(void);
 void test_suite_2(void);
 void test_suite_3(void);
+void test_suite_4(void);
 
 void print_commits_info(const char *username, const char *repo);
 
@@ -47,6 +49,7 @@ int main(int argc, const char * argv[]) {
     test_suite_1();
     test_suite_2();
     test_suite_3();
+    test_suite_4();
     printf("Tests failed: %d\n", tests_failed);
     printf("Tests passed: %d\n", tests_passed);
     return 0;
@@ -68,7 +71,7 @@ void test_suite_2(void) {
     JSON_Value *root_value;
     JSON_Object *object;
     JSON_Array *array;
-    int i;
+    size_t i;
     const char *filename = "tests/test_2.txt";
     printf("Testing %s:\n", filename);
     root_value = json_parse_file(filename);
@@ -83,7 +86,7 @@ void test_suite_2(void) {
     TEST(json_object_get_boolean(object, "boolean true") == 1);
     TEST(json_object_get_boolean(object, "boolean false") == 0);
     TEST(json_value_get_type(json_object_get_value(object, "null")) == JSONNull);
-    
+
     array = json_object_get_array(object, "string array");
     if (array != NULL && json_array_get_count(array) > 1) {
         TEST(STREQ(json_array_get_string(array, 0), "lorem"));
@@ -91,7 +94,7 @@ void test_suite_2(void) {
     } else {
         tests_failed++;
     }
-    
+
     array = json_object_get_array(object, "x^2 array");
     if (array != NULL) {
         for (i = 0; i < json_array_get_count(array); i++) {
@@ -100,19 +103,19 @@ void test_suite_2(void) {
     } else {
         tests_failed++;
     }
-    
+
     TEST(json_object_get_array(object, "non existent array") == NULL);
     TEST(STREQ(json_object_dotget_string(object, "object.nested string"), "str"));
     TEST(json_object_dotget_boolean(object, "object.nested true") == 1);
     TEST(json_object_dotget_boolean(object, "object.nested false") == 0);
     TEST(json_object_dotget_value(object, "object.nested null") != NULL);
     TEST(json_object_dotget_number(object, "object.nested number") == 123);
-    
+
     TEST(json_object_dotget_value(object, "should.be.null") == NULL);
     TEST(json_object_dotget_value(object, "should.be.null.") == NULL);
     TEST(json_object_dotget_value(object, ".") == NULL);
     TEST(json_object_dotget_value(object, "") == NULL);
-    
+
     array = json_object_dotget_array(object, "object.nested array");
     if (array != NULL && json_array_get_count(array) > 1) {
         TEST(STREQ(json_array_get_string(array, 0), "lorem"));
@@ -120,7 +123,7 @@ void test_suite_2(void) {
     } else {
         tests_failed++;
     }
-    TEST(json_object_dotget_boolean(object, "nested true"));    
+    TEST(json_object_dotget_boolean(object, "nested true"));
     json_value_free(root_value);
 }
 
@@ -169,30 +172,36 @@ void test_suite_3(void) {
     TEST(json_parse_string("[-07.0]") == NULL);
 }
 
+/* Test serialization */
+void test_suite_4( void ) {
+    TEST(RESERIALIZE("[1]"));
+    TEST(RESERIALIZE("[\"hello\"]"));
+}
+
 void print_commits_info(const char *username, const char *repo) {
     JSON_Value *root_value;
     JSON_Array *commits;
     JSON_Object *commit;
-    int i;
-    
+    size_t i;
+
     char curl_command[512];
     char cleanup_command[256];
     char output_filename[] = "commits.json";
-    
+
     /* it ain't pretty, but it's not a libcurl tutorial */
-    sprintf(curl_command, 
+    sprintf(curl_command,
         "curl -s \"https://api.github.com/repos/%s/%s/commits\" > %s",
         username, repo, output_filename);
     sprintf(cleanup_command, "rm -f %s", output_filename);
     system(curl_command);
-    
+
     /* parsing json and validating output */
     root_value = json_parse_file(output_filename);
     if (json_value_get_type(root_value) != JSONArray) {
         system(cleanup_command);
         return;
     }
-    
+
     /* getting array from root value and printing commit info */
     commits = json_value_get_array(root_value);
     printf("%-10.10s %-10.10s %s\n", "Date", "SHA", "Author");
@@ -203,7 +212,7 @@ void print_commits_info(const char *username, const char *repo) {
                json_object_get_string(commit, "sha"),
                json_object_dotget_string(commit, "commit.author.name"));
     }
-    
+
     /* cleanup code */
     json_value_free(root_value);
     system(cleanup_command);

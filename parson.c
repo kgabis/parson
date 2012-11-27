@@ -1,17 +1,17 @@
 /*
  Parson ( http://kgabis.github.com/parson/ )
  Copyright (c) 2012 Krzysztof Gabis
- 
+
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated documentation files (the "Software"), to deal
  in the Software without restriction, including without limitation the rights
  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  copies of the Software, and to permit persons to whom the Software is
  furnished to do so, subject to the following conditions:
- 
+
  The above copyright notice and this permission notice shall be included in
  all copies or substantial portions of the Software.
- 
+
  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -27,6 +27,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <assert.h>
 
 #define ERROR                      0
 #define SUCCESS                    1
@@ -646,4 +647,142 @@ void json_value_free(JSON_Value *value) {
             break;
     }
     parson_free(value);
+}
+
+/* -------------------------------------------------------------------------- */
+
+struct _serialize_str {
+    char *str;
+    size_t len;
+};
+
+/*
+ * Callback which appends data to the string
+ */
+void _serialize_str_cb( const char *str, size_t len, void *data ) {
+    struct _serialize_str *self = (struct _serialize_str*)data;
+    if( self->str == NULL ) {
+        self->str = parson_malloc(len + 1);
+        assert( self->str != NULL );
+        strncpy( self->str, str, len );
+        self->str[ len ] = 0;
+        self->len = len;
+    }
+    else {
+        self->str = parson_realloc( self->str, self->len + len + 1 );
+        assert( self->str != NULL );
+        strncpy( self->str + (self->len), str, len);
+        self->str[ self->len + len ] = 0;
+        self->len += len;
+    }
+}
+
+static void
+json_serialize_string( const char *str, json_print_cb cb, void *arg ) {
+    cb("\"", 1, arg);
+    /* TODO: handle unicode encoding of string?
+     * XXX: need to be aware of unicode escape sequences so that we don't mess up
+     */
+    cb(str, strlen(str), arg);
+    cb("\"", 1, arg);
+}
+
+static void
+json_serialize_number( const JSON_Value *value, json_print_cb cb, void *arg ) {
+    char buf[64];
+    size_t len = sprintf(buf, "%.16g", json_value_get_number(value));
+    cb(buf, len, arg);
+}
+
+static void
+json_serialize_object( const JSON_Value *value, json_print_cb cb, void *arg ) {
+    int first = 1;
+    size_t idx;
+    JSON_Object* obj = json_value_get_object(value);
+    const char *name = NULL;
+    JSON_Value *obj_value = json_object_get_value(obj, name);
+
+    cb("{", 1, arg);
+    for( idx = 0; idx < json_object_get_count(obj); idx++ ) {
+        name = json_object_get_name(obj, idx);
+        if( first ) {
+            first = 0;
+        }
+        else {
+            cb(",", 1, arg);
+        }
+        json_serialize_string( name, cb, arg );
+        cb(":", 1, arg);
+        json_serialize_cb(obj_value, cb, arg);
+    }
+    cb("}", 1, arg);
+}
+
+static void
+json_serialize_array( const JSON_Value *value, json_print_cb cb, void *arg ) {
+    int first = 1;
+    size_t idx;
+    JSON_Array *array = json_value_get_array(value);
+    cb("[", 1, arg);
+    for( idx = 0; idx < json_array_get_count(array); idx++ ) {
+        if( first ) {
+            first = 0;
+        }
+        else {
+            cb(",", 1, arg);
+        }
+        json_serialize_cb( json_array_get_value(array, idx), cb, arg );
+    }
+    cb("]", 1, arg);
+}
+
+void
+json_serialize_cb( const JSON_Value *value, json_print_cb cb, void *arg ) {
+    assert( json_value_get_type(value) != JSONError );
+
+    switch( json_value_get_type(value) ) {
+    case JSONNull:
+        cb( "null", 4, arg );
+        break;
+
+    case JSONString:
+        json_serialize_string( json_value_get_string(value), cb, arg );
+        break;
+
+    case JSONNumber:
+        json_serialize_number(value, cb, arg);
+        break;
+
+    case JSONObject:
+        json_serialize_object(value, cb, arg);
+        break;
+
+    case JSONArray:
+        json_serialize_array(value, cb, arg);
+        break;
+
+    case JSONBoolean:
+        if( json_value_get_boolean(value) ) {
+            cb("true", 4, arg);
+        }
+        else {
+            cb("false", 5, arg);
+        }
+        break;
+
+    default:
+        printf("Got unknown type!\n");
+        /* XXX: this shouldn't ever happen! */
+        break;
+    }
+}
+
+char *
+json_serialize( const JSON_Value *value ) {
+    struct _serialize_str str;
+    str.str = NULL;
+    str.len = 0;
+
+    json_serialize_cb( value, &_serialize_str_cb, &str );
+    return str.str;
 }
