@@ -1,17 +1,17 @@
 /*
  Parson ( http://kgabis.github.com/parson/ )
  Copyright (c) 2012 Krzysztof Gabis
- 
+
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated documentation files (the "Software"), to deal
  in the Software without restriction, including without limitation the rights
  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  copies of the Software, and to permit persons to whom the Software is
  furnished to do so, subject to the following conditions:
- 
+
  The above copyright notice and this permission notice shall be included in
  all copies or substantial portions of the Software.
- 
+
  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -27,6 +27,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <assert.h>
 
 #define ERROR                      0
 #define SUCCESS                    1
@@ -646,4 +647,349 @@ void json_value_free(JSON_Value *value) {
             break;
     }
     parson_free(value);
+}
+
+/* -------------------------------------------------------------------------- */
+
+/*
+ * Copyright (c) 2009-2012 Petri Lehtinen <petri@digip.org>
+ *
+ * Jansson is free software; you can redistribute it and/or modify
+ * it under the terms of the MIT license. See LICENSE for details.
+ */
+
+int utf8_check_first(char byte)
+{
+    unsigned char u = (unsigned char)byte;
+
+    if(u < 0x80)
+        return 1;
+
+    if(0x80 <= u && u <= 0xBF) {
+        /* second, third or fourth byte of a multi-byte
+           sequence, i.e. a "continuation byte" */
+        return 0;
+    }
+    else if(u == 0xC0 || u == 0xC1) {
+        /* overlong encoding of an ASCII byte */
+        return 0;
+    }
+    else if(0xC2 <= u && u <= 0xDF) {
+        /* 2-byte sequence */
+        return 2;
+    }
+
+    else if(0xE0 <= u && u <= 0xEF) {
+        /* 3-byte sequence */
+        return 3;
+    }
+    else if(0xF0 <= u && u <= 0xF4) {
+        /* 4-byte sequence */
+        return 4;
+    }
+    else { /* u >= 0xF5 */
+        /* Restricted (start of 4-, 5- or 6-byte sequence) or invalid
+           UTF-8 */
+        return 0;
+    }
+}
+
+int utf8_check_full(const char *buffer, int size, int *codepoint)
+{
+    int i;
+    int value = 0;
+    unsigned char u = (unsigned char)buffer[0];
+
+    if(size == 2)
+    {
+        value = u & 0x1F;
+    }
+    else if(size == 3)
+    {
+        value = u & 0xF;
+    }
+    else if(size == 4)
+    {
+        value = u & 0x7;
+    }
+    else
+        return 0;
+
+    for(i = 1; i < size; i++)
+    {
+        u = (unsigned char)buffer[i];
+
+        if(u < 0x80 || u > 0xBF) {
+            /* not a continuation byte */
+            return 0;
+        }
+
+        value = (value << 6) + (u & 0x3F);
+    }
+
+    if(value > 0x10FFFF) {
+        /* not in Unicode range */
+        return 0;
+    }
+
+    else if(0xD800 <= value && value <= 0xDFFF) {
+        /* invalid code point (UTF-16 surrogate halves) */
+        return 0;
+    }
+
+    else if((size == 2 && value < 0x80) ||
+            (size == 3 && value < 0x800) ||
+            (size == 4 && value < 0x10000)) {
+        /* overlong encoding */
+        return 0;
+    }
+
+    if(codepoint)
+        *codepoint = value;
+
+    return 1;
+}
+
+const char *utf8_iterate(const char *buffer, int *codepoint)
+{
+    int count;
+    int value;
+
+    if(!*buffer)
+        return buffer;
+
+    count = utf8_check_first(buffer[0]);
+    if(count <= 0)
+        return NULL;
+
+    if(count == 1)
+        value = (unsigned char)buffer[0];
+    else
+    {
+        if(!utf8_check_full(buffer, count, &value))
+            return NULL;
+    }
+
+    if(codepoint)
+        *codepoint = value;
+
+    return buffer + count;
+}
+
+
+static void json_serialize_string(const char *str, json_print_cb dump, void *data)
+{
+    const char *pos, *end;
+    int codepoint;
+
+    dump("\"", 1, data);
+
+    end = pos = str;
+    while(1)
+    {
+        const char *text;
+        char seq[13];
+        int length;
+
+        while(*end)
+        {
+            end = utf8_iterate(pos, &codepoint);
+            if(!end)
+                return -1;
+
+            /* mandatory escape or control char */
+            if(codepoint == '\\' || codepoint == '"' || codepoint < 0x20)
+                break;
+
+            /* slash */
+            if(codepoint == '/')
+                break;
+
+            /* non-ASCII */
+            if(codepoint > 0x7F)
+                break;
+
+            pos = end;
+        }
+
+        if(pos != str) {
+            dump(str, pos - str, data);
+        }
+
+        if(end == pos)
+            break;
+
+        /* handle \, /, ", and control codes */
+        length = 2;
+        switch(codepoint)
+        {
+            case '\\': text = "\\\\"; break;
+            case '\"': text = "\\\""; break;
+            case '\b': text = "\\b"; break;
+            case '\f': text = "\\f"; break;
+            case '\n': text = "\\n"; break;
+            case '\r': text = "\\r"; break;
+            case '\t': text = "\\t"; break;
+            case '/':  text = "\\/"; break;
+            default:
+            {
+                /* codepoint is in BMP */
+                if(codepoint < 0x10000)
+                {
+                    sprintf(seq, "\\u%04x", codepoint);
+                    length = 6;
+                }
+
+                /* not in BMP -> construct a UTF-16 surrogate pair */
+                else
+                {
+                    int first, last;
+
+                    codepoint -= 0x10000;
+                    first = 0xD800 | ((codepoint & 0xffc00) >> 10);
+                    last = 0xDC00 | (codepoint & 0x003ff);
+
+                    sprintf(seq, "\\u%04x\\u%04x", first, last);
+                    length = 12;
+                }
+
+                text = seq;
+                break;
+            }
+        }
+
+        dump(text, length, data);
+
+        str = pos = end;
+    }
+
+    dump("\"", 1, data);
+}
+
+/* -------------------------------------------------------------------------- */
+
+struct _serialize_str {
+    char *str;
+    size_t len;
+};
+
+/*
+ * Callback which appends data to the string
+ */
+static void
+_serialize_str_cb( const char *str, size_t len, void *data ) {
+    struct _serialize_str *self = (struct _serialize_str*)data;
+    if( self->str == NULL ) {
+        self->str = parson_malloc(len + 1);
+        assert( self->str != NULL );
+        strncpy( self->str, str, len );
+        self->str[ len ] = 0;
+        self->len = len;
+    }
+    else {
+        self->str = parson_realloc( self->str, self->len + len + 1 );
+        assert( self->str != NULL );
+        strncpy( self->str + (self->len), str, len);
+        self->str[ self->len + len ] = 0;
+        self->len += len;
+    }
+}
+
+static void
+json_serialize_number( const JSON_Value *value, json_print_cb cb, void *arg ) {
+    char buf[64];
+    size_t len = sprintf(buf, "%.16g", json_value_get_number(value));
+    cb(buf, len, arg);
+}
+
+static void
+json_serialize_object( const JSON_Value *value, json_print_cb cb, void *arg ) {
+    int first = 1;
+    size_t idx;
+    JSON_Object* obj = json_value_get_object(value);
+    const char *name = NULL;
+    JSON_Value *obj_value = json_object_get_value(obj, name);
+
+    cb("{", 1, arg);
+    for( idx = 0; idx < json_object_get_count(obj); idx++ ) {
+        name = json_object_get_name(obj, idx);
+        if( first ) {
+            first = 0;
+        }
+        else {
+            cb(",", 1, arg);
+        }
+        json_serialize_string( name, cb, arg );
+        cb(":", 1, arg);
+        json_serialize_cb(obj_value, cb, arg);
+    }
+    cb("}", 1, arg);
+}
+
+static void
+json_serialize_array( const JSON_Value *value, json_print_cb cb, void *arg ) {
+    int first = 1;
+    size_t idx;
+    JSON_Array *array = json_value_get_array(value);
+    cb("[", 1, arg);
+    for( idx = 0; idx < json_array_get_count(array); idx++ ) {
+        if( first ) {
+            first = 0;
+        }
+        else {
+            cb(",", 1, arg);
+        }
+        json_serialize_cb( json_array_get_value(array, idx), cb, arg );
+    }
+    cb("]", 1, arg);
+}
+
+void
+json_serialize_cb( const JSON_Value *value, json_print_cb cb, void *arg ) {
+    assert( json_value_get_type(value) != JSONError );
+
+    switch( json_value_get_type(value) ) {
+    case JSONNull:
+        cb( "null", 4, arg );
+        break;
+
+    case JSONString:
+        json_serialize_string( json_value_get_string(value), cb, arg );
+        break;
+
+    case JSONNumber:
+        json_serialize_number(value, cb, arg);
+        break;
+
+    case JSONObject:
+        json_serialize_object(value, cb, arg);
+        break;
+
+    case JSONArray:
+        json_serialize_array(value, cb, arg);
+        break;
+
+    case JSONBoolean:
+        if( json_value_get_boolean(value) ) {
+            cb("true", 4, arg);
+        }
+        else {
+            cb("false", 5, arg);
+        }
+        break;
+
+    default:
+        assert( 0 ); /* XXX: this shouldn't ever happen! */
+        break;
+    }
+}
+
+char *
+json_serialize( const JSON_Value *value ) {
+    struct _serialize_str str;
+    str.str = NULL;
+    str.len = 0;
+
+    json_serialize_cb( value, &_serialize_str_cb, &str );
+    return str.str;
 }

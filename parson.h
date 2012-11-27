@@ -1,17 +1,17 @@
 /*
  Parson ( http://kgabis.github.com/parson/ )
  Copyright (c) 2012 Krzysztof Gabis
- 
+
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated documentation files (the "Software"), to deal
  in the Software without restriction, including without limitation the rights
  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  copies of the Software, and to permit persons to whom the Software is
  furnished to do so, subject to the following conditions:
- 
+
  The above copyright notice and this permission notice shall be included in
  all copies or substantial portions of the Software.
- 
+
  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -27,10 +27,10 @@
 #ifdef __cplusplus
 extern "C"
 {
-#endif    
-    
-#include <stddef.h>   /* size_t */    
-    
+#endif
+
+#include <stddef.h>   /* size_t */
+
 /* Types and enums */
 typedef struct json_object_t JSON_Object;
 typedef struct json_array_t  JSON_Array;
@@ -74,7 +74,7 @@ int           json_object_dotget_boolean(const JSON_Object *object, const char *
 /* Functions to get available names */
 size_t        json_object_get_count(const JSON_Object *object);
 const char  * json_object_get_name (const JSON_Object *object, size_t index);
-    
+
 /* JSON Array */
 JSON_Value  * json_array_get_value  (const JSON_Array *array, size_t index);
 const char  * json_array_get_string (const JSON_Array *array, size_t index);
@@ -92,7 +92,12 @@ const char  *   json_value_get_string (const JSON_Value *value);
 double          json_value_get_number (const JSON_Value *value);
 int             json_value_get_boolean(const JSON_Value *value);
 void            json_value_free       (JSON_Value *value);
-    
+
+/* Functions for serializing JSON */
+typedef void (*json_print_cb)(const char *str, size_t len, void *data);
+void json_serialize_cb( const JSON_Value *value, json_print_cb cb, void *arg );
+char *json_serialize( const JSON_Value *value );
+
 #ifdef __cplusplus
 }
 #endif
