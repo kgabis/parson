@@ -41,7 +41,7 @@ void print_commits_info(const char *username, const char *repo);
 static int tests_passed;
 static int tests_failed;
 
-int main(int argc, const char * argv[]) {
+int main() {
     /* Example function from readme file:       */
     /* print_commits_info("torvalds", "linux"); */
     test_suite_1();
@@ -68,7 +68,7 @@ void test_suite_2(void) {
     JSON_Value *root_value;
     JSON_Object *object;
     JSON_Array *array;
-    int i;
+    size_t i;
     const char *filename = "tests/test_2.txt";
     printf("Testing %s:\n", filename);
     root_value = json_parse_file(filename);
@@ -120,7 +120,7 @@ void test_suite_2(void) {
     } else {
         tests_failed++;
     }
-    TEST(json_object_dotget_boolean(object, "nested true"));    
+    TEST(json_object_dotget_boolean(object, "nested true"));
     json_value_free(root_value);
 }
 
@@ -173,7 +173,7 @@ void print_commits_info(const char *username, const char *repo) {
     JSON_Value *root_value;
     JSON_Array *commits;
     JSON_Object *commit;
-    int i;
+    size_t i;
     
     char curl_command[512];
     char cleanup_command[256];

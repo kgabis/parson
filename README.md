@@ -24,7 +24,7 @@ void print_commits_info(const char *username, const char *repo) {
     JSON_Value *root_value;
     JSON_Array *commits;
     JSON_Object *commit;
-    int i;
+    size_t i;
     
     char curl_command[512];
     char cleanup_command[256];
