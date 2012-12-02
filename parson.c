@@ -73,7 +73,7 @@ struct json_array_t {
 /* Various */
 static int    try_realloc(void **ptr, size_t new_size);
 static char * parson_strndup(const char *string, size_t n);
-static int    is_utf(const char *string);
+static int    is_utf(const unsigned char *string);
 static int    is_decimal(const char *string, size_t length);
 
 /* JSON Object */
@@ -124,7 +124,7 @@ static char * parson_strndup(const char *string, size_t n) {
     return output_string;
 }
 
-static int is_utf(const char *s) {
+static int is_utf(const unsigned char *s) {
     return isxdigit(s[0]) && isxdigit(s[1]) && isxdigit(s[2]) && isxdigit(s[3]);
 }
 
@@ -312,7 +312,7 @@ static const char * get_processed_string(const char **string) {
                 case 't': current_char = '\t'; break;
                 case 'u':
                     unprocessed_ptr++;
-                    if (!is_utf(unprocessed_ptr) ||
+                    if (!is_utf((const unsigned char*)unprocessed_ptr) ||
                         sscanf(unprocessed_ptr, "%4x", &utf_val) == EOF) {
                         parson_free(output); return NULL;
                     }
@@ -333,7 +333,7 @@ static const char * get_processed_string(const char **string) {
                     return NULL;
                     break;
             }
-        } else if (iscntrl(current_char)) { /* no control characters allowed */
+        } else if (iscntrl((unsigned char)current_char)) { /* no control characters allowed */
             parson_free(output);
             return NULL;
         }
