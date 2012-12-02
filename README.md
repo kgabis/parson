@@ -15,7 +15,7 @@ git clone https://github.com/kgabis/parson.git
 ```
 and copy parson.h and parson.c to you source code tree.
 
-Run tests.sh to compile and run tests.
+Run ```make test``` to compile and run tests.
 
 ##Example
 Here is a function, which prints basic commit info (date, sha and author) from a github repository.  It's also included in tests.c file, you can just uncomment and run it.
