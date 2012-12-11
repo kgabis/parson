@@ -37,6 +37,7 @@
 #define sizeof_token(a)       (sizeof(a) - 1)
 #define skip_char(str)        ((*str)++)
 #define skip_whitespaces(str) while (isspace(**string)) { skip_char(string); }
+#define MAX(a, b)             ((a) > (b) ? (a) : (b))
 
 #define parson_malloc(a)     malloc(a)
 #define parson_free(a)       free((void*)a)
@@ -139,11 +140,9 @@ static int is_decimal(const char *string, size_t length) {
 static JSON_Object * json_object_init(void) {
     JSON_Object *new_obj = (JSON_Object*)parson_malloc(sizeof(JSON_Object));
     if (!new_obj) { return NULL; }
-    new_obj->names = (const char**)parson_malloc(sizeof(char*) * STARTING_CAPACITY);
-    if (!new_obj->names) { parson_free(new_obj); return NULL; }
-    new_obj->values = (JSON_Value**)parson_malloc(sizeof(JSON_Value*) * STARTING_CAPACITY);
-    if (!new_obj->values) { parson_free(new_obj->names); parson_free(new_obj); return NULL; }
-    new_obj->capacity = STARTING_CAPACITY;
+    new_obj->names = (const char**)NULL;
+    new_obj->values = (JSON_Value**)NULL;
+    new_obj->capacity = 0;
     new_obj->count = 0;
     return new_obj;
 }
@@ -151,7 +150,7 @@ static JSON_Object * json_object_init(void) {
 static int json_object_add(JSON_Object *object, const char *name, JSON_Value *value) {
     size_t index;
     if (object->count >= object->capacity) {
-        size_t new_capacity = object->capacity * 2;
+        size_t new_capacity = MAX(object->capacity * 2, STARTING_CAPACITY);
         if (new_capacity > OBJECT_MAX_CAPACITY) { return ERROR; }
         if (json_object_resize(object, new_capacity) == ERROR) { return ERROR; }
     }
@@ -195,16 +194,15 @@ static void json_object_free(JSON_Object *object) {
 static JSON_Array * json_array_init(void) {
     JSON_Array *new_array = (JSON_Array*)parson_malloc(sizeof(JSON_Array));
     if (!new_array) { return NULL; }
-    new_array->items = (JSON_Value**)parson_malloc(STARTING_CAPACITY * sizeof(JSON_Value*));
-    if (!new_array->items) { parson_free(new_array); return NULL; }
-    new_array->capacity = STARTING_CAPACITY;
+    new_array->items = (JSON_Value**)NULL;
+    new_array->capacity = 0;
     new_array->count = 0;
     return new_array;
 }
 
 static int json_array_add(JSON_Array *array, JSON_Value *value) {
     if (array->count >= array->capacity) {
-        size_t new_capacity = array->capacity * 2;
+        size_t new_capacity = MAX(array->capacity * 2, STARTING_CAPACITY);
         if (new_capacity > ARRAY_MAX_CAPACITY) { return ERROR; }
         if (!json_array_resize(array, new_capacity)) { return ERROR; }
     }
