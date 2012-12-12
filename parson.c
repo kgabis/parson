@@ -331,7 +331,8 @@ static const char * get_processed_string(const char **string) {
                     return NULL;
                     break;
             }
-        } else if (iscntrl((unsigned char)current_char)) { /* no control characters allowed */
+        } else if (iscntrl((unsigned char)current_char) &&
+                   ((unsigned char)current_char != 0x7F)) { /* no control characters allowed (except DEL)*/
             parson_free(output);
             return NULL;
         }
