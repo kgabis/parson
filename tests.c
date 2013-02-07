@@ -77,6 +77,7 @@ void test_suite_2(void) {
     object = json_value_get_object(root_value);
     TEST(STREQ(json_object_get_string(object, "string"), "lorem ipsum"));
     TEST(STREQ(json_object_get_string(object, "utf string"), "lorem ipsum"));
+    TEST(STREQ(json_object_get_string(object, "utf-8 string"), "あいうえお"));
     TEST(json_object_get_number(object, "positive one") == 1.0);
     TEST(json_object_get_number(object, "negative one") == -1.0);
     TEST(json_object_get_number(object, "hard to parse number") == -0.000314);
