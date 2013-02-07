@@ -331,8 +331,7 @@ static const char * get_processed_string(const char **string) {
                     return NULL;
                     break;
             }
-        } else if (iscntrl((unsigned char)current_char) &&
-                   ((unsigned char)current_char != 0x7F)) { /* no control characters allowed (except DEL)*/
+        } else if ((unsigned char)current_char < 0x20) { /* 0x00-0x19 are invalid characters for json string (http://www.ietf.org/rfc/rfc4627.txt) */
             parson_free(output);
             return NULL;
         }
