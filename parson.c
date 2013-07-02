@@ -36,7 +36,7 @@
 #define MAX_NESTING               19
 #define sizeof_token(a)       (sizeof(a) - 1)
 #define skip_char(str)        ((*str)++)
-#define skip_whitespaces(str) while (isspace(**string)) { skip_char(string); }
+#define skip_whitespaces(str) while (isspace(**str)) { skip_char(str); }
 #define MAX(a, b)             ((a) > (b) ? (a) : (b))
 
 #define parson_malloc(a)     malloc(a)
