@@ -500,7 +500,9 @@ JSON_Value * json_parse_file(const char *filename) {
     rewind(fp);
     file_contents = (char*)parson_malloc(sizeof(char) * (file_size + 1));
     if (!file_contents) { fclose(fp); return NULL; }
-    if (fread(file_contents, file_size, 1, fp) < 1) { fclose(fp); return NULL; }
+    if (fread(file_contents, file_size, 1, fp) < 1) {
+        if (ferror(fp)) { fclose(fp); return NULL; }
+    }
     fclose(fp);
     file_contents[file_size] = '\0';
     output_value = json_parse_string(file_contents);
