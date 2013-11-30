@@ -170,7 +170,8 @@ static char * read_file(const char * filename) {
 }
 
 static void remove_comments(char *string, const char *start_token, const char *end_token) {
-    int in_string = 0, escaped = 0, i;
+    int in_string = 0, escaped = 0;
+    size_t i;
     char *ptr = NULL, current_char;
     size_t start_token_len = strlen(start_token);
     size_t end_token_len = strlen(end_token);
@@ -630,7 +631,6 @@ JSON_Value * json_parse_string_with_comments(const char *string) {
         return NULL;
     remove_comments(string_mutable_copy, "/*", "*/");
     remove_comments(string_mutable_copy, "//", "\n");
-    puts(string_mutable_copy);
     string_mutable_copy_ptr = string_mutable_copy;
     skip_whitespaces(&string_mutable_copy_ptr);
     if (*string_mutable_copy_ptr != '{' && *string_mutable_copy_ptr != '[') {
