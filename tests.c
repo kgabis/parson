@@ -1,6 +1,6 @@
 /*
  Parson ( http://kgabis.github.com/parson/ )
- Copyright (c) 2012 Krzysztof Gabis
+ Copyright (c) 2013 Krzysztof Gabis
  
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated documentation files (the "Software"), to deal
@@ -32,10 +32,14 @@
                 else{puts(" FAIL");tests_failed++;}
 #define STREQ(A, B) (A && B ? strcmp(A, B) == 0 : 0)
 
+
 void test_suite_1(void);
-void test_suite_2(void);
+void test_suite_2(JSON_Value *value);
+void test_suite_2_no_comments(void);
+void test_suite_2_with_commnets(void);
 void test_suite_3(void);
 
+char *read_file(const char *filename);
 void print_commits_info(const char *username, const char *repo);
 
 static int tests_passed;
@@ -45,7 +49,8 @@ int main() {
     /* Example function from readme file:       */
     /* print_commits_info("torvalds", "linux"); */
     test_suite_1();
-    test_suite_2();
+    test_suite_2_no_comments();
+    test_suite_2_with_commnets();
     test_suite_3();
     printf("Tests failed: %d\n", tests_failed);
     printf("Tests passed: %d\n", tests_passed);
@@ -61,31 +66,35 @@ void test_suite_1(void) {
     if (val) { json_value_free(val); }
     TEST((val = json_parse_file("tests/test_1_3.txt")) != NULL);
     if (val) { json_value_free(val); }
+    
+    TEST((val = json_parse_file_with_comments("tests/test_1_1.txt")) != NULL);
+    if (val) { json_value_free(val); }
+    TEST((val = json_parse_file_with_comments("tests/test_1_2.txt")) != NULL);
+    if (val) { json_value_free(val); }
+    TEST((val = json_parse_file_with_comments("tests/test_1_3.txt")) != NULL);
+    if (val) { json_value_free(val); }
+
 }
 
 /* Testing correctness of parsed values */
-void test_suite_2(void) {
-    JSON_Value *root_value;
-    JSON_Object *object;
+void test_suite_2(JSON_Value *root_value) {
+    JSON_Object *root_object;
     JSON_Array *array;
     size_t i;
-    const char *filename = "tests/test_2.txt";
-    printf("Testing %s:\n", filename);
-    root_value = json_parse_file(filename);
     TEST(root_value);
     TEST(json_value_get_type(root_value) == JSONObject);
-    object = json_value_get_object(root_value);
-    TEST(STREQ(json_object_get_string(object, "string"), "lorem ipsum"));
-    TEST(STREQ(json_object_get_string(object, "utf string"), "lorem ipsum"));
-    TEST(STREQ(json_object_get_string(object, "utf-8 string"), "あいうえお"));
-    TEST(json_object_get_number(object, "positive one") == 1.0);
-    TEST(json_object_get_number(object, "negative one") == -1.0);
-    TEST(json_object_get_number(object, "hard to parse number") == -0.000314);
-    TEST(json_object_get_boolean(object, "boolean true") == 1);
-    TEST(json_object_get_boolean(object, "boolean false") == 0);
-    TEST(json_value_get_type(json_object_get_value(object, "null")) == JSONNull);
+    root_object = json_value_get_object(root_value);
+    TEST(STREQ(json_object_get_string(root_object, "string"), "lorem ipsum"));
+    TEST(STREQ(json_object_get_string(root_object, "utf string"), "lorem ipsum"));
+    TEST(STREQ(json_object_get_string(root_object, "utf-8 string"), "あいうえお"));
+    TEST(json_object_get_number(root_object, "positive one") == 1.0);
+    TEST(json_object_get_number(root_object, "negative one") == -1.0);
+    TEST(json_object_get_number(root_object, "hard to parse number") == -0.000314);
+    TEST(json_object_get_boolean(root_object, "boolean true") == 1);
+    TEST(json_object_get_boolean(root_object, "boolean false") == 0);
+    TEST(json_value_get_type(json_object_get_value(root_object, "null")) == JSONNull);
     
-    array = json_object_get_array(object, "string array");
+    array = json_object_get_array(root_object, "string array");
     if (array != NULL && json_array_get_count(array) > 1) {
         TEST(STREQ(json_array_get_string(array, 0), "lorem"));
         TEST(STREQ(json_array_get_string(array, 1), "ipsum"));
@@ -93,7 +102,7 @@ void test_suite_2(void) {
         tests_failed++;
     }
     
-    array = json_object_get_array(object, "x^2 array");
+    array = json_object_get_array(root_object, "x^2 array");
     if (array != NULL) {
         for (i = 0; i < json_array_get_count(array); i++) {
             TEST(json_array_get_number(array, i) == (i * i));
@@ -102,26 +111,46 @@ void test_suite_2(void) {
         tests_failed++;
     }
     
-    TEST(json_object_get_array(object, "non existent array") == NULL);
-    TEST(STREQ(json_object_dotget_string(object, "object.nested string"), "str"));
-    TEST(json_object_dotget_boolean(object, "object.nested true") == 1);
-    TEST(json_object_dotget_boolean(object, "object.nested false") == 0);
-    TEST(json_object_dotget_value(object, "object.nested null") != NULL);
-    TEST(json_object_dotget_number(object, "object.nested number") == 123);
+    TEST(json_object_get_array(root_object, "non existent array") == NULL);
+    TEST(STREQ(json_object_dotget_string(root_object, "object.nested string"), "str"));
+    TEST(json_object_dotget_boolean(root_object, "object.nested true") == 1);
+    TEST(json_object_dotget_boolean(root_object, "object.nested false") == 0);
+    TEST(json_object_dotget_value(root_object, "object.nested null") != NULL);
+    TEST(json_object_dotget_number(root_object, "object.nested number") == 123);
     
-    TEST(json_object_dotget_value(object, "should.be.null") == NULL);
-    TEST(json_object_dotget_value(object, "should.be.null.") == NULL);
-    TEST(json_object_dotget_value(object, ".") == NULL);
-    TEST(json_object_dotget_value(object, "") == NULL);
+    TEST(json_object_dotget_value(root_object, "should.be.null") == NULL);
+    TEST(json_object_dotget_value(root_object, "should.be.null.") == NULL);
+    TEST(json_object_dotget_value(root_object, ".") == NULL);
+    TEST(json_object_dotget_value(root_object, "") == NULL);
     
-    array = json_object_dotget_array(object, "object.nested array");
+    array = json_object_dotget_array(root_object, "object.nested array");
     if (array != NULL && json_array_get_count(array) > 1) {
         TEST(STREQ(json_array_get_string(array, 0), "lorem"));
         TEST(STREQ(json_array_get_string(array, 1), "ipsum"));
     } else {
         tests_failed++;
     }
-    TEST(json_object_dotget_boolean(object, "nested true"));
+    TEST(json_object_dotget_boolean(root_object, "nested true"));
+    
+    TEST(STREQ(json_object_get_string(root_object, "/**/"), "comment"));
+    TEST(STREQ(json_object_get_string(root_object, "//"), "comment"));
+}
+
+void test_suite_2_no_comments(void) {
+    const char *filename = "tests/test_2.txt";
+    JSON_Value *root_value = NULL;
+    printf("Testing %s:\n", filename);
+    root_value = json_parse_file(filename);
+    test_suite_2(root_value);
+    json_value_free(root_value);
+}
+
+void test_suite_2_with_commnets(void) {
+    const char *filename = "tests/test_2_comments.txt";
+    JSON_Value *root_value = NULL;
+    printf("Testing %s:\n", filename);
+    root_value = json_parse_file_with_comments(filename);
+    test_suite_2(root_value);
     json_value_free(root_value);
 }
 
@@ -132,6 +161,8 @@ void test_suite_3(void) {
     TEST(json_parse_string(NULL) == NULL);
     TEST(json_parse_string("") == NULL); /* empty string */
     TEST(json_parse_string("[\"lorem\",]") == NULL);
+    TEST(json_parse_string("{\"lorem\":\"ipsum\",}") == NULL);
+    TEST(json_parse_string("{lorem:ipsum}") == NULL);
     TEST(json_parse_string("[,]") == NULL);
     TEST(json_parse_string("[,") == NULL);
     TEST(json_parse_string("[") == NULL);

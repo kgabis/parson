@@ -1,6 +1,6 @@
 /*
  Parson ( http://kgabis.github.com/parson/ )
- Copyright (c) 2012 Krzysztof Gabis
+ Copyright (c) 2013 Krzysztof Gabis
  
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated documentation files (the "Software"), to deal
@@ -72,6 +72,8 @@ struct json_array_t {
 };
 
 /* Various */
+static char * read_file(const char *filename);
+static void   remove_comments(char *string, const char *start_token, const char *end_token);
 static int    try_realloc(void **ptr, size_t new_size);
 static char * parson_strndup(const char *string, size_t n);
 static int    is_utf(const unsigned char *string);
@@ -134,6 +136,51 @@ static int is_decimal(const char *string, size_t length) {
     if (length > 2 && !strncmp(string, "-0", 2) && string[2] != '.') { return 0; }
     while (length--) { if (strchr("xX", string[length])) { return 0; } }
     return 1;
+}
+
+static char * read_file(const char * filename) {
+    FILE *fp = fopen(filename, "r");
+    size_t file_size;
+    char *file_contents;
+    if (!fp) { return NULL; }
+    fseek(fp, 0L, SEEK_END);
+    file_size = ftell(fp);
+    rewind(fp);
+    file_contents = (char*)parson_malloc(sizeof(char) * (file_size + 1));
+    if (!file_contents) { fclose(fp); return NULL; }
+    if (fread(file_contents, file_size, 1, fp) < 1) {
+        if (ferror(fp)) { fclose(fp); return NULL; }
+    }
+    fclose(fp);
+    file_contents[file_size] = '\0';
+    return file_contents;
+}
+
+static void remove_comments(char *string, const char *start_token, const char *end_token) {
+    int in_string = 0, escaped = 0, i;
+    char *ptr = NULL, current_char;
+    size_t start_token_len = strlen(start_token);
+    size_t end_token_len = strlen(end_token);
+    if (start_token_len == 0 || end_token_len == 0)
+    	return;
+    while ((current_char = *string) != '\0') {
+        if (current_char == '\\' && !escaped) {
+            escaped = 1;
+            string++;
+            continue;
+        } else if (current_char == '\"' && !escaped) {
+            in_string = !in_string;
+        } else if (!in_string && strncmp(string, start_token, start_token_len) == 0) {
+			for(i = 0; i < start_token_len; i++) string[i] = ' ';
+        	string = string + start_token_len;
+            ptr = strstr(string, end_token);
+            if (!ptr) return;
+            for (i = 0; i < (ptr - string) + end_token_len; i++) string[i] = ' ';
+          	string = ptr + end_token_len - 1;
+        }
+        escaped = 0;
+        string++;
+    }
 }
 
 /* JSON Object */
@@ -312,7 +359,8 @@ static const char * get_processed_string(const char **string) {
                     unprocessed_ptr++;
                     if (!is_utf((const unsigned char*)unprocessed_ptr) ||
                         sscanf(unprocessed_ptr, "%4x", &utf_val) == EOF) {
-                        parson_free(output); return NULL;
+                            parson_free(output);
+                            return NULL;
                     }
                     if (utf_val < 0x80) {
                         current_char = utf_val;
@@ -490,22 +538,23 @@ static JSON_Value * parse_null_value(const char **string) {
 
 /* Parser API */
 JSON_Value * json_parse_file(const char *filename) {
-    FILE *fp = fopen(filename, "r");
-    size_t file_size;
-    char *file_contents;
-    JSON_Value *output_value;
-    if (!fp) { return NULL; }
-    fseek(fp, 0L, SEEK_END);
-    file_size = ftell(fp);
-    rewind(fp);
-    file_contents = (char*)parson_malloc(sizeof(char) * (file_size + 1));
-    if (!file_contents) { fclose(fp); return NULL; }
-    if (fread(file_contents, file_size, 1, fp) < 1) {
-        if (ferror(fp)) { fclose(fp); return NULL; }
+    char *file_contents = read_file(filename);
+    JSON_Value *output_value = NULL;
+    if (!file_contents) {
+        return NULL;
     }
-    fclose(fp);
-    file_contents[file_size] = '\0';
     output_value = json_parse_string(file_contents);
+    parson_free(file_contents);
+    return output_value;
+}
+
+JSON_Value * json_parse_file_with_comments(const char *filename) {
+    char *file_contents = read_file(filename);
+    JSON_Value *output_value = NULL;
+    if (!file_contents) {
+        return NULL;
+    }
+    output_value = json_parse_string_with_comments(file_contents);
     parson_free(file_contents);
     return output_value;
 }
@@ -515,7 +564,30 @@ JSON_Value * json_parse_string(const char *string) {
     return parse_value((const char**)&string, 0);
 }
 
+JSON_Value * json_parse_string_with_comments(const char *string) {
+    JSON_Value *result = NULL;
+    char *string_mutable_copy = NULL, *string_mutable_copy_ptr = NULL;
+    string_mutable_copy = parson_strndup(string, strlen(string));
+    if (!string_mutable_copy) {
+        return NULL;
+    }
+    remove_comments(string_mutable_copy, "/*", "*/");
+    remove_comments(string_mutable_copy, "//", "\n");
+    puts(string_mutable_copy);
+    string_mutable_copy_ptr = string_mutable_copy;
+    skip_whitespaces(&string_mutable_copy_ptr);
+    if (*string_mutable_copy_ptr != '{' && *string_mutable_copy_ptr != '[') {
+        parson_free(string_mutable_copy);
+        return NULL;
+    }
+    result = parse_value((const char**)&string_mutable_copy_ptr, 0);
+    parson_free(string_mutable_copy);
+    return result;
+}
+
+
 /* JSON Object API */
+
 JSON_Value * json_object_get_value(const JSON_Object *object, const char *name) {
     return json_object_nget_value(object, name, strlen(name));
 }

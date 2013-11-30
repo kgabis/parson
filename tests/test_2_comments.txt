@@ -1,0 +1,34 @@
+/* 
+ *Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor 
+ *ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud 
+ *dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. 
+*/
+// Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor 
+{ /* lorem ipsum */
+	"string" : "lorem ipsum", // lorem ipsum 
+	"utf string" : "\u006corem\u0020ipsum", // lorem ipsum //
+   "utf-8 string": "あいうえお", // /* lorem ipsum */
+	"positive one" : 1, 
+	"negative one" : -1,
+	"pi" : 3.14,
+	"hard to parse number" : -3.14e-4,
+	"boolean true" : true,
+	"boolean false" : false,
+	"null" : null,
+	"string array" : ["lorem",/*in array*/"ipsum"],
+	"x^2 array" : [0, 1, 4, 9, 16, 25, 36, 49, 64, 81, 100],
+/*	"x^2 array" : [0, 1, 4, 9, 16, 25, 36, 49, 64, 81, 100],
+*/	"object_empty" : { }, 
+	"/*" : null,
+	"object" : { "nested string" : "str",
+				 "nested true" : /* lorem ipsum */ true, 
+				 "nested false" : false,
+				 "nested null" : null, // lorem ipsum
+				 "nested number" : 123,
+				 "nested array" : ["lorem", "ipsum"] },
+	"*/" : null,
+	"/**/" : "comment",
+	"//" : "comment"
+}
+/**/
+//
