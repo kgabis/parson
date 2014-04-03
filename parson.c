@@ -619,7 +619,10 @@ JSON_Value * json_parse_file_with_comments(const char *filename) {
 }
 
 JSON_Value * json_parse_string(const char *string) {
-    if (!string || (*string != '{' && *string != '['))
+    if (!string)
+        return NULL;
+    skip_whitespaces(&string);
+    if (*string != '{' && *string != '[')
         return NULL;
     return parse_value((const char**)&string, 0);
 }
