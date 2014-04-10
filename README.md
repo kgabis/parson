@@ -2,6 +2,7 @@
 Parson is a lighweight [json](http://json.org) parser and reader written in C.  
 
 ##Features
+* Full JSON support
 * Lightweight (only 2 files)
 * Simple API
 * Addressing json values with dot notation (similiar to C structs or objects in most OO languages, e.g. "objectA.objectB.value")

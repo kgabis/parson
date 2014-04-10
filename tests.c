@@ -1,6 +1,6 @@
 /*
  Parson ( http://kgabis.github.com/parson/ )
- Copyright (c) 2013 Krzysztof Gabis
+ Copyright (c) 2012 - 2014 Krzysztof Gabis
  
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated documentation files (the "Software"), to deal
@@ -36,7 +36,7 @@
 void test_suite_1(void);
 void test_suite_2(JSON_Value *value);
 void test_suite_2_no_comments(void);
-void test_suite_2_with_commnets(void);
+void test_suite_2_with_comments(void);
 void test_suite_3(void);
 
 char *read_file(const char *filename);
@@ -50,7 +50,7 @@ int main() {
     /* print_commits_info("torvalds", "linux"); */
     test_suite_1();
     test_suite_2_no_comments();
-    test_suite_2_with_commnets();
+    test_suite_2_with_comments();
     test_suite_3();
     printf("Tests failed: %d\n", tests_failed);
     printf("Tests passed: %d\n", tests_passed);
@@ -87,6 +87,7 @@ void test_suite_2(JSON_Value *root_value) {
     TEST(STREQ(json_object_get_string(root_object, "string"), "lorem ipsum"));
     TEST(STREQ(json_object_get_string(root_object, "utf string"), "lorem ipsum"));
     TEST(STREQ(json_object_get_string(root_object, "utf-8 string"), "あいうえお"));
+    TEST(STREQ(json_object_get_string(root_object, "surrogate string"), "lorem𝄞ipsum𝍧lorem"));
     TEST(json_object_get_number(root_object, "positive one") == 1.0);
     TEST(json_object_get_number(root_object, "negative one") == -1.0);
     TEST(json_object_get_number(root_object, "hard to parse number") == -0.000314);
@@ -145,7 +146,7 @@ void test_suite_2_no_comments(void) {
     json_value_free(root_value);
 }
 
-void test_suite_2_with_commnets(void) {
+void test_suite_2_with_comments(void) {
     const char *filename = "tests/test_2_comments.txt";
     JSON_Value *root_value = NULL;
     printf("Testing %s:\n", filename);
@@ -199,6 +200,7 @@ void test_suite_3(void) {
     TEST(json_parse_string("[-07]") == NULL);
     TEST(json_parse_string("[-007]") == NULL);
     TEST(json_parse_string("[-07.0]") == NULL);
+    TEST(json_parse_string("[\"\\uDF67\\uD834\"]") == NULL); /* wrong order surrogate pair */
 }
 
 void print_commits_info(const char *username, const char *repo) {
