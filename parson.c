@@ -437,7 +437,12 @@ static const char * get_processed_string(const char **string) {
         if (*unprocessed_ptr == '\\') {
             unprocessed_ptr++;
             switch (*unprocessed_ptr) {
-                case '\"': case '\\': case '/': break;
+                case '\"': case '\\': case '/':
+                  if ('/' == *(unprocessed_ptr)) {
+                    *processed_ptr = '/';
+                    *(processed_ptr+1) = '/';
+                  }
+                  break;
                 case 'b': *processed_ptr = '\b'; break;
                 case 'f': *processed_ptr = '\f'; break;
                 case 'n': *processed_ptr = '\n'; break;

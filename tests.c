@@ -38,6 +38,7 @@ void test_suite_2(JSON_Value *value);
 void test_suite_2_no_comments(void);
 void test_suite_2_with_comments(void);
 void test_suite_3(void);
+void test_with_encoded_url(void);
 
 char *read_file(const char *filename);
 void print_commits_info(const char *username, const char *repo);
@@ -52,6 +53,7 @@ int main() {
     test_suite_2_no_comments();
     test_suite_2_with_comments();
     test_suite_3();
+    test_with_encoded_url();
     printf("Tests failed: %d\n", tests_failed);
     printf("Tests passed: %d\n", tests_passed);
     return 0;
@@ -201,6 +203,14 @@ void test_suite_3(void) {
     TEST(json_parse_string("[-007]") == NULL);
     TEST(json_parse_string("[-07.0]") == NULL);
     TEST(json_parse_string("[\"\\uDF67\\uD834\"]") == NULL); /* wrong order surrogate pair */
+}
+
+void test_with_encoded_url(void) {
+  JSON_Object *root;
+  JSON_Value *val;
+  TEST((val = json_parse_file("tests/test_url_encoded.txt")) != NULL);
+  root = json_value_get_object(val);
+  TEST(STREQ(json_object_get_string(root, "url"), "https://www.example.com/search?q=12345"));
 }
 
 void print_commits_info(const char *username, const char *repo) {
