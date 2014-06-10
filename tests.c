@@ -135,6 +135,8 @@ void test_suite_2(JSON_Value *root_value) {
     
     TEST(STREQ(json_object_get_string(root_object, "/**/"), "comment"));
     TEST(STREQ(json_object_get_string(root_object, "//"), "comment"));
+    TEST(STREQ(json_object_get_string(root_object, "url"), "https://www.example.com/search?q=12345"));
+    TEST(STREQ(json_object_get_string(root_object, "escaped chars"), "\" \\ /"));
 }
 
 void test_suite_2_no_comments(void) {

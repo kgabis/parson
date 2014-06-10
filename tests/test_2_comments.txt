@@ -29,7 +29,9 @@
 				 "nested array" : ["lorem", "ipsum"] },
 	"*/" : null,
 	"/**/" : "comment",
-	"//" : "comment"
+	"//" : "comment",
+	"url" : "https:\/\/www.example.com\/search?q=12345",
+	"escaped chars" : "\" \\ \/"
 }
 /**/
 //
