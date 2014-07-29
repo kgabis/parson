@@ -1,5 +1,6 @@
 ##About
 Parson is a lighweight [json](http://json.org) parser and reader written in C.  
+If you need serialization and json value building in code, use [parson-devel](https://github.com/kgabis/parson-devel), which has extended API, but may change in future.
 
 ##Features
 * Full JSON support
