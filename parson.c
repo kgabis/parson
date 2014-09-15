@@ -172,7 +172,7 @@ static char * read_fildes(const int fd) {
     }
 
     if (i < 1) {
-        free(file_contents);
+        parson_free(file_contents);
         file_contents = NULL;
     } else {
         if (try_realloc((void **)&file_contents, sizeof(char) * (i+1)) == ERROR)
