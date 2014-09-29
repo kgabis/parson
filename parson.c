@@ -810,3 +810,77 @@ void json_value_free(JSON_Value *value) {
     }
     parson_free(value);
 }
+
+void json_to_string(const JSON_Value *value, char *str, int *pos) {
+    switch(value->type) {
+    case JSONNull: {
+        strcpy(str+*pos, "null");
+        *pos += 4;
+        break;
+    }
+    case JSONString: {
+        str[*pos]= '"'; *pos += 1 ;
+        int n = strlen(value->value.string);
+        strncpy(str+*pos, value->value.string, n);
+        *pos += n;
+        str[*pos]= '"'; *pos += 1 ;
+        break;
+    }
+    case JSONNumber: {
+        char buf[128] = {0};
+        sprintf(buf, "%f", value->value.number);
+        int n = strlen(buf);
+        if (strchr(buf, '.')) {
+            while (--n>1) if(buf[n] != '0' && buf[n] != '.') ;
+        }
+        strncpy(str+*pos, buf, n);
+        *pos += n;
+        break;
+    }
+    case JSONObject: {
+        int i;
+        JSON_Object *jobj = value->value.object;
+        str[*pos]= '{'; *pos += 1 ;
+        for (i=0; i<jobj->count; i++) {
+            str[*pos] = '"'; *pos += 1;
+            int len = strlen(jobj->names[i]);
+            strncpy(str+*pos, jobj->names[i], len);
+            *pos += len;
+            str[*pos]= '"'; *pos += 1;
+            str[*pos] = ':'; *pos += 1;
+            json_to_string(jobj->values[i], str, pos);
+            if (i < jobj->count-1) {
+                str[*pos] = ','; *pos += 1;
+            }
+        }
+        str[*pos] = '}'; *pos += 1;
+        break;
+    }
+    case JSONArray: {
+        int i;
+        JSON_Array *jarray = value->value.array;
+        str[*pos] = '['; *pos += 1;
+        for (i=0; i<jarray->count; i++) {
+            json_to_string(jarray->items[i], str, pos);
+            if (i < jarray->count-1) {
+                str[*pos] = ','; *pos += 1;
+            }
+        }
+        str[*pos] = ']'; *pos += 1;
+        break;
+    }
+    case JSONBoolean: {
+        if (value->value.boolean) {
+            strncpy(str+*pos, "true", 4);
+            *pos += 4;
+        }else {
+            strncpy(str+*pos, "false", 5);
+            *pos += 5;
+        }
+        break;
+    }
+    default:{
+        break;
+    }
+    }
+}
