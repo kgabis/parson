@@ -45,8 +45,9 @@ typedef enum json_value_type {
     JSONArray   = 5,
     JSONBoolean = 6
 } JSON_Value_Type;
-
-   
+    
+void json_to_string(const JSON_Value *value, char *str, int *pos);
+    
 /* Parses first JSON value in a file, returns NULL in case of error */
 JSON_Value  * json_parse_file(const char *filename);
 
