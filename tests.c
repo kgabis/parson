@@ -20,6 +20,9 @@
  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  THE SOFTWARE.
 */
+#ifdef _MSC_VER
+#define _CRT_SECURE_NO_WARNINGS
+#endif
 
 #include "parson.h"
 
@@ -30,53 +33,68 @@
 #define TEST(A) printf("%-72s-",#A);              \
                 if(A){puts(" OK");tests_passed++;} \
                 else{puts(" FAIL");tests_failed++;}
-#define STREQ(A, B) (A && B ? strcmp(A, B) == 0 : 0)
+#define STREQ(A, B) ((A) && (B) ? strcmp((A), (B)) == 0 : 0)
 
-
-void test_suite_1(void);
-void test_suite_2(JSON_Value *value);
+void test_suite_1(void); /* Test 3 files from json.org + serialization*/
+void test_suite_2(JSON_Value *value); /* Test correctness of parsed values */
 void test_suite_2_no_comments(void);
 void test_suite_2_with_comments(void);
-void test_suite_3(void);
+void test_suite_3(void); /* Test incorrect values */
+void test_suite_4(void); /* Test deep copy funtion */
+void test_suite_5(void); /* Test building json values from scratch */
+void test_suite_6(void); /* Test value comparing verification */
+void test_suite_7(void); /* Test schema validation */
+void test_suite_8(void); /* Test serialization to file */
 
-char *read_file(const char *filename);
 void print_commits_info(const char *username, const char *repo);
+void persistence_example(void);
+void serialization_example(void);
 
 static int tests_passed;
 static int tests_failed;
 
 int main() {
-    /* Example function from readme file:       */
+    /* Example functions from readme file:      */
     /* print_commits_info("torvalds", "linux"); */
+    /* serialization_example(); */
+    /* persistence_example(); */
     test_suite_1();
     test_suite_2_no_comments();
     test_suite_2_with_comments();
     test_suite_3();
+    test_suite_4();
+    test_suite_5();
+    test_suite_6();
+    test_suite_7();
+    test_suite_8();
     printf("Tests failed: %d\n", tests_failed);
     printf("Tests passed: %d\n", tests_passed);
     return 0;
 }
 
-/* 3 test files from json.org */
 void test_suite_1(void) {
     JSON_Value *val;
     TEST((val = json_parse_file("tests/test_1_1.txt")) != NULL);
+    TEST(json_value_equals(json_parse_string(json_serialize_to_string(val)), val));
     if (val) { json_value_free(val); }
     TEST((val = json_parse_file("tests/test_1_2.txt")) != NULL);
+    TEST(json_value_equals(json_parse_string(json_serialize_to_string(val)), val));
     if (val) { json_value_free(val); }
     TEST((val = json_parse_file("tests/test_1_3.txt")) != NULL);
+    TEST(json_value_equals(json_parse_string(json_serialize_to_string(val)), val));
     if (val) { json_value_free(val); }
     
     TEST((val = json_parse_file_with_comments("tests/test_1_1.txt")) != NULL);
+    TEST(json_value_equals(json_parse_string(json_serialize_to_string(val)), val));
     if (val) { json_value_free(val); }
     TEST((val = json_parse_file_with_comments("tests/test_1_2.txt")) != NULL);
+    TEST(json_value_equals(json_parse_string(json_serialize_to_string(val)), val));
     if (val) { json_value_free(val); }
     TEST((val = json_parse_file_with_comments("tests/test_1_3.txt")) != NULL);
+    TEST(json_value_equals(json_parse_string(json_serialize_to_string(val)), val));
     if (val) { json_value_free(val); }
-
 }
 
-/* Testing correctness of parsed values */
 void test_suite_2(JSON_Value *root_value) {
     JSON_Object *root_object;
     JSON_Array *array;
@@ -125,11 +143,11 @@ void test_suite_2(JSON_Value *root_value) {
     TEST(json_object_dotget_value(root_object, "") == NULL);
     
     array = json_object_dotget_array(root_object, "object.nested array");
+    TEST(array != NULL);
+    TEST(json_array_get_count(array) > 1);
     if (array != NULL && json_array_get_count(array) > 1) {
         TEST(STREQ(json_array_get_string(array, 0), "lorem"));
         TEST(STREQ(json_array_get_string(array, 1), "ipsum"));
-    } else {
-        tests_failed++;
     }
     TEST(json_object_dotget_boolean(root_object, "nested true"));
     
@@ -142,22 +160,21 @@ void test_suite_2(JSON_Value *root_value) {
 void test_suite_2_no_comments(void) {
     const char *filename = "tests/test_2.txt";
     JSON_Value *root_value = NULL;
-    printf("Testing %s:\n", filename);
     root_value = json_parse_file(filename);
     test_suite_2(root_value);
+    TEST(json_value_equals(root_value, json_parse_string(json_serialize_to_string(root_value))));
     json_value_free(root_value);
 }
 
 void test_suite_2_with_comments(void) {
     const char *filename = "tests/test_2_comments.txt";
     JSON_Value *root_value = NULL;
-    printf("Testing %s:\n", filename);
     root_value = json_parse_file_with_comments(filename);
     test_suite_2(root_value);
+    TEST(json_value_equals(root_value, json_parse_string(json_serialize_to_string(root_value))));
     json_value_free(root_value);
 }
 
-/* Testing values, on which parsing should fail */
 void test_suite_3(void) {
     char nested_20x[] = "[[[[[[[[[[[[[[[[[[[[\"hi\"]]]]]]]]]]]]]]]]]]]]";
     puts("Testing invalid strings:");
@@ -205,6 +222,80 @@ void test_suite_3(void) {
     TEST(json_parse_string("[\"\\uDF67\\uD834\"]") == NULL); /* wrong order surrogate pair */
 }
 
+void test_suite_4() {
+    const char *filename = "tests/test_2.txt";
+    JSON_Value *a = NULL, *a_copy = NULL;
+    printf("Testing %s:\n", filename);
+    a = json_parse_file(filename);
+    TEST(json_value_equals(a, a)); /* test equality test */
+    a_copy = json_value_deep_copy(a);
+    TEST(a_copy != NULL);
+    TEST(json_value_equals(a, a_copy));
+}
+
+void test_suite_5(void) {
+    JSON_Value *val_from_file = json_parse_file("tests/test_5.txt");
+    
+    JSON_Value *val = json_value_init_object();
+    JSON_Object *obj = json_value_get_object(val);
+    TEST(json_object_set_string(obj, "first", "John") == JSONSuccess);
+    TEST(json_object_set_string(obj, "last", "Doe") == JSONSuccess);
+    TEST(json_object_set_number(obj, "age", 25) == JSONSuccess);
+    TEST(json_object_set_boolean(obj, "registered", 1) == JSONSuccess);
+    TEST(json_object_set_value(obj, "interests", json_value_init_array()) == JSONSuccess);
+    TEST(json_array_append_string(json_object_get_array(obj, "interests"), "Writing") == JSONSuccess);
+    TEST(json_array_append_string(json_object_get_array(obj, "interests"), "Mountain Biking") == JSONSuccess);
+    TEST(json_array_replace_string(json_object_get_array(obj, "interests"), 0, "Reading") == JSONSuccess);
+    TEST(json_object_dotset_string(obj, "favorites.color", "blue") == JSONSuccess);
+    TEST(json_object_dotset_string(obj, "favorites.sport", "running") == JSONSuccess);
+    TEST(json_object_dotset_string(obj, "favorites.fruit", "apple") == JSONSuccess);
+    TEST(json_object_dotremove(obj, "favorites.fruit") == JSONSuccess);
+    TEST(json_object_set_string(obj, "utf string", "\\u006corem\\u0020ipsum") == JSONSuccess);
+    TEST(json_object_set_string(obj, "utf-8 string", "あいうえお") == JSONSuccess);
+    TEST(json_object_set_string(obj, "surrogate string", "lorem\\uD834\\uDD1Eipsum\\uD834\\uDF67lorem") == JSONSuccess);
+    TEST(json_value_equals(val_from_file, val));
+}
+
+void test_suite_6(void) {
+    const char *filename = "tests/test_2.txt";
+    JSON_Value *a = NULL;
+    JSON_Value *b = NULL;
+    a = json_parse_file(filename);
+    b = json_parse_file(filename);
+    TEST(json_value_equals(a, b));
+    json_object_set_string(json_object(a), "string", "eki");
+    TEST(!json_value_equals(a, b));
+    a = json_value_deep_copy(b);
+    TEST(json_value_equals(a, b));
+    json_array_append_number(json_object_get_array(json_object(b), "string array"), 1337);
+    TEST(!json_value_equals(a, b));
+}
+
+void test_suite_7(void) {
+    JSON_Value *val_from_file = json_parse_file("tests/test_5.txt");
+    JSON_Value *schema = json_value_init_object();
+    JSON_Object *schema_obj = json_value_get_object(schema);
+    json_object_set_string(schema_obj, "first", "");
+    json_object_set_string(schema_obj, "last", "");
+    json_object_set_number(schema_obj, "age", 0);
+    json_object_set_null(schema_obj, "favorites");
+    TEST(json_validate(schema, val_from_file) == JSONSuccess);
+    json_object_set_string(schema_obj, "age", "");
+    TEST(json_validate(schema, val_from_file) == JSONFailure);
+}
+
+void test_suite_8(void) {
+    const char *filename = "tests/test_2.txt";
+    const char *temp_filename = "tests/test_2_serialized.txt";
+    JSON_Value *a = NULL;
+    JSON_Value *b = NULL;
+    a = json_parse_file(filename);
+    TEST(json_serialize_to_file(a, temp_filename) == JSONSuccess);
+    b = json_parse_file(temp_filename);
+    TEST(json_value_equals(a, b));
+    remove(temp_filename);
+}
+
 void print_commits_info(const char *username, const char *repo) {
     JSON_Value *root_value;
     JSON_Array *commits;
@@ -243,4 +334,37 @@ void print_commits_info(const char *username, const char *repo) {
     /* cleanup code */
     json_value_free(root_value);
     system(cleanup_command);
+}
+
+void persistence_example(void) {
+    JSON_Value *schema = json_parse_string("{\"name\":\"\"}");
+    JSON_Value *user_data = json_parse_file("user_data.json");
+    char buf[256];
+    const char *name = NULL;
+    if (!user_data || json_validate(schema, user_data) == JSONSuccess) {
+        puts("Enter your name:");
+        scanf("%s", buf);
+        user_data = json_value_init_object();
+        json_object_set_string(json_object(user_data), "name", buf);
+        json_serialize_to_file(user_data, "user_data.json");
+    }
+    name = json_object_get_string(json_object(user_data), "name");
+    printf("Hello, %s.", name);
+    json_value_free(schema);
+    json_value_free(user_data);
+    return;
+}
+
+void serialization_example(void) {
+    JSON_Value *root_value = json_value_init_object();
+    JSON_Object *root_object = json_value_get_object(root_value);
+    char *serialized_string = NULL;
+    json_object_set_string(root_object, "name", "John Smith");
+    json_object_set_number(root_object, "age", 25);
+    json_object_dotset_string(root_object, "address.city", "Cupertino");
+    json_object_dotset_value(root_object, "contact.emails",
+                             json_parse_string("[\"email@example.com\", \"email2@example.com\"]"));
+    serialized_string = json_serialize_to_string(root_value);
+    puts(serialized_string);
+    json_free_serialized_string(serialized_string);
 }
