@@ -1,51 +1,54 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
   <head>
-    <meta charset='utf-8'>
+    <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <link href='https://fonts.googleapis.com/css?family=Chivo:900' rel='stylesheet' type='text/css'>
-    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen" />
-    <link rel="stylesheet" type="text/css" href="stylesheets/pygment_trac.css" media="screen" />
-    <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print" />
+    <title>parson by kgabis</title>
+
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
+    <script src="javascripts/scale.fix.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
     <!--[if lt IE 9]>
     <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
-    <title>parson by kgabis</title>
   </head>
-
   <body>
-    <div id="container">
-      <div class="inner">
+    <div class="wrapper">
+      <header>
+        <h1 class="header">parson</h1>
+        <p class="header">Lightweight json library written in C.</p>
 
-        <header>
-          <h1>parson</h1>
-          <h2>Lightweight json parser and reader written in C.</h2>
-        </header>
+        <ul>
+          <li class="download"><a class="buttons" href="https://github.com/kgabis/parson/zipball/master">Download ZIP</a></li>
+          <li class="download"><a class="buttons" href="https://github.com/kgabis/parson/tarball/master">Download TAR</a></li>
+          <li><a class="buttons github" href="https://github.com/kgabis/parson">View On GitHub</a></li>
+        </ul>
 
-        <section id="downloads" class="clearfix">
-          <a href="https://github.com/kgabis/parson/zipball/master" id="download-zip" class="button"><span>Download .zip</span></a>
-          <a href="https://github.com/kgabis/parson/tarball/master" id="download-tar-gz" class="button"><span>Download .tar.gz</span></a>
-          <a href="https://github.com/kgabis/parson" id="view-on-github" class="button"><span>View on GitHub</span></a>
-        </section>
+        <p class="header">This project is maintained by <a class="header name" href="https://github.com/kgabis">kgabis</a></p>
 
-        <hr>
 
-        <section id="main_content">
-          <h2>About</h2>
+      </header>
+      <section>
+        <h2>
+<a name="about" class="anchor" href="#about"><span class="octicon octicon-link"></span></a>About</h2>
 
-<p>Parson is a lighweight <a href="http://json.org">json</a> parser and reader written in C.  </p>
+<p>Parson is a lighweight <a href="http://json.org">json</a> library written in C.</p>
 
-<h2>Features</h2>
+<h2>
+<a name="features" class="anchor" href="#features"><span class="octicon octicon-link"></span></a>Features</h2>
 
 <ul>
+<li>Full JSON support</li>
 <li>Lightweight (only 2 files)</li>
 <li>Simple API</li>
 <li>Addressing json values with dot notation (similiar to C structs or objects in most OO languages, e.g. "objectA.objectB.value")</li>
 <li>C89 compatible</li>
 <li>Test suites</li>
-</ul><h2>Installation</h2>
+</ul><h2>
+<a name="installation" class="anchor" href="#installation"><span class="octicon octicon-link"></span></a>Installation</h2>
 
-<p>Run the following code:</p>
+<p>Run:</p>
 
 <pre><code>git clone https://github.com/kgabis/parson.git
 </code></pre>
@@ -54,11 +57,15 @@
 
 <p>Run <code>make test</code> to compile and run tests.</p>
 
-<h2>Example</h2>
+<h2>
+<a name="examples" class="anchor" href="#examples"><span class="octicon octicon-link"></span></a>Examples</h2>
 
-<p>Here is a function, which prints basic commit info (date, sha and author) from a github repository.  It's also included in tests.c file, you can just uncomment and run it.</p>
+<h3>
+<a name="parsing-json" class="anchor" href="#parsing-json"><span class="octicon octicon-link"></span></a>Parsing JSON</h3>
 
-<div class="highlight"><pre><span class="kt">void</span> <span class="nf">print_commits_info</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">username</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">repo</span><span class="p">)</span> <span class="p">{</span>
+<p>Here is a function, which prints basic commit info (date, sha and author) from a github repository.  </p>
+
+<div class="highlight highlight-c"><pre><span class="kt">void</span> <span class="nf">print_commits_info</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">username</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">repo</span><span class="p">)</span> <span class="p">{</span>
     <span class="n">JSON_Value</span> <span class="o">*</span><span class="n">root_value</span><span class="p">;</span>
     <span class="n">JSON_Array</span> <span class="o">*</span><span class="n">commits</span><span class="p">;</span>
     <span class="n">JSON_Object</span> <span class="o">*</span><span class="n">commit</span><span class="p">;</span>
@@ -112,17 +119,88 @@
 ...
 </code></pre>
 
-<h2>License</h2>
+<h3>
+<a name="persistence" class="anchor" href="#persistence"><span class="octicon octicon-link"></span></a>Persistence</h3>
+
+<p>In this example I'm using parson to save user information to a file and then load it and validate later.</p>
+
+<div class="highlight highlight-c"><pre><span class="kt">void</span> <span class="nf">persistence_example</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">JSON_Value</span> <span class="o">*</span><span class="n">schema</span> <span class="o">=</span> <span class="n">json_parse_string</span><span class="p">(</span><span class="s">"{</span><span class="se">\"</span><span class="s">name</span><span class="se">\"</span><span class="s">:</span><span class="se">\"\"</span><span class="s">}"</span><span class="p">);</span>
+    <span class="n">JSON_Value</span> <span class="o">*</span><span class="n">user_data</span> <span class="o">=</span> <span class="n">json_parse_file</span><span class="p">(</span><span class="s">"user_data.json"</span><span class="p">);</span>
+    <span class="kt">char</span> <span class="n">buf</span><span class="p">[</span><span class="mi">256</span><span class="p">];</span>
+    <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">name</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">user_data</span> <span class="o">||</span> <span class="o">!</span><span class="n">json_validate</span><span class="p">(</span><span class="n">schema</span><span class="p">,</span> <span class="n">user_data</span><span class="p">)</span> <span class="o">==</span> <span class="n">JSONSuccess</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">puts</span><span class="p">(</span><span class="s">"Enter your name:"</span><span class="p">);</span>
+        <span class="n">scanf</span><span class="p">(</span><span class="s">"%s"</span><span class="p">,</span> <span class="n">buf</span><span class="p">);</span>
+        <span class="n">user_data</span> <span class="o">=</span> <span class="n">json_value_init_object</span><span class="p">();</span>
+        <span class="n">json_object_set_string</span><span class="p">(</span><span class="n">json_object</span><span class="p">(</span><span class="n">user_data</span><span class="p">),</span> <span class="s">"name"</span><span class="p">,</span> <span class="n">buf</span><span class="p">);</span>
+        <span class="n">json_serialize_to_file</span><span class="p">(</span><span class="n">user_data</span><span class="p">,</span> <span class="s">"user_data.json"</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">json_object_get_string</span><span class="p">(</span><span class="n">json_object</span><span class="p">(</span><span class="n">user_data</span><span class="p">),</span> <span class="s">"name"</span><span class="p">);</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">"Hello, %s."</span><span class="p">,</span> <span class="n">name</span><span class="p">);</span>
+    <span class="n">json_value_free</span><span class="p">(</span><span class="n">schema</span><span class="p">);</span>
+    <span class="n">json_value_free</span><span class="p">(</span><span class="n">user_data</span><span class="p">);</span>
+    <span class="k">return</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+
+<h3>
+<a name="serialization" class="anchor" href="#serialization"><span class="octicon octicon-link"></span></a>Serialization</h3>
+
+<p>Creating JSON values is very simple thanks to the dot notation. 
+Object hierarchy is automatically created when addressing specific fields. 
+In the following example I create a simple JSON value containing basic information about a person.</p>
+
+<div class="highlight highlight-c"><pre><span class="kt">void</span> <span class="nf">serialization_example</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">JSON_Value</span> <span class="o">*</span><span class="n">root_value</span> <span class="o">=</span> <span class="n">json_value_init_object</span><span class="p">();</span>
+    <span class="n">JSON_Object</span> <span class="o">*</span><span class="n">root_object</span> <span class="o">=</span> <span class="n">json_value_get_object</span><span class="p">(</span><span class="n">root_value</span><span class="p">);</span>
+    <span class="kt">char</span> <span class="o">*</span><span class="n">serialized_string</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+    <span class="n">json_object_set_string</span><span class="p">(</span><span class="n">root_object</span><span class="p">,</span> <span class="s">"name"</span><span class="p">,</span> <span class="s">"John Smith"</span><span class="p">);</span>
+    <span class="n">json_object_set_number</span><span class="p">(</span><span class="n">root_object</span><span class="p">,</span> <span class="s">"age"</span><span class="p">,</span> <span class="mi">25</span><span class="p">);</span>
+    <span class="n">json_object_dotset_string</span><span class="p">(</span><span class="n">root_object</span><span class="p">,</span> <span class="s">"address.city"</span><span class="p">,</span> <span class="s">"Cupertino"</span><span class="p">);</span>
+    <span class="n">json_object_dotset_value</span><span class="p">(</span><span class="n">root_object</span><span class="p">,</span> <span class="s">"contact.emails"</span><span class="p">,</span> <span class="n">json_parse_string</span><span class="p">(</span><span class="s">"[</span><span class="se">\"</span><span class="s">email@example.com</span><span class="se">\"</span><span class="s">,</span><span class="se">\"</span><span class="s">email2@example.com</span><span class="se">\"</span><span class="s">]"</span><span class="p">));</span>
+    <span class="n">serialized_string</span> <span class="o">=</span> <span class="n">json_serialize_to_string</span><span class="p">(</span><span class="n">root_value</span><span class="p">);</span>
+    <span class="n">puts</span><span class="p">(</span><span class="n">serialized_string</span><span class="p">);</span>
+    <span class="n">json_free_serialized_string</span><span class="p">(</span><span class="n">serialized_string</span><span class="p">);</span>
+<span class="p">}</span>
+
+</pre></div>
+
+<p>Created value (after formatting outside parson):</p>
+
+<pre><code>{  
+   "name":"John Smith",
+   "age":25,
+   "address":{  
+      "city":"Cupertino"
+   },
+   "contact":{  
+      "emails":[  
+         "email@example.com",
+         "email2@example.com"
+      ]
+   }
+}
+</code></pre>
+
+<h2>
+<a name="contributing" class="anchor" href="#contributing"><span class="octicon octicon-link"></span></a>Contributing</h2>
+
+<p>I will always merge <em>working</em> bug fixes. However, if you want to add something to the API, 
+I <em>won't</em> merge it without prior discussion.
+Remember to follow parson's code style and write appropriate tests.</p>
+
+<h2>
+<a name="license" class="anchor" href="#license"><span class="octicon octicon-link"></span></a>License</h2>
 
 <p><a href="http://opensource.org/licenses/mit-license.php">The MIT License (MIT)</a></p>
-        </section>
-
-        <footer>
-          parson is maintained by <a href="https://github.com/kgabis">kgabis</a><br>
-          This page was generated by <a href="http://pages.github.com">GitHub Pages</a>. Tactile theme by <a href="http://twitter.com/jasonlong">Jason Long</a>.
-        </footer>
-
-                  <script type="text/javascript">
+      </section>
+      <footer>
+        <p><small>Hosted on <a href="http://pages.github.com">GitHub Pages</a> using the Dinky theme</small></p>
+      </footer>
+    </div>
+    <!--[if !IE]><script>fixScale(document);</script><![endif]-->
+		          <script type="text/javascript">
             var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
             document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
           </script>
@@ -133,7 +211,5 @@
             } catch(err) {}
           </script>
 
-      </div>
-    </div>
   </body>
 </html>
