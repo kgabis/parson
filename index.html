@@ -162,6 +162,7 @@ In the following example I create a simple JSON value containing basic informati
     <span class="n">serialized_string</span> <span class="o">=</span> <span class="n">json_serialize_to_string</span><span class="p">(</span><span class="n">root_value</span><span class="p">);</span>
     <span class="n">puts</span><span class="p">(</span><span class="n">serialized_string</span><span class="p">);</span>
     <span class="n">json_free_serialized_string</span><span class="p">(</span><span class="n">serialized_string</span><span class="p">);</span>
+    <span class="n">json_value_free</span><span class="p">(</span><span class="n">root_value</span><span class="p">);</span>
 <span class="p">}</span>
 
 </pre></div>
