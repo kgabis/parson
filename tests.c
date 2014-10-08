@@ -367,4 +367,5 @@ void serialization_example(void) {
     serialized_string = json_serialize_to_string(root_value);
     puts(serialized_string);
     json_free_serialized_string(serialized_string);
+    json_value_free(root_value);
 }
