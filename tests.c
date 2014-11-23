@@ -29,11 +29,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 #define TEST(A) printf("%-72s-",#A);              \
                 if(A){puts(" OK");tests_passed++;} \
                 else{puts(" FAIL");tests_failed++;}
 #define STREQ(A, B) ((A) && (B) ? strcmp((A), (B)) == 0 : 0)
+#define EPSILON 0.000001
 
 void test_suite_1(void); /* Test 3 files from json.org + serialization*/
 void test_suite_2(JSON_Value *value); /* Test correctness of parsed values */
@@ -108,7 +110,7 @@ void test_suite_2(JSON_Value *root_value) {
     TEST(STREQ(json_object_get_string(root_object, "surrogate string"), "lorem𝄞ipsum𝍧lorem"));
     TEST(json_object_get_number(root_object, "positive one") == 1.0);
     TEST(json_object_get_number(root_object, "negative one") == -1.0);
-    TEST(json_object_get_number(root_object, "hard to parse number") == -0.000314);
+    TEST(fabs(json_object_get_number(root_object, "hard to parse number") - (-0.000314)) < EPSILON);
     TEST(json_object_get_boolean(root_object, "boolean true") == 1);
     TEST(json_object_get_boolean(root_object, "boolean false") == 0);
     TEST(json_value_get_type(json_object_get_value(root_object, "null")) == JSONNull);
