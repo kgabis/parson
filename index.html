@@ -31,12 +31,12 @@
       </header>
       <section>
         <h2>
-<a name="about" class="anchor" href="#about"><span class="octicon octicon-link"></span></a>About</h2>
+<a id="about" class="anchor" href="#about" aria-hidden="true"><span class="octicon octicon-link"></span></a>About</h2>
 
 <p>Parson is a lighweight <a href="http://json.org">json</a> library written in C.</p>
 
 <h2>
-<a name="features" class="anchor" href="#features"><span class="octicon octicon-link"></span></a>Features</h2>
+<a id="features" class="anchor" href="#features" aria-hidden="true"><span class="octicon octicon-link"></span></a>Features</h2>
 
 <ul>
 <li>Full JSON support</li>
@@ -45,8 +45,10 @@
 <li>Addressing json values with dot notation (similiar to C structs or objects in most OO languages, e.g. "objectA.objectB.value")</li>
 <li>C89 compatible</li>
 <li>Test suites</li>
-</ul><h2>
-<a name="installation" class="anchor" href="#installation"><span class="octicon octicon-link"></span></a>Installation</h2>
+</ul>
+
+<h2>
+<a id="installation" class="anchor" href="#installation" aria-hidden="true"><span class="octicon octicon-link"></span></a>Installation</h2>
 
 <p>Run:</p>
 
@@ -58,53 +60,52 @@
 <p>Run <code>make test</code> to compile and run tests.</p>
 
 <h2>
-<a name="examples" class="anchor" href="#examples"><span class="octicon octicon-link"></span></a>Examples</h2>
+<a id="examples" class="anchor" href="#examples" aria-hidden="true"><span class="octicon octicon-link"></span></a>Examples</h2>
 
 <h3>
-<a name="parsing-json" class="anchor" href="#parsing-json"><span class="octicon octicon-link"></span></a>Parsing JSON</h3>
+<a id="parsing-json" class="anchor" href="#parsing-json" aria-hidden="true"><span class="octicon octicon-link"></span></a>Parsing JSON</h3>
 
 <p>Here is a function, which prints basic commit info (date, sha and author) from a github repository.  </p>
 
-<div class="highlight highlight-c"><pre><span class="kt">void</span> <span class="nf">print_commits_info</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">username</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">repo</span><span class="p">)</span> <span class="p">{</span>
-    <span class="n">JSON_Value</span> <span class="o">*</span><span class="n">root_value</span><span class="p">;</span>
-    <span class="n">JSON_Array</span> <span class="o">*</span><span class="n">commits</span><span class="p">;</span>
-    <span class="n">JSON_Object</span> <span class="o">*</span><span class="n">commit</span><span class="p">;</span>
-    <span class="kt">size_t</span> <span class="n">i</span><span class="p">;</span>
+<div class="highlight highlight-c"><pre><span class="pl-st">void</span> <span class="pl-en">print_commits_info</span>(<span class="pl-s">const</span> <span class="pl-st">char</span> *username, <span class="pl-s">const</span> <span class="pl-st">char</span> *repo) {
+    JSON_Value *root_value;
+    JSON_Array *commits;
+    JSON_Object *commit;
+    <span class="pl-s3">size_t</span> i;
 
-    <span class="kt">char</span> <span class="n">curl_command</span><span class="p">[</span><span class="mi">512</span><span class="p">];</span>
-    <span class="kt">char</span> <span class="n">cleanup_command</span><span class="p">[</span><span class="mi">256</span><span class="p">];</span>
-    <span class="kt">char</span> <span class="n">output_filename</span><span class="p">[]</span> <span class="o">=</span> <span class="s">"commits.json"</span><span class="p">;</span>
+    <span class="pl-st">char</span> curl_command[<span class="pl-c1">512</span>];
+    <span class="pl-st">char</span> cleanup_command[<span class="pl-c1">256</span>];
+    <span class="pl-st">char</span> output_filename[] = <span class="pl-s1"><span class="pl-pds">"</span>commits.json<span class="pl-pds">"</span></span>;
 
-    <span class="cm">/* it ain't pretty, but it's not a libcurl tutorial */</span>
-    <span class="n">sprintf</span><span class="p">(</span><span class="n">curl_command</span><span class="p">,</span> 
-        <span class="s">"curl -s </span><span class="se">\"</span><span class="s">https://api.github.com/repos/%s/%s/commits</span><span class="se">\"</span><span class="s"> &gt; %s"</span><span class="p">,</span>
-        <span class="n">username</span><span class="p">,</span> <span class="n">repo</span><span class="p">,</span> <span class="n">output_filename</span><span class="p">);</span>
-    <span class="n">sprintf</span><span class="p">(</span><span class="n">cleanup_command</span><span class="p">,</span> <span class="s">"rm -f %s"</span><span class="p">,</span> <span class="n">output_filename</span><span class="p">);</span>
-    <span class="n">system</span><span class="p">(</span><span class="n">curl_command</span><span class="p">);</span>
+    <span class="pl-c">/* it ain't pretty, but it's not a libcurl tutorial */</span>
+    <span class="pl-s3">sprintf</span>(curl_command, 
+        <span class="pl-s1"><span class="pl-pds">"</span>curl -s <span class="pl-cce">\"</span>https://api.github.com/repos/<span class="pl-c1">%s</span>/<span class="pl-c1">%s</span>/commits<span class="pl-cce">\"</span> &gt; <span class="pl-c1">%s</span><span class="pl-pds">"</span></span>,
+        username, repo, output_filename);
+    <span class="pl-s3">sprintf</span>(cleanup_command, <span class="pl-s1"><span class="pl-pds">"</span>rm -f <span class="pl-c1">%s</span><span class="pl-pds">"</span></span>, output_filename);
+    <span class="pl-s3">system</span>(curl_command);
 
-    <span class="cm">/* parsing json and validating output */</span>
-    <span class="n">root_value</span> <span class="o">=</span> <span class="n">json_parse_file</span><span class="p">(</span><span class="n">output_filename</span><span class="p">);</span>
-    <span class="k">if</span> <span class="p">(</span><span class="n">json_value_get_type</span><span class="p">(</span><span class="n">root_value</span><span class="p">)</span> <span class="o">!=</span> <span class="n">JSONArray</span><span class="p">)</span> <span class="p">{</span>
-        <span class="n">system</span><span class="p">(</span><span class="n">cleanup_command</span><span class="p">);</span>
-        <span class="k">return</span><span class="p">;</span>
-    <span class="p">}</span>
+    <span class="pl-c">/* parsing json and validating output */</span>
+    root_value = <span class="pl-s3">json_parse_file</span>(output_filename);
+    <span class="pl-k">if</span> (<span class="pl-s3">json_value_get_type</span>(root_value) != JSONArray) {
+        <span class="pl-s3">system</span>(cleanup_command);
+        <span class="pl-k">return</span>;
+    }
 
-    <span class="cm">/* getting array from root value and printing commit info */</span>
-    <span class="n">commits</span> <span class="o">=</span> <span class="n">json_value_get_array</span><span class="p">(</span><span class="n">root_value</span><span class="p">);</span>
-    <span class="n">printf</span><span class="p">(</span><span class="s">"%-10.10s %-10.10s %s</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="s">"Date"</span><span class="p">,</span> <span class="s">"SHA"</span><span class="p">,</span> <span class="s">"Author"</span><span class="p">);</span>
-    <span class="k">for</span> <span class="p">(</span><span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">json_array_get_count</span><span class="p">(</span><span class="n">commits</span><span class="p">);</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
-        <span class="n">commit</span> <span class="o">=</span> <span class="n">json_array_get_object</span><span class="p">(</span><span class="n">commits</span><span class="p">,</span> <span class="n">i</span><span class="p">);</span>
-        <span class="n">printf</span><span class="p">(</span><span class="s">"%.10s %.10s %s</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span>
-               <span class="n">json_object_dotget_string</span><span class="p">(</span><span class="n">commit</span><span class="p">,</span> <span class="s">"commit.author.date"</span><span class="p">),</span>
-               <span class="n">json_object_get_string</span><span class="p">(</span><span class="n">commit</span><span class="p">,</span> <span class="s">"sha"</span><span class="p">),</span>
-               <span class="n">json_object_dotget_string</span><span class="p">(</span><span class="n">commit</span><span class="p">,</span> <span class="s">"commit.author.name"</span><span class="p">));</span>
-    <span class="p">}</span>
+    <span class="pl-c">/* getting array from root value and printing commit info */</span>
+    commits = <span class="pl-s3">json_value_get_array</span>(root_value);
+    <span class="pl-s3">printf</span>(<span class="pl-s1"><span class="pl-pds">"</span><span class="pl-c1">%-10.10s</span> <span class="pl-c1">%-10.10s</span> <span class="pl-c1">%s</span><span class="pl-cce">\n</span><span class="pl-pds">"</span></span>, <span class="pl-s1"><span class="pl-pds">"</span>Date<span class="pl-pds">"</span></span>, <span class="pl-s1"><span class="pl-pds">"</span>SHA<span class="pl-pds">"</span></span>, <span class="pl-s1"><span class="pl-pds">"</span>Author<span class="pl-pds">"</span></span>);
+    <span class="pl-k">for</span> (i = <span class="pl-c1">0</span>; i &lt; <span class="pl-s3">json_array_get_count</span>(commits); i++) {
+        commit = <span class="pl-s3">json_array_get_object</span>(commits, i);
+        <span class="pl-s3">printf</span>(<span class="pl-s1"><span class="pl-pds">"</span><span class="pl-c1">%.10s</span> <span class="pl-c1">%.10s</span> <span class="pl-c1">%s</span><span class="pl-cce">\n</span><span class="pl-pds">"</span></span>,
+               <span class="pl-s3">json_object_dotget_string</span>(commit, <span class="pl-s1"><span class="pl-pds">"</span>commit.author.date<span class="pl-pds">"</span></span>),
+               <span class="pl-s3">json_object_get_string</span>(commit, <span class="pl-s1"><span class="pl-pds">"</span>sha<span class="pl-pds">"</span></span>),
+               <span class="pl-s3">json_object_dotget_string</span>(commit, <span class="pl-s1"><span class="pl-pds">"</span>commit.author.name<span class="pl-pds">"</span></span>));
+    }
 
-    <span class="cm">/* cleanup code */</span>
-    <span class="n">json_value_free</span><span class="p">(</span><span class="n">root_value</span><span class="p">);</span>
-    <span class="n">system</span><span class="p">(</span><span class="n">cleanup_command</span><span class="p">);</span>
-<span class="p">}</span>
-
+    <span class="pl-c">/* cleanup code */</span>
+    <span class="pl-s3">json_value_free</span>(root_value);
+    <span class="pl-s3">system</span>(cleanup_command);
+}
 </pre></div>
 
 <p>Calling <code>print_commits_info("torvalds", "linux");</code> prints:  </p>
@@ -120,51 +121,49 @@
 </code></pre>
 
 <h3>
-<a name="persistence" class="anchor" href="#persistence"><span class="octicon octicon-link"></span></a>Persistence</h3>
+<a id="persistence" class="anchor" href="#persistence" aria-hidden="true"><span class="octicon octicon-link"></span></a>Persistence</h3>
 
 <p>In this example I'm using parson to save user information to a file and then load it and validate later.</p>
 
-<div class="highlight highlight-c"><pre><span class="kt">void</span> <span class="nf">persistence_example</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
-    <span class="n">JSON_Value</span> <span class="o">*</span><span class="n">schema</span> <span class="o">=</span> <span class="n">json_parse_string</span><span class="p">(</span><span class="s">"{</span><span class="se">\"</span><span class="s">name</span><span class="se">\"</span><span class="s">:</span><span class="se">\"\"</span><span class="s">}"</span><span class="p">);</span>
-    <span class="n">JSON_Value</span> <span class="o">*</span><span class="n">user_data</span> <span class="o">=</span> <span class="n">json_parse_file</span><span class="p">(</span><span class="s">"user_data.json"</span><span class="p">);</span>
-    <span class="kt">char</span> <span class="n">buf</span><span class="p">[</span><span class="mi">256</span><span class="p">];</span>
-    <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">name</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
-    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">user_data</span> <span class="o">||</span> <span class="o">!</span><span class="n">json_validate</span><span class="p">(</span><span class="n">schema</span><span class="p">,</span> <span class="n">user_data</span><span class="p">)</span> <span class="o">==</span> <span class="n">JSONSuccess</span><span class="p">)</span> <span class="p">{</span>
-        <span class="n">puts</span><span class="p">(</span><span class="s">"Enter your name:"</span><span class="p">);</span>
-        <span class="n">scanf</span><span class="p">(</span><span class="s">"%s"</span><span class="p">,</span> <span class="n">buf</span><span class="p">);</span>
-        <span class="n">user_data</span> <span class="o">=</span> <span class="n">json_value_init_object</span><span class="p">();</span>
-        <span class="n">json_object_set_string</span><span class="p">(</span><span class="n">json_object</span><span class="p">(</span><span class="n">user_data</span><span class="p">),</span> <span class="s">"name"</span><span class="p">,</span> <span class="n">buf</span><span class="p">);</span>
-        <span class="n">json_serialize_to_file</span><span class="p">(</span><span class="n">user_data</span><span class="p">,</span> <span class="s">"user_data.json"</span><span class="p">);</span>
-    <span class="p">}</span>
-    <span class="n">name</span> <span class="o">=</span> <span class="n">json_object_get_string</span><span class="p">(</span><span class="n">json_object</span><span class="p">(</span><span class="n">user_data</span><span class="p">),</span> <span class="s">"name"</span><span class="p">);</span>
-    <span class="n">printf</span><span class="p">(</span><span class="s">"Hello, %s."</span><span class="p">,</span> <span class="n">name</span><span class="p">);</span>
-    <span class="n">json_value_free</span><span class="p">(</span><span class="n">schema</span><span class="p">);</span>
-    <span class="n">json_value_free</span><span class="p">(</span><span class="n">user_data</span><span class="p">);</span>
-    <span class="k">return</span><span class="p">;</span>
-<span class="p">}</span>
-</pre></div>
+<div class="highlight highlight-c"><pre><span class="pl-st">void</span> <span class="pl-en">persistence_example</span>(<span class="pl-st">void</span>) {
+    JSON_Value *schema = <span class="pl-s3">json_parse_string</span>(<span class="pl-s1"><span class="pl-pds">"</span>{<span class="pl-cce">\"</span>name<span class="pl-cce">\"</span>:<span class="pl-cce">\"\"</span>}<span class="pl-pds">"</span></span>);
+    JSON_Value *user_data = <span class="pl-s3">json_parse_file</span>(<span class="pl-s1"><span class="pl-pds">"</span>user_data.json<span class="pl-pds">"</span></span>);
+    <span class="pl-st">char</span> buf[<span class="pl-c1">256</span>];
+    <span class="pl-s">const</span> <span class="pl-st">char</span> *name = <span class="pl-c1">NULL</span>;
+    <span class="pl-k">if</span> (user_data == <span class="pl-c1">NULL</span> || <span class="pl-s3">json_validate</span>(schema, user_data) != JSONSuccess) {
+        <span class="pl-s3">puts</span>(<span class="pl-s1"><span class="pl-pds">"</span>Enter your name:<span class="pl-pds">"</span></span>);
+        <span class="pl-s3">scanf</span>(<span class="pl-s1"><span class="pl-pds">"</span><span class="pl-c1">%s</span><span class="pl-pds">"</span></span>, buf);
+        user_data = <span class="pl-s3">json_value_init_object</span>();
+        <span class="pl-s3">json_object_set_string</span>(<span class="pl-s3">json_object</span>(user_data), <span class="pl-s1"><span class="pl-pds">"</span>name<span class="pl-pds">"</span></span>, buf);
+        <span class="pl-s3">json_serialize_to_file</span>(user_data, <span class="pl-s1"><span class="pl-pds">"</span>user_data.json<span class="pl-pds">"</span></span>);
+    }
+    name = <span class="pl-s3">json_object_get_string</span>(<span class="pl-s3">json_object</span>(user_data), <span class="pl-s1"><span class="pl-pds">"</span>name<span class="pl-pds">"</span></span>);
+    <span class="pl-s3">printf</span>(<span class="pl-s1"><span class="pl-pds">"</span>Hello, <span class="pl-c1">%s</span>.<span class="pl-pds">"</span></span>, name);
+    <span class="pl-s3">json_value_free</span>(schema);
+    <span class="pl-s3">json_value_free</span>(user_data);
+    <span class="pl-k">return</span>;
+}</pre></div>
 
 <h3>
-<a name="serialization" class="anchor" href="#serialization"><span class="octicon octicon-link"></span></a>Serialization</h3>
+<a id="serialization" class="anchor" href="#serialization" aria-hidden="true"><span class="octicon octicon-link"></span></a>Serialization</h3>
 
 <p>Creating JSON values is very simple thanks to the dot notation. 
 Object hierarchy is automatically created when addressing specific fields. 
 In the following example I create a simple JSON value containing basic information about a person.</p>
 
-<div class="highlight highlight-c"><pre><span class="kt">void</span> <span class="nf">serialization_example</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
-    <span class="n">JSON_Value</span> <span class="o">*</span><span class="n">root_value</span> <span class="o">=</span> <span class="n">json_value_init_object</span><span class="p">();</span>
-    <span class="n">JSON_Object</span> <span class="o">*</span><span class="n">root_object</span> <span class="o">=</span> <span class="n">json_value_get_object</span><span class="p">(</span><span class="n">root_value</span><span class="p">);</span>
-    <span class="kt">char</span> <span class="o">*</span><span class="n">serialized_string</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
-    <span class="n">json_object_set_string</span><span class="p">(</span><span class="n">root_object</span><span class="p">,</span> <span class="s">"name"</span><span class="p">,</span> <span class="s">"John Smith"</span><span class="p">);</span>
-    <span class="n">json_object_set_number</span><span class="p">(</span><span class="n">root_object</span><span class="p">,</span> <span class="s">"age"</span><span class="p">,</span> <span class="mi">25</span><span class="p">);</span>
-    <span class="n">json_object_dotset_string</span><span class="p">(</span><span class="n">root_object</span><span class="p">,</span> <span class="s">"address.city"</span><span class="p">,</span> <span class="s">"Cupertino"</span><span class="p">);</span>
-    <span class="n">json_object_dotset_value</span><span class="p">(</span><span class="n">root_object</span><span class="p">,</span> <span class="s">"contact.emails"</span><span class="p">,</span> <span class="n">json_parse_string</span><span class="p">(</span><span class="s">"[</span><span class="se">\"</span><span class="s">email@example.com</span><span class="se">\"</span><span class="s">,</span><span class="se">\"</span><span class="s">email2@example.com</span><span class="se">\"</span><span class="s">]"</span><span class="p">));</span>
-    <span class="n">serialized_string</span> <span class="o">=</span> <span class="n">json_serialize_to_string</span><span class="p">(</span><span class="n">root_value</span><span class="p">);</span>
-    <span class="n">puts</span><span class="p">(</span><span class="n">serialized_string</span><span class="p">);</span>
-    <span class="n">json_free_serialized_string</span><span class="p">(</span><span class="n">serialized_string</span><span class="p">);</span>
-    <span class="n">json_value_free</span><span class="p">(</span><span class="n">root_value</span><span class="p">);</span>
-<span class="p">}</span>
-
+<div class="highlight highlight-c"><pre><span class="pl-st">void</span> <span class="pl-en">serialization_example</span>(<span class="pl-st">void</span>) {
+    JSON_Value *root_value = <span class="pl-s3">json_value_init_object</span>();
+    JSON_Object *root_object = <span class="pl-s3">json_value_get_object</span>(root_value);
+    <span class="pl-st">char</span> *serialized_string = <span class="pl-c1">NULL</span>;
+    <span class="pl-s3">json_object_set_string</span>(root_object, <span class="pl-s1"><span class="pl-pds">"</span>name<span class="pl-pds">"</span></span>, <span class="pl-s1"><span class="pl-pds">"</span>John Smith<span class="pl-pds">"</span></span>);
+    <span class="pl-s3">json_object_set_number</span>(root_object, <span class="pl-s1"><span class="pl-pds">"</span>age<span class="pl-pds">"</span></span>, <span class="pl-c1">25</span>);
+    <span class="pl-s3">json_object_dotset_string</span>(root_object, <span class="pl-s1"><span class="pl-pds">"</span>address.city<span class="pl-pds">"</span></span>, <span class="pl-s1"><span class="pl-pds">"</span>Cupertino<span class="pl-pds">"</span></span>);
+    <span class="pl-s3">json_object_dotset_value</span>(root_object, <span class="pl-s1"><span class="pl-pds">"</span>contact.emails<span class="pl-pds">"</span></span>, <span class="pl-s3">json_parse_string</span>(<span class="pl-s1"><span class="pl-pds">"</span>[<span class="pl-cce">\"</span>email@example.com<span class="pl-cce">\"</span>,<span class="pl-cce">\"</span>email2@example.com<span class="pl-cce">\"</span>]<span class="pl-pds">"</span></span>));
+    serialized_string = <span class="pl-s3">json_serialize_to_string</span>(root_value);
+    <span class="pl-s3">puts</span>(serialized_string);
+    <span class="pl-s3">json_free_serialized_string</span>(serialized_string);
+    <span class="pl-s3">json_value_free</span>(root_value);
+}
 </pre></div>
 
 <p>Created value (after formatting outside parson):</p>
@@ -185,14 +184,14 @@ In the following example I create a simple JSON value containing basic informati
 </code></pre>
 
 <h2>
-<a name="contributing" class="anchor" href="#contributing"><span class="octicon octicon-link"></span></a>Contributing</h2>
+<a id="contributing" class="anchor" href="#contributing" aria-hidden="true"><span class="octicon octicon-link"></span></a>Contributing</h2>
 
 <p>I will always merge <em>working</em> bug fixes. However, if you want to add something to the API, 
 I <em>won't</em> merge it without prior discussion.
 Remember to follow parson's code style and write appropriate tests.</p>
 
 <h2>
-<a name="license" class="anchor" href="#license"><span class="octicon octicon-link"></span></a>License</h2>
+<a id="license" class="anchor" href="#license" aria-hidden="true"><span class="octicon octicon-link"></span></a>License</h2>
 
 <p><a href="http://opensource.org/licenses/mit-license.php">The MIT License (MIT)</a></p>
       </section>
