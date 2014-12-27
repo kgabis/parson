@@ -30,6 +30,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <stdarg.h>
 #include <math.h>
 
 #define STARTING_CAPACITY         15
@@ -78,10 +79,14 @@ struct json_array_t {
     size_t       capacity;
 };
 
+struct serializationContext;
+typedef int (*printf_ptr) (struct serializationContext *ctx, char const *str, ...);
+
 typedef struct serializationContext
 {
     FILE *file;
     int identation;
+    printf_ptr print_function;
 }SerContext;
 
 /* Various */
@@ -1471,7 +1476,7 @@ static void WriteIdentation(SerContext *ctx)
     int i;
     for (i = 0; i < ctx->identation; ++i)
     {
-        fprintf(ctx->file, "    ");
+        ctx->print_function(ctx, "    ");
     }
 }
 static void json_serialize_string_file(const char *string, SerContext *ctx) {
@@ -1509,7 +1514,7 @@ JSON_Status json_serialize_to_file_pretty_r(const JSON_Value *value, SerContext 
         case JSONArray:
             array = json_value_get_array(value);
             count = json_array_get_count(array);
-            fprintf(ctx->file, "[\n");
+            ctx->print_function(ctx, "[\n");
             ctx->identation++;
             for (i = 0; i < count; i++) {
                 temp_value = json_array_get_value(array, i);
@@ -1520,24 +1525,24 @@ JSON_Status json_serialize_to_file_pretty_r(const JSON_Value *value, SerContext 
                     return status;
                 }
                 if (i < (count - 1))
-                    fprintf(ctx->file, ",\n");
+                    ctx->print_function(ctx, ",\n");
                 else
-                    fprintf(ctx->file, "\n");
+                    ctx->print_function(ctx, "\n");
             }
             WriteIdentation(ctx);
-            fprintf(ctx->file,  "]");
+            ctx->print_function(ctx, "]");
             ctx->identation--;
             return JSONSuccess;
         case JSONObject:
             object = json_value_get_object(value);
             count  = json_object_get_count(object);
-            fprintf(ctx->file, "{\n");
+            ctx->print_function(ctx, "{\n");
             ctx->identation++;
             for (i = 0; i < count; i++) {
                 key = json_object_get_name(object, i);
                 WriteIdentation(ctx);
                 json_serialize_string_file(key, ctx);
-                fprintf(ctx->file, " : ");
+                ctx->print_function(ctx, " : ");
                 temp_value = json_object_get_value(object, key);
                 status = json_serialize_to_file_pretty_r(temp_value, ctx);
                 if (status != JSONSuccess)
@@ -1547,13 +1552,13 @@ JSON_Status json_serialize_to_file_pretty_r(const JSON_Value *value, SerContext 
 
                 if (i < (count - 1))
                 {
-                    fprintf(ctx->file, ",\n");
+                    ctx->print_function(ctx, ",\n");
                 }
             }
             ctx->identation--;
-            fprintf(ctx->file, "\n");
+            ctx->print_function(ctx, "\n");
             WriteIdentation(ctx);
-            fprintf(ctx->file, "}");
+            ctx->print_function(ctx, "}");
 
             return JSONSuccess;
         case JSONString:
@@ -1562,21 +1567,21 @@ JSON_Status json_serialize_to_file_pretty_r(const JSON_Value *value, SerContext 
             return JSONSuccess;
         case JSONBoolean:
             if (json_value_get_boolean(value)) {
-                fprintf(ctx->file, "true");
+                ctx->print_function(ctx, "true");
             } else {
-                fprintf(ctx->file, "false");
+                ctx->print_function(ctx, "false");
             }
             return JSONSuccess;
         case JSONNumber:
             num = json_value_get_number(value);
             if (num == ((double)(int)num)) { /*  check if num is integer */
-                fprintf(ctx->file, "%d", (int)num);
+                ctx->print_function(ctx, "%d", (int)num);
             } else {
-                fprintf(ctx->file, DOUBLE_SERIALIZATION_FORMAT, num);
+                ctx->print_function(ctx, DOUBLE_SERIALIZATION_FORMAT, num);
             }
             return JSONSuccess;
         case JSONNull:
-            fprintf(ctx->file, "null");
+            ctx->print_function(ctx, "null");
             return JSONSuccess;
         case JSONError:
             return JSONError;
@@ -1585,12 +1590,27 @@ JSON_Status json_serialize_to_file_pretty_r(const JSON_Value *value, SerContext 
     }
 }
 
+int print_to_file(SerContext *ctx, const char *fmt, ...)
+{
+    FILE *file;
+    va_list args;
+    int ret;
+    
+    file =  ctx->file;
+    va_start(args, fmt);
+    ret = vfprintf(file, fmt, args);
+    va_end(args);
+    
+    return ret;
+}
+
 JSON_Status json_serialize_to_file_pretty(const JSON_Value *value, const char *filename)
 {
     JSON_Status return_code = JSONSuccess;
     SerContext ctx;
 
     ctx.identation = 0;
+    ctx.print_function = print_to_file;
     ctx.file = fopen (filename, "w");
     if (ctx.file != NULL)
     {
