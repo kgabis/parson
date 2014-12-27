@@ -87,6 +87,7 @@ typedef struct serializationContext
     FILE *file;
     int identation;
     printf_ptr print_function;
+    size_t character_count;
 }SerContext;
 
 /* Various */
@@ -1590,7 +1591,7 @@ JSON_Status json_serialize_r(const JSON_Value *value, SerContext *ctx)
     }
 }
 
-int print_to_file(SerContext *ctx, const char *fmt, ...)
+int print_to_file_strategy(SerContext *ctx, const char *fmt, ...)
 {
     FILE *file;
     va_list args;
@@ -1610,7 +1611,7 @@ JSON_Status json_serialize_to_file_pretty(const JSON_Value *value, const char *f
     SerContext ctx;
 
     ctx.identation = 0;
-    ctx.print_function = print_to_file;
+    ctx.print_function = print_to_file_strategy;
     ctx.file = fopen (filename, "w");
     if (ctx.file != NULL)
     {
@@ -1623,3 +1624,32 @@ JSON_Status json_serialize_to_file_pretty(const JSON_Value *value, const char *f
     return return_code;
 }
 
+
+int count_characters_strategy(SerContext *ctx, const char *fmt, ...)
+{
+    char buffer[64];
+    va_list args;
+    int ret;
+    size_t len;
+
+    va_start(args, fmt);
+    ret = vsprintf(buffer, fmt, args);
+    va_end(args);
+
+    len = strlen(buffer);
+    ctx->character_count += len;
+
+    return ret;
+}
+
+size_t json_count_characters(const JSON_Value *value)
+{
+    JSON_Status return_code = JSONSuccess;
+    SerContext ctx;
+
+    ctx.identation = 0;
+    ctx.character_count = 0;
+    ctx.print_function = count_characters_strategy;
+    return_code = json_serialize_r(value, &ctx);
+    return ctx.character_count;
+}

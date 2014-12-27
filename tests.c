@@ -1,17 +1,17 @@
 /*
  Parson ( http://kgabis.github.com/parson/ )
  Copyright (c) 2012 - 2014 Krzysztof Gabis
- 
+
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated documentation files (the "Software"), to deal
  in the Software without restriction, including without limitation the rights
  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  copies of the Software, and to permit persons to whom the Software is
  furnished to do so, subject to the following conditions:
- 
+
  The above copyright notice and this permission notice shall be included in
  all copies or substantial portions of the Software.
- 
+
  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -52,6 +52,7 @@ void print_commits_info(const char *username, const char *repo);
 void persistence_example(void);
 void serialization_example(void);
 void test_pretty_serialization(void);
+void test_count_characters(void);
 
 static int tests_passed;
 static int tests_failed;
@@ -71,6 +72,7 @@ int main() {
     test_suite_7();
     test_suite_8();
     test_pretty_serialization();
+    test_count_characters();
     printf("Tests failed: %d\n", tests_failed);
     printf("Tests passed: %d\n", tests_passed);
     return 0;
@@ -87,7 +89,7 @@ void test_suite_1(void) {
     TEST((val = json_parse_file("tests/test_1_3.txt")) != NULL);
     TEST(json_value_equals(json_parse_string(json_serialize_to_string(val)), val));
     if (val) { json_value_free(val); }
-    
+
     TEST((val = json_parse_file_with_comments("tests/test_1_1.txt")) != NULL);
     TEST(json_value_equals(json_parse_string(json_serialize_to_string(val)), val));
     if (val) { json_value_free(val); }
@@ -116,7 +118,7 @@ void test_suite_2(JSON_Value *root_value) {
     TEST(json_object_get_boolean(root_object, "boolean true") == 1);
     TEST(json_object_get_boolean(root_object, "boolean false") == 0);
     TEST(json_value_get_type(json_object_get_value(root_object, "null")) == JSONNull);
-    
+
     array = json_object_get_array(root_object, "string array");
     if (array != NULL && json_array_get_count(array) > 1) {
         TEST(STREQ(json_array_get_string(array, 0), "lorem"));
@@ -124,7 +126,7 @@ void test_suite_2(JSON_Value *root_value) {
     } else {
         tests_failed++;
     }
-    
+
     array = json_object_get_array(root_object, "x^2 array");
     if (array != NULL) {
         for (i = 0; i < json_array_get_count(array); i++) {
@@ -133,19 +135,19 @@ void test_suite_2(JSON_Value *root_value) {
     } else {
         tests_failed++;
     }
-    
+
     TEST(json_object_get_array(root_object, "non existent array") == NULL);
     TEST(STREQ(json_object_dotget_string(root_object, "object.nested string"), "str"));
     TEST(json_object_dotget_boolean(root_object, "object.nested true") == 1);
     TEST(json_object_dotget_boolean(root_object, "object.nested false") == 0);
     TEST(json_object_dotget_value(root_object, "object.nested null") != NULL);
     TEST(json_object_dotget_number(root_object, "object.nested number") == 123);
-    
+
     TEST(json_object_dotget_value(root_object, "should.be.null") == NULL);
     TEST(json_object_dotget_value(root_object, "should.be.null.") == NULL);
     TEST(json_object_dotget_value(root_object, ".") == NULL);
     TEST(json_object_dotget_value(root_object, "") == NULL);
-    
+
     array = json_object_dotget_array(root_object, "object.nested array");
     TEST(array != NULL);
     TEST(json_array_get_count(array) > 1);
@@ -154,7 +156,7 @@ void test_suite_2(JSON_Value *root_value) {
         TEST(STREQ(json_array_get_string(array, 1), "ipsum"));
     }
     TEST(json_object_dotget_boolean(root_object, "nested true"));
-    
+
     TEST(STREQ(json_object_get_string(root_object, "/**/"), "comment"));
     TEST(STREQ(json_object_get_string(root_object, "//"), "comment"));
     TEST(STREQ(json_object_get_string(root_object, "url"), "https://www.example.com/search?q=12345"));
@@ -239,7 +241,7 @@ void test_suite_4() {
 
 void test_suite_5(void) {
     JSON_Value *val_from_file = json_parse_file("tests/test_5.txt");
-    
+
     JSON_Value *val = json_value_init_object();
     JSON_Object *obj = json_value_get_object(val);
     TEST(json_object_set_string(obj, "first", "John") == JSONSuccess);
@@ -305,25 +307,25 @@ void print_commits_info(const char *username, const char *repo) {
     JSON_Array *commits;
     JSON_Object *commit;
     size_t i;
-    
+
     char curl_command[512];
     char cleanup_command[256];
     char output_filename[] = "commits.json";
-    
+
     /* it ain't pretty, but it's not a libcurl tutorial */
-    sprintf(curl_command, 
+    sprintf(curl_command,
         "curl -s \"https://api.github.com/repos/%s/%s/commits\" > %s",
         username, repo, output_filename);
     sprintf(cleanup_command, "rm -f %s", output_filename);
     system(curl_command);
-    
+
     /* parsing json and validating output */
     root_value = json_parse_file(output_filename);
     if (json_value_get_type(root_value) != JSONArray) {
         system(cleanup_command);
         return;
     }
-    
+
     /* getting array from root value and printing commit info */
     commits = json_value_get_array(root_value);
     printf("%-10.10s %-10.10s %s\n", "Date", "SHA", "Author");
@@ -334,7 +336,7 @@ void print_commits_info(const char *username, const char *repo) {
                json_object_get_string(commit, "sha"),
                json_object_dotget_string(commit, "commit.author.name"));
     }
-    
+
     /* cleanup code */
     json_value_free(root_value);
     system(cleanup_command);
@@ -477,3 +479,15 @@ void test_pretty_serialization()
     TEST(file_equals("out.json", "tests/pretty.json"));
 }
 
+void test_count_characters(void)
+{
+    JSON_Value *rootValue;
+    size_t string_length;
+
+    rootValue = build_test_value();
+
+    string_length = json_count_characters(rootValue);
+    json_value_free(rootValue);
+
+    TEST(string_length == 1986);
+}
