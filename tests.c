@@ -499,12 +499,20 @@ void test_serialize_to_string(void)
     char *str;
     JSON_Value *rootValue;
     size_t string_length;
+    FILE *file;
 
     rootValue = build_test_value();
 
     str = json_serialize_to_string_pretty(rootValue);
     json_value_free(rootValue);
     string_length = strlen(str);
+
+    /* write to file out.json*/
+    file = fopen("out.json", "w");
+    fprintf(file, "%s", str);
+    fclose(file);
+    TEST(file_equals("out.json", "tests/pretty.json"));
+
     json_free_serialized_string(str);
     TEST(string_length == 1986);
 }
