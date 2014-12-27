@@ -78,6 +78,12 @@ struct json_array_t {
     size_t       capacity;
 };
 
+typedef struct serializationContext
+{
+    FILE *file;
+    int identation;
+}SerContext;
+
 /* Various */
 static char * read_file(const char *filename);
 static void   remove_comments(char *string, const char *start_token, const char *end_token);

@@ -54,12 +54,6 @@ enum json_result_t {
 };
 typedef int JSON_Status;
 
-typedef struct serializationContext
-{
-    FILE *file;
-    int identation;
-}SerContext;
-
 /* Parses first JSON value in a file, returns NULL in case of error */
 JSON_Value * json_parse_file(const char *filename);
 
