@@ -75,6 +75,7 @@ size_t json_count_characters(const JSON_Value *value);
 JSON_Status json_serialize_to_buffer(const JSON_Value *value, char *buf, size_t buf_size_in_bytes);
 JSON_Status json_serialize_to_file(const JSON_Value *value, const char *filename);
 char *      json_serialize_to_string(const JSON_Value *value);
+char *      json_serialize_to_string_pretty(const JSON_Value *value);
 void        json_free_serialized_string(char *string); /* frees string from json_serialize_to_string */
 
 /* Comparing */

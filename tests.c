@@ -53,6 +53,7 @@ void persistence_example(void);
 void serialization_example(void);
 void test_pretty_serialization(void);
 void test_count_characters(void);
+void test_serialize_to_string(void);
 
 static int tests_passed;
 static int tests_failed;
@@ -73,6 +74,7 @@ int main() {
     test_suite_8();
     test_pretty_serialization();
     test_count_characters();
+    test_serialize_to_string();
     printf("Tests failed: %d\n", tests_failed);
     printf("Tests passed: %d\n", tests_passed);
     return 0;
@@ -489,5 +491,20 @@ void test_count_characters(void)
     string_length = json_count_characters(rootValue);
     json_value_free(rootValue);
 
+    TEST(string_length == 1986);
+}
+
+void test_serialize_to_string(void)
+{
+    char *str;
+    JSON_Value *rootValue;
+    size_t string_length;
+
+    rootValue = build_test_value();
+
+    str = json_serialize_to_string_pretty(rootValue);
+    json_value_free(rootValue);
+    string_length = strlen(str);
+    json_free_serialized_string(str);
     TEST(string_length == 1986);
 }

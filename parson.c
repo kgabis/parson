@@ -88,6 +88,9 @@ typedef struct serializationContext
     int identation;
     printf_ptr print_function;
     size_t character_count;
+
+    char *buffer;
+    unsigned int buffer_offset;
 }SerContext;
 
 /* Various */
@@ -1480,6 +1483,7 @@ static void WriteIdentation(SerContext *ctx)
         ctx->print_function(ctx, "    ");
     }
 }
+
 static void json_serialize_string_file(const char *string, SerContext *ctx) {
     size_t i = 0, len = strlen(string);
     char c = '\0';
@@ -1628,6 +1632,7 @@ JSON_Status json_serialize_to_file_pretty(const JSON_Value *value, const char *f
 int count_characters_strategy(SerContext *ctx, const char *fmt, ...)
 {
     char buffer[64];
+
     va_list args;
     int ret;
     size_t len;
@@ -1644,12 +1649,43 @@ int count_characters_strategy(SerContext *ctx, const char *fmt, ...)
 
 size_t json_count_characters(const JSON_Value *value)
 {
-    JSON_Status return_code = JSONSuccess;
     SerContext ctx;
 
     ctx.identation = 0;
     ctx.character_count = 0;
     ctx.print_function = count_characters_strategy;
-    return_code = json_serialize_r(value, &ctx);
+    json_serialize_r(value, &ctx);
     return ctx.character_count;
+}
+
+int serialize_to_string_strategy(SerContext *ctx, const char *fmt, ...)
+{
+    char buffer[64];
+    va_list args;
+    int ret;
+
+    va_start(args, fmt);
+    ret = vsprintf(buffer, fmt, args);
+    va_end(args);
+
+    strcpy(ctx->buffer + ctx->buffer_offset, buffer);
+    ctx->buffer_offset += strlen(buffer);
+
+    return ret;
+}
+
+char *json_serialize_to_string_pretty(const JSON_Value *value)
+{
+    SerContext ctx;
+    size_t len;
+
+    len = json_count_characters(value);
+    ctx.identation = 0;
+    ctx.buffer = PARSON_MALLOC(len + 1);
+    ctx.buffer[len] = '\x00';
+    ctx.buffer_offset = 0;
+    ctx.print_function = serialize_to_string_strategy;
+
+    json_serialize_r(value, &ctx);
+    return ctx.buffer;
 }
