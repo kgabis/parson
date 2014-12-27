@@ -1533,9 +1533,16 @@ JSON_Status json_serialize_to_file_pretty_r(const JSON_Value *value, SerContext 
                 json_serialize_string_file(key, ctx);
                 fprintf(ctx->file, " : ");
                 temp_value = json_object_get_value(object, key);
-                json_serialize_to_file_pretty_r(temp_value, ctx);
+                status = json_serialize_to_file_pretty_r(temp_value, ctx);
+                if (status != JSONSuccess)
+                {
+                    return status;
+                }
+
                 if (i < (count - 1))
+                {
                     fprintf(ctx->file, ",\n");
+                }
             }
             ctx->identation--;
             fprintf(ctx->file, "\n");
@@ -1572,7 +1579,6 @@ JSON_Status json_serialize_to_file_pretty_r(const JSON_Value *value, SerContext 
     }
 }
 
-
 JSON_Status json_serialize_to_file_pretty(const JSON_Value *value, const char *filename)
 {
     JSON_Status return_code = JSONSuccess;
@@ -1582,7 +1588,7 @@ JSON_Status json_serialize_to_file_pretty(const JSON_Value *value, const char *f
     ctx.file = fopen (filename, "w");
     if (ctx.file != NULL)
     {
-        json_serialize_to_file_pretty_r(value, &ctx);
+        return_code = json_serialize_to_file_pretty_r(value, &ctx);
 
         if (fclose (ctx.file) == EOF) {
             return_code = JSONFailure;

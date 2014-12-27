@@ -51,6 +51,7 @@ void test_suite_8(void); /* Test serialization to file */
 void print_commits_info(const char *username, const char *repo);
 void persistence_example(void);
 void serialization_example(void);
+void test_pretty_serialization(void);
 
 static int tests_passed;
 static int tests_failed;
@@ -69,6 +70,7 @@ int main() {
     test_suite_6();
     test_suite_7();
     test_suite_8();
+    test_pretty_serialization();
     printf("Tests failed: %d\n", tests_failed);
     printf("Tests passed: %d\n", tests_passed);
     return 0;
@@ -371,3 +373,107 @@ void serialization_example(void) {
     json_free_serialized_string(serialized_string);
     json_value_free(root_value);
 }
+
+int file_equals(const char *file1, const char *file2)
+{
+    FILE * fp1;
+    FILE * fp2;
+    char ch1, ch2;
+    unsigned long offset = 0ul;
+
+    fp1 = fopen(file1, "rb");
+    if (fp1 == NULL)
+    {
+        return 0;
+    }
+
+    fp2 = fopen(file2, "rb");
+    if (fp2 == NULL)
+    {
+        fclose(fp1);
+        return 0;
+    }
+
+    while(!feof(fp1) && !feof(fp2))
+    {
+        ch1 = fgetc(fp1);
+        if (ferror(fp1))
+        {
+            return 0;
+        }
+
+        ch2 = fgetc(fp2);
+        if (ferror(fp2))
+        {
+            return 0;
+        }
+
+        if (ch1 != ch2)
+        {
+            return 0;
+            break;
+        }
+        offset++;
+    }
+
+    if (feof(fp1) && feof(fp2))
+    {
+        return 1;
+    }
+
+    return 0;
+}
+
+JSON_Value * build_test_value()
+{
+    JSON_Value *rootValue;
+    JSON_Object *root;
+
+    JSON_Value *innerValue;
+    JSON_Object *inner;
+
+    rootValue = json_value_init_object();
+    root = json_value_get_object(rootValue);
+    json_object_set_number(root, "val", 11.3);
+
+    innerValue = json_value_init_object();
+    inner = json_value_get_object(innerValue);
+    json_object_set_number(inner, "a", 1);
+    json_object_set_number(inner, "b", 1.2);
+    json_object_set_string(inner, "c", "two");
+    json_object_set_boolean(inner, "d", 1);
+    json_object_set_boolean(inner, "e", 0);
+
+    json_object_set_boolean(inner, "e", 0);
+    json_object_set_value(root, "inner", innerValue);
+
+    {
+        JSON_Value *arrayValue;
+        JSON_Array *array;
+        double val;
+
+        arrayValue = json_value_init_array();
+        array = json_value_get_array(arrayValue);
+        for (val = 0.0; val < 10; val += 0.1)
+        {
+            json_array_append_number(array, val);
+        }
+
+        json_object_set_value(root, "arr", arrayValue);
+    }
+
+    return rootValue;
+}
+
+void test_pretty_serialization()
+{
+    JSON_Value *rootValue;
+
+    rootValue = build_test_value();
+
+    json_serialize_to_file_pretty(rootValue, "out.json");
+    json_value_free(rootValue);
+
+    TEST(file_equals("out.json", "tests/pretty.json"));
+}
+
