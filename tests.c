@@ -108,8 +108,8 @@ void test_suite_2(JSON_Value *root_value) {
     root_object = json_value_get_object(root_value);
     TEST(STREQ(json_object_get_string(root_object, "string"), "lorem ipsum"));
     TEST(STREQ(json_object_get_string(root_object, "utf string"), "lorem ipsum"));
-    TEST(STREQ(json_object_get_string(root_object, "utf-8 string"), "あいうえお"));
-    TEST(STREQ(json_object_get_string(root_object, "surrogate string"), "lorem𝄞ipsum𝍧lorem"));
+    TEST(STREQ(json_object_get_string(root_object, "utf-8 string"), "\xe3\x81\x82\xe3\x81\x84\xe3\x81\x86\xe3\x81\x88\xe3\x81\x8a"));
+    TEST(STREQ(json_object_get_string(root_object, "surrogate string"), "lorem\xF0\x9d\x84\x9eipsum\xf0\x9d\x8d\xa7lorem"));
     TEST(json_object_get_number(root_object, "positive one") == 1.0);
     TEST(json_object_get_number(root_object, "negative one") == -1.0);
     TEST(fabs(json_object_get_number(root_object, "hard to parse number") - (-0.000314)) < EPSILON);
