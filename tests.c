@@ -283,6 +283,7 @@ void test_suite_7(void) {
     json_object_set_null(schema_obj, "favorites");
     TEST(json_validate(schema, val_from_file) == JSONSuccess);
     json_object_set_string(schema_obj, "age", "");
+    json_object_set_string(schema_obj, "windowspath", "c:\\foo\\bar");
     TEST(json_validate(schema, val_from_file) == JSONFailure);
 }
 
