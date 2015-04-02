@@ -47,6 +47,7 @@ void test_suite_5(void); /* Test building json values from scratch */
 void test_suite_6(void); /* Test value comparing verification */
 void test_suite_7(void); /* Test schema validation */
 void test_suite_8(void); /* Test serialization to file */
+void test_suite_9(void); /* Test serialization to string */
 
 void print_commits_info(const char *username, const char *repo);
 void persistence_example(void);
@@ -69,6 +70,7 @@ int main() {
     test_suite_6();
     test_suite_7();
     test_suite_8();
+    test_suite_9();
     printf("Tests failed: %d\n", tests_failed);
     printf("Tests passed: %d\n", tests_passed);
     return 0;
@@ -283,7 +285,6 @@ void test_suite_7(void) {
     json_object_set_null(schema_obj, "favorites");
     TEST(json_validate(schema, val_from_file) == JSONSuccess);
     json_object_set_string(schema_obj, "age", "");
-    json_object_set_string(schema_obj, "windowspath", "c:\\foo\\bar");
     TEST(json_validate(schema, val_from_file) == JSONFailure);
 }
 
@@ -297,6 +298,16 @@ void test_suite_8(void) {
     b = json_parse_file(temp_filename);
     TEST(json_value_equals(a, b));
     remove(temp_filename);
+}
+
+void test_suite_9(void) {
+    JSON_Value *val = json_value_init_object();
+    char *serialized_string = NULL;
+    JSON_Object *obj = json_value_get_object(val);
+    TEST(json_object_set_string(obj, "windowspath", "C:\\ProgramData") == JSONSuccess);
+    serialized_string = json_serialize_to_string(val);
+    json_free_serialized_string(serialized_string);
+    json_value_free(val);
 }
 
 void print_commits_info(const char *username, const char *repo) {
