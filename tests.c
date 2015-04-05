@@ -238,16 +238,28 @@ void test_suite_4() {
 void test_suite_5(void) {
     JSON_Value *val_from_file = json_parse_file("tests/test_5.txt");
     
-    JSON_Value *val = json_value_init_object();
-    JSON_Object *obj = json_value_get_object(val);
+    JSON_Value *val = NULL;
+    JSON_Object *obj = NULL;
+    JSON_Array *interests_arr = NULL;
+    
+    val = json_value_init_object();
+    TEST(val != NULL);
+    
+    obj = json_value_get_object(val);
+    TEST(obj != NULL);
+    
     TEST(json_object_set_string(obj, "first", "John") == JSONSuccess);
     TEST(json_object_set_string(obj, "last", "Doe") == JSONSuccess);
     TEST(json_object_set_number(obj, "age", 25) == JSONSuccess);
     TEST(json_object_set_boolean(obj, "registered", 1) == JSONSuccess);
+    
     TEST(json_object_set_value(obj, "interests", json_value_init_array()) == JSONSuccess);
-    TEST(json_array_append_string(json_object_get_array(obj, "interests"), "Writing") == JSONSuccess);
-    TEST(json_array_append_string(json_object_get_array(obj, "interests"), "Mountain Biking") == JSONSuccess);
-    TEST(json_array_replace_string(json_object_get_array(obj, "interests"), 0, "Reading") == JSONSuccess);
+    interests_arr = json_object_get_array(obj, "interests");
+    TEST(interests_arr != NULL);
+    TEST(json_array_append_string(interests_arr, "Writing") == JSONSuccess);
+    TEST(json_array_append_string(interests_arr, "Mountain Biking") == JSONSuccess);
+    TEST(json_array_replace_string(interests_arr, 0, "Reading") == JSONSuccess);
+    
     TEST(json_object_dotset_string(obj, "favorites.color", "blue") == JSONSuccess);
     TEST(json_object_dotset_string(obj, "favorites.sport", "running") == JSONSuccess);
     TEST(json_object_dotset_string(obj, "favorites.fruit", "apple") == JSONSuccess);
@@ -256,6 +268,27 @@ void test_suite_5(void) {
     TEST(json_object_set_string(obj, "utf-8 string", "あいうえお") == JSONSuccess);
     TEST(json_object_set_string(obj, "surrogate string", "lorem\\uD834\\uDD1Eipsum\\uD834\\uDF67lorem") == JSONSuccess);
     TEST(json_value_equals(val_from_file, val));
+    
+    TEST(json_object_set_string(obj, NULL, "") == JSONFailure);
+    TEST(json_object_set_string(obj, "last", NULL) == JSONFailure);
+    TEST(json_object_set_string(obj, NULL, NULL) == JSONFailure);
+    TEST(json_object_set_value(obj, NULL, NULL) == JSONFailure);
+    
+    TEST(json_object_dotset_string(obj, NULL, "") == JSONFailure);
+    TEST(json_object_dotset_string(obj, "favorites.color", NULL) == JSONFailure);
+    TEST(json_object_dotset_string(obj, NULL, NULL) == JSONFailure);
+    TEST(json_object_dotset_value(obj, NULL, NULL) == JSONFailure);
+    
+    TEST(json_array_append_string(NULL, "lorem") == JSONFailure);
+    TEST(json_array_append_value(interests_arr, NULL) == JSONFailure);
+    TEST(json_array_append_value(NULL, NULL) == JSONFailure);
+    
+    TEST(json_array_remove(NULL, 0) == JSONFailure);
+    TEST(json_array_replace_value(interests_arr, 0, NULL) == JSONFailure);
+    TEST(json_array_replace_string(NULL, 0, "lorem") == JSONFailure);
+    TEST(json_array_replace_string(interests_arr, 100, "not existing") == JSONFailure);
+    
+    TEST(json_array_append_string(json_object_get_array(obj, "interests"), NULL) == JSONFailure);
 }
 
 void test_suite_6(void) {
