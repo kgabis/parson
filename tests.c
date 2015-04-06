@@ -264,9 +264,10 @@ void test_suite_5(void) {
     TEST(json_object_dotset_string(obj, "favorites.sport", "running") == JSONSuccess);
     TEST(json_object_dotset_string(obj, "favorites.fruit", "apple") == JSONSuccess);
     TEST(json_object_dotremove(obj, "favorites.fruit") == JSONSuccess);
-    TEST(json_object_set_string(obj, "utf string", "\\u006corem\\u0020ipsum") == JSONSuccess);
+    TEST(json_object_set_string(obj, "utf string", "lorem ipsum") == JSONSuccess);
     TEST(json_object_set_string(obj, "utf-8 string", "あいうえお") == JSONSuccess);
-    TEST(json_object_set_string(obj, "surrogate string", "lorem\\uD834\\uDD1Eipsum\\uD834\\uDF67lorem") == JSONSuccess);
+    TEST(json_object_set_string(obj, "surrogate string", "lorem𝄞ipsum𝍧lorem") == JSONSuccess);
+    TEST(json_object_set_string(obj, "windows path", "C:\\Windows\\Path") == JSONSuccess);
     TEST(json_value_equals(val_from_file, val));
     
     TEST(json_object_set_string(obj, NULL, "") == JSONFailure);

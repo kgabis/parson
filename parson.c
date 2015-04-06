@@ -972,13 +972,13 @@ JSON_Value * json_value_init_array(void) {
 }
 
 JSON_Value * json_value_init_string(const char *string) {
-    char *processed_copy = NULL;
+    char *copy = NULL;
     if (string == NULL)
         return NULL;
-    processed_copy = process_string(string, strlen(string));
-    if (processed_copy == NULL)
+    copy = parson_strdup(string);
+    if (copy == NULL)
         return NULL;
-    return json_value_init_string_no_copy(processed_copy);
+    return json_value_init_string_no_copy(copy);
 }
 
 JSON_Value * json_value_init_number(double number) {
