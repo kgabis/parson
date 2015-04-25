@@ -437,7 +437,7 @@ static char* process_string(const char *input, size_t len) {
         input_ptr++;
     }
     *output_ptr = '\0';
-    if (try_realloc((void**)&output, strlen(output) + 1) == JSONFailure)
+    if (try_realloc((void**)&output, (size_t)(output_ptr-output) + 1) == JSONFailure) /* resize to new length */
         goto error;
     return output;
 error:
