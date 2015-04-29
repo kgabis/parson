@@ -979,12 +979,16 @@ JSON_Value * json_value_init_array(void) {
 
 JSON_Value * json_value_init_string(const char *string) {
     char *copy = NULL;
+    JSON_Value *value;
     if (string == NULL)
         return NULL;
     copy = parson_strdup(string);
     if (copy == NULL)
         return NULL;
-    return json_value_init_string_no_copy(copy);
+    value = json_value_init_string_no_copy(copy);
+    if (value == NULL)
+        PARSON_FREE(copy);
+    return value;
 }
 
 JSON_Value * json_value_init_number(double number) {
@@ -1071,7 +1075,10 @@ JSON_Value * json_value_deep_copy(const JSON_Value *value) {
             temp_string_copy = parson_strdup(temp_string);
             if (temp_string_copy == NULL)
                 return NULL;
-            return json_value_init_string_no_copy(temp_string_copy);
+            return_value = json_value_init_string_no_copy(temp_string_copy);
+            if (return_value == NULL)
+                PARSON_FREE(temp_string_copy);
+            return return_value;
         case JSONNull:
             return json_value_init_null();
         case JSONError:
