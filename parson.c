@@ -179,11 +179,17 @@ static size_t parson_strlen(const char *string) {
 static char * read_file(const char * filename) {
     FILE *fp = fopen(filename, "r");
     size_t file_size;
+    long pos;
     char *file_contents;
     if (!fp)
         return NULL;
     fseek(fp, 0L, SEEK_END);
-    file_size = ftell(fp);
+    pos = ftell(fp);
+    if (pos < 0) {
+        fclose(fp);
+        return NULL;
+    }
+    file_size = pos;
     rewind(fp);
     file_contents = (char*)PARSON_MALLOC(sizeof(char) * (file_size + 1));
     if (!file_contents) {
