@@ -179,11 +179,17 @@ static size_t parson_strlen(const char *string) {
 static char * read_file(const char * filename) {
     FILE *fp = fopen(filename, "r");
     size_t file_size;
+    long pos;
     char *file_contents;
     if (!fp)
         return NULL;
     fseek(fp, 0L, SEEK_END);
-    file_size = ftell(fp);
+    pos = ftell(fp);
+    if (pos < 0) {
+        fclose(fp);
+        return NULL;
+    }
+    file_size = pos;
     rewind(fp);
     file_contents = (char*)PARSON_MALLOC(sizeof(char) * (file_size + 1));
     if (!file_contents) {
@@ -973,12 +979,16 @@ JSON_Value * json_value_init_array(void) {
 
 JSON_Value * json_value_init_string(const char *string) {
     char *copy = NULL;
+    JSON_Value *value;
     if (string == NULL)
         return NULL;
     copy = parson_strdup(string);
     if (copy == NULL)
         return NULL;
-    return json_value_init_string_no_copy(copy);
+    value = json_value_init_string_no_copy(copy);
+    if (value == NULL)
+        PARSON_FREE(copy);
+    return value;
 }
 
 JSON_Value * json_value_init_number(double number) {
@@ -1065,7 +1075,10 @@ JSON_Value * json_value_deep_copy(const JSON_Value *value) {
             temp_string_copy = parson_strdup(temp_string);
             if (temp_string_copy == NULL)
                 return NULL;
-            return json_value_init_string_no_copy(temp_string_copy);
+            return_value = json_value_init_string_no_copy(temp_string_copy);
+            if (return_value == NULL)
+                PARSON_FREE(temp_string_copy);
+            return return_value;
         case JSONNull:
             return json_value_init_null();
         case JSONError:
@@ -1153,19 +1166,47 @@ JSON_Status json_array_replace_value(JSON_Array *array, size_t ix, JSON_Value *v
 }
 
 JSON_Status json_array_replace_string(JSON_Array *array, size_t i, const char* string) {
-    return json_array_replace_value(array, i, json_value_init_string(string));
+    JSON_Value *value = json_value_init_string(string);
+    if (value == NULL)
+        return JSONFailure;
+    if (json_array_replace_value(array, i, value) == JSONFailure) {
+        json_value_free(value);
+        return JSONFailure;
+    }
+    return JSONSuccess;
 }
 
 JSON_Status json_array_replace_number(JSON_Array *array, size_t i, double number) {
-    return json_array_replace_value(array, i, json_value_init_number(number));
+    JSON_Value *value = json_value_init_number(number);
+    if (value == NULL)
+        return JSONFailure;
+    if (json_array_replace_value(array, i, value) == JSONFailure) {
+        json_value_free(value);
+        return JSONFailure;
+    }
+    return JSONSuccess;
 }
 
 JSON_Status json_array_replace_boolean(JSON_Array *array, size_t i, int boolean) {
-    return json_array_replace_value(array, i, json_value_init_boolean(boolean));
+    JSON_Value *value = json_value_init_boolean(boolean);
+    if (value == NULL)
+        return JSONFailure;
+    if (json_array_replace_value(array, i, value) == JSONFailure) {
+        json_value_free(value);
+        return JSONFailure;
+    }
+    return JSONSuccess;
 }
 
 JSON_Status json_array_replace_null(JSON_Array *array, size_t i) {
-    return json_array_replace_value(array, i, json_value_init_null());
+    JSON_Value *value = json_value_init_null();
+    if (value == NULL)
+        return JSONFailure;
+    if (json_array_replace_value(array, i, value) == JSONFailure) {
+        json_value_free(value);
+        return JSONFailure;
+    }
+    return JSONSuccess;
 }
 
 JSON_Status json_array_clear(JSON_Array *array) {
@@ -1186,19 +1227,47 @@ JSON_Status json_array_append_value(JSON_Array *array, JSON_Value *value) {
 }
 
 JSON_Status json_array_append_string(JSON_Array *array, const char *string) {
-    return json_array_append_value(array, json_value_init_string(string));
+    JSON_Value *value = json_value_init_string(string);
+    if (value == NULL)
+        return JSONFailure;
+    if (json_array_append_value(array, value) == JSONFailure) {
+        json_value_free(value);
+        return JSONFailure;
+    }
+    return JSONSuccess;
 }
 
 JSON_Status json_array_append_number(JSON_Array *array, double number) {
-    return json_array_append_value(array, json_value_init_number(number));
+    JSON_Value *value = json_value_init_number(number);
+    if (value == NULL)
+        return JSONFailure;
+    if (json_array_append_value(array, value) == JSONFailure) {
+        json_value_free(value);
+        return JSONFailure;
+    }
+    return JSONSuccess;
 }
 
 JSON_Status json_array_append_boolean(JSON_Array *array, int boolean) {
-    return json_array_append_value(array, json_value_init_boolean(boolean));
+    JSON_Value *value = json_value_init_boolean(boolean);
+    if (value == NULL)
+        return JSONFailure;
+    if (json_array_append_value(array, value) == JSONFailure) {
+        json_value_free(value);
+        return JSONFailure;
+    }
+    return JSONSuccess;
 }
 
 JSON_Status json_array_append_null(JSON_Array *array) {
-    return json_array_append_value(array, json_value_init_null());
+    JSON_Value *value = json_value_init_null();
+    if (value == NULL)
+        return JSONFailure;
+    if (json_array_append_value(array, value) == JSONFailure) {
+        json_value_free(value);
+        return JSONFailure;
+    }
+    return JSONSuccess;
 }
 
 JSON_Status json_object_set_value(JSON_Object *object, const char *name, JSON_Value *value) {
@@ -1269,19 +1338,47 @@ JSON_Status json_object_dotset_value(JSON_Object *object, const char *name, JSON
 }
 
 JSON_Status json_object_dotset_string(JSON_Object *object, const char *name, const char *string) {
-    return json_object_dotset_value(object, name, json_value_init_string(string));
+    JSON_Value *value = json_value_init_string(string);
+    if (value == NULL)
+        return JSONFailure;
+    if (json_object_dotset_value(object, name, value) == JSONFailure) {
+        json_value_free(value);
+        return JSONFailure;
+    }
+    return JSONSuccess;
 }
 
 JSON_Status json_object_dotset_number(JSON_Object *object, const char *name, double number) {
-    return json_object_dotset_value(object, name, json_value_init_number(number));
+    JSON_Value *value = json_value_init_number(number);
+    if (value == NULL)
+        return JSONFailure;
+    if (json_object_dotset_value(object, name, value) == JSONFailure) {
+        json_value_free(value);
+        return JSONFailure;
+    }
+    return JSONSuccess;
 }
 
 JSON_Status json_object_dotset_boolean(JSON_Object *object, const char *name, int boolean) {
-    return json_object_dotset_value(object, name, json_value_init_boolean(boolean));
+    JSON_Value *value = json_value_init_boolean(boolean);
+    if (value == NULL)
+        return JSONFailure;
+    if (json_object_dotset_value(object, name, value) == JSONFailure) {
+        json_value_free(value);
+        return JSONFailure;
+    }
+    return JSONSuccess;
 }
 
 JSON_Status json_object_dotset_null(JSON_Object *object, const char *name) {
-    return json_object_dotset_value(object, name, json_value_init_null());
+    JSON_Value *value = json_value_init_null();
+    if (value == NULL)
+        return JSONFailure;
+    if (json_object_dotset_value(object, name, value) == JSONFailure) {
+        json_value_free(value);
+        return JSONFailure;
+    }
+    return JSONSuccess;
 }
 
 JSON_Status json_object_remove(JSON_Object *object, const char *name) {
