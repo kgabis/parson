@@ -50,6 +50,8 @@
 #define PRINT_AND_SKIP(str, to_append) str += sprintf(str, to_append);
 #define PRINTF_AND_SKIP(str, format, to_append) str += sprintf(str, format, to_append);
 
+#define IS_CONT(b) (((unsigned char)(b) & 0xC0) == 0x80) /* is utf-8 continuation byte */
+
 /* Type definitions */
 typedef union json_value_value {
     const char  *string;
@@ -84,9 +86,12 @@ static void   remove_comments(char *string, const char *start_token, const char 
 static int    try_realloc(void **ptr, size_t new_size);
 static char * parson_strndup(const char *string, size_t n);
 static char * parson_strdup(const char *string);
-static int    is_utf(const unsigned char *string);
+static int    is_utf16_hex(const unsigned char *string);
+static int    num_bytes_in_utf8_sequence(unsigned char c);
+static int    verify_utf8_sequence(const unsigned char *string, int *len);
+static int    is_valid_utf8(const char *string, size_t string_len);
 static int    is_decimal(const char *string, size_t length);
-static size_t parson_strlen(const char *string);
+static size_t serialization_strlen(const char *string);
 
 /* JSON Object */
 static JSON_Object * json_object_init(void);
@@ -149,8 +154,77 @@ static char * parson_strdup(const char *string) {
     return parson_strndup(string, strlen(string));
 }
 
-static int is_utf(const unsigned char *s) {
+static int is_utf16_hex(const unsigned char *s) {
     return isxdigit(s[0]) && isxdigit(s[1]) && isxdigit(s[2]) && isxdigit(s[3]);
+}
+
+static int num_bytes_in_utf8_sequence(unsigned char c) {
+    if (c == 0xC0 || c == 0xC1 || c > 0xF4 || IS_CONT(c)) {
+        return 0;
+    } else if ((c & 0x80) == 0) {    /* 0xxxxxxx */
+        return 1;
+    } else if ((c & 0xE0) == 0xC0) { /* 110xxxxx */
+        return 2;
+    } else if ((c & 0xF0) == 0xE0) { /* 1110xxxx */
+        return 3;
+    } else if ((c & 0xF8) == 0xF0) { /* 11110xxx */
+        return 4;
+    }
+    return 0; /* won't happen */
+}
+
+static int verify_utf8_sequence(const unsigned char *string, int *len) {
+    unsigned int cp = 0;
+    *len = num_bytes_in_utf8_sequence(string[0]);
+    
+    if (*len == 1) {
+        cp = string[0];
+    } else if (*len == 2 && IS_CONT(string[1])) {
+        cp = string[0] & 0x1F;
+        cp = (cp << 6) | (string[1] & 0x3F);
+    } else if (*len == 3 && IS_CONT(string[1]) && IS_CONT(string[2])) {
+        cp = ((unsigned char)string[0]) & 0xF;
+        cp = (cp << 6) | (string[1] & 0x3F);
+        cp = (cp << 6) | (string[2] & 0x3F);
+    } else if (*len == 4 && IS_CONT(string[1]) && IS_CONT(string[2]) && IS_CONT(string[3])) {
+        cp = string[0] & 0x7;
+        cp = (cp << 6) | (string[1] & 0x3F);
+        cp = (cp << 6) | (string[2] & 0x3F);
+        cp = (cp << 6) | (string[3] & 0x3F);
+    } else {
+        return 0;
+    }
+    
+    /* overlong encodings */
+    if ((cp < 0x80    && *len > 1) ||
+        (cp < 0x800   && *len > 2) ||
+        (cp < 0x10000 && *len > 3)) {
+        return 0;
+    }
+    
+    /* invalid unicode */
+    if (cp > 0x10FFFF) {
+        return 0;
+    }
+    
+    /* surrogate halves */
+    if (cp >= 0xD800 && cp <= 0xDFFF) {
+        return 0;
+    }
+    
+    return 1;
+}
+
+static int is_valid_utf8(const char *string, size_t string_len) {
+    int len = 0;
+    const char *string_end =  string + string_len;
+    while (string < string_end) {
+        if (!verify_utf8_sequence((const unsigned char*)string, &len)) {
+            return 0;
+        }
+        string += len;
+    }
+    return 1;
 }
 
 static int is_decimal(const char *string, size_t length) {
@@ -164,7 +238,7 @@ static int is_decimal(const char *string, size_t length) {
     return 1;
 }
 
-static size_t parson_strlen(const char *string) {
+static size_t serialization_strlen(const char *string) {
     size_t result = 0;
     size_t i = 0, len = strlen(string);
     for (i = 0; i < len; i++) {
@@ -374,7 +448,7 @@ static int parse_utf_16(const char **unprocessed, char **processed) {
     char *processed_ptr = *processed;
     const char *unprocessed_ptr = *unprocessed;
     unprocessed_ptr++; /* skips u */
-    if (!is_utf((const unsigned char*)unprocessed_ptr) || sscanf(unprocessed_ptr, "%4x", &cp) == EOF)
+    if (!is_utf16_hex((const unsigned char*)unprocessed_ptr) || sscanf(unprocessed_ptr, "%4x", &cp) == EOF)
             return JSONFailure;
     if (cp < 0x80) {
         *processed_ptr = cp; /* 0xxxxxxx */
@@ -389,7 +463,7 @@ static int parse_utf_16(const char **unprocessed, char **processed) {
         lead = cp;
         unprocessed_ptr += 4; /* should always be within the buffer, otherwise previous sscanf would fail */
         if (*unprocessed_ptr++ != '\\' || *unprocessed_ptr++ != 'u' || /* starts with \u? */
-            !is_utf((const unsigned char*)unprocessed_ptr)          ||
+            !is_utf16_hex((const unsigned char*)unprocessed_ptr)          ||
             sscanf(unprocessed_ptr, "%4x", &trail) == EOF           ||
             trail < 0xDC00 || trail > 0xDFFF) { /* valid trail surrogate? (0xDC00..0xDFFF) */
                 return JSONFailure;
@@ -645,12 +719,12 @@ static size_t json_serialization_size_r(const JSON_Value *value, char *buf) {
                 result_size += (count * 2) - 1; /* : between keys and values and , between items */
             for (i = 0; i < count; i++) {
                 key = json_object_get_name(object, i);
-                result_size += parson_strlen(key) + 2; /* string and quotes */
+                result_size += serialization_strlen(key) + 2; /* string and quotes */
                 result_size += json_serialization_size_r(json_object_get_value(object, key), buf);
             }
             return result_size;
         case JSONString:
-            return parson_strlen(json_value_get_string(value)) + 2; /* string and quotes */
+            return serialization_strlen(json_value_get_string(value)) + 2; /* string and quotes */
         case JSONBoolean:
             if (json_value_get_boolean(value))
                 return 4; /* strlen("true"); */
@@ -980,9 +1054,13 @@ JSON_Value * json_value_init_array(void) {
 JSON_Value * json_value_init_string(const char *string) {
     char *copy = NULL;
     JSON_Value *value;
+    size_t string_len = 0;
     if (string == NULL)
         return NULL;
-    copy = parson_strdup(string);
+    string_len = strlen(string);
+    if (!is_valid_utf8(string, string_len))
+        return NULL;
+    copy = parson_strndup(string, string_len);
     if (copy == NULL)
         return NULL;
     value = json_value_init_string_no_copy(copy);
@@ -1334,7 +1412,6 @@ JSON_Status json_object_dotset_value(JSON_Object *object, const char *name, JSON
         PARSON_FREE(current_name);
         return json_object_dotset_value(temp_obj, dot_pos + 1, value);
     }
-    return JSONFailure;
 }
 
 JSON_Status json_object_dotset_string(JSON_Object *object, const char *name, const char *string) {
@@ -1417,7 +1494,6 @@ JSON_Status json_object_dotremove(JSON_Object *object, const char *name) {
         PARSON_FREE(current_name);
         return json_object_dotremove(temp_obj, dot_pos + 1);
     }
-    return JSONFailure;
 }
 
 JSON_Status json_object_clear(JSON_Object *object) {

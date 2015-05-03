@@ -290,6 +290,40 @@ void test_suite_5(void) {
     TEST(json_array_replace_string(interests_arr, 100, "not existing") == JSONFailure);
     
     TEST(json_array_append_string(json_object_get_array(obj, "interests"), NULL) == JSONFailure);
+    
+    
+    /* UTF-8 tests */
+    TEST(json_object_set_string(obj, "correct string", "κόσμε") == JSONSuccess);
+    
+    TEST(json_object_set_string(obj, "boundary 1", "\xed\x9f\xbf") == JSONSuccess);
+    TEST(json_object_set_string(obj, "boundary 2", "\xee\x80\x80") == JSONSuccess);
+    TEST(json_object_set_string(obj, "boundary 3", "\xef\xbf\xbd") == JSONSuccess);
+    TEST(json_object_set_string(obj, "boundary 4", "\xf4\x8f\xbf\xbf") == JSONSuccess);
+    
+    TEST(json_object_set_string(obj, "first continuation byte", "\x80") == JSONFailure);
+    TEST(json_object_set_string(obj, "last continuation byte", "\xbf") == JSONFailure);
+    
+    TEST(json_object_set_string(obj, "impossible sequence 1", "\xfe") == JSONFailure);
+    TEST(json_object_set_string(obj, "impossible sequence 2", "\xff") == JSONFailure);
+    TEST(json_object_set_string(obj, "impossible sequence 3", "\xfe\xfe\xff\xff") == JSONFailure);
+    
+    TEST(json_object_set_string(obj, "overlong 1", "\xc0\xaf") == JSONFailure);
+    TEST(json_object_set_string(obj, "overlong 2", "\xc1\xbf") == JSONFailure);
+    TEST(json_object_set_string(obj, "overlong 3", "\xe0\x80\xaf") == JSONFailure);
+    TEST(json_object_set_string(obj, "overlong 4", "\xe0\x9f\xbf") == JSONFailure);    
+    TEST(json_object_set_string(obj, "overlong 5", "\xf0\x80\x80\xaf") == JSONFailure);
+    TEST(json_object_set_string(obj, "overlong 6", "\xf0\x8f\xbf\xbf") == JSONFailure);
+    TEST(json_object_set_string(obj, "overlong 7", "\xf0\x8f\xbf\xbf") == JSONFailure);
+
+    TEST(json_object_set_string(obj, "overlong null 1", "\xc0\x80") == JSONFailure);
+    TEST(json_object_set_string(obj, "overlong null 2", "\xe0\x80\x80") == JSONFailure);
+    TEST(json_object_set_string(obj, "overlong null 3", "\xf0\x80\x80\x80") == JSONFailure);
+    TEST(json_object_set_string(obj, "overlong null 4", "\xf8\x80\x80\x80\x80") == JSONFailure);
+    TEST(json_object_set_string(obj, "overlong null 5", "\xfc\x80\x80\x80\x80\x80") == JSONFailure);
+    
+    TEST(json_object_set_string(obj, "single surrogate 1", "\xed\xa0\x80") == JSONFailure);
+    TEST(json_object_set_string(obj, "single surrogate 2", "\xed\xaf\xbf") == JSONFailure);
+    TEST(json_object_set_string(obj, "single surrogate 3", "\xed\xbf\xbf") == JSONFailure);
 }
 
 void test_suite_6(void) {
