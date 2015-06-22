@@ -31,7 +31,9 @@
 	"/**/" : "comment",
 	"//" : "comment",
 	"url" : "https:\/\/www.example.com\/search?q=12345",
-	"escaped chars" : "\" \\ \/"
+	"escaped chars" : "\" \\ \/",
+	"empty object" : {},
+	"empty array" : []
 }
 /**/
 //

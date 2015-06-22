@@ -46,11 +46,14 @@ void test_suite_4(void); /* Test deep copy funtion */
 void test_suite_5(void); /* Test building json values from scratch */
 void test_suite_6(void); /* Test value comparing verification */
 void test_suite_7(void); /* Test schema validation */
-void test_suite_8(void); /* Test serialization to file */
+void test_suite_8(void); /* Test serialization */
+void test_suite_9(void); /* Test serialization (pretty) */
 
 void print_commits_info(const char *username, const char *repo);
 void persistence_example(void);
 void serialization_example(void);
+
+static char * read_file(const char * filename);
 
 static int tests_passed;
 static int tests_failed;
@@ -69,6 +72,7 @@ int main() {
     test_suite_6();
     test_suite_7();
     test_suite_8();
+    test_suite_9();
     printf("Tests failed: %d\n", tests_failed);
     printf("Tests passed: %d\n", tests_passed);
     return 0;
@@ -78,22 +82,32 @@ void test_suite_1(void) {
     JSON_Value *val;
     TEST((val = json_parse_file("tests/test_1_1.txt")) != NULL);
     TEST(json_value_equals(json_parse_string(json_serialize_to_string(val)), val));
+    TEST(json_value_equals(json_parse_string(json_serialize_to_string_pretty(val)), val));
     if (val) { json_value_free(val); }
+    
     TEST((val = json_parse_file("tests/test_1_2.txt")) != NULL);
     TEST(json_value_equals(json_parse_string(json_serialize_to_string(val)), val));
+    TEST(json_value_equals(json_parse_string(json_serialize_to_string_pretty(val)), val));
     if (val) { json_value_free(val); }
+    
     TEST((val = json_parse_file("tests/test_1_3.txt")) != NULL);
     TEST(json_value_equals(json_parse_string(json_serialize_to_string(val)), val));
+    TEST(json_value_equals(json_parse_string(json_serialize_to_string_pretty(val)), val));
     if (val) { json_value_free(val); }
     
     TEST((val = json_parse_file_with_comments("tests/test_1_1.txt")) != NULL);
     TEST(json_value_equals(json_parse_string(json_serialize_to_string(val)), val));
+    TEST(json_value_equals(json_parse_string(json_serialize_to_string_pretty(val)), val));
     if (val) { json_value_free(val); }
+    
     TEST((val = json_parse_file_with_comments("tests/test_1_2.txt")) != NULL);
     TEST(json_value_equals(json_parse_string(json_serialize_to_string(val)), val));
+    TEST(json_value_equals(json_parse_string(json_serialize_to_string_pretty(val)), val));
     if (val) { json_value_free(val); }
+    
     TEST((val = json_parse_file_with_comments("tests/test_1_3.txt")) != NULL);
     TEST(json_value_equals(json_parse_string(json_serialize_to_string(val)), val));
+    TEST(json_value_equals(json_parse_string(json_serialize_to_string_pretty(val)), val));
     if (val) { json_value_free(val); }
 }
 
@@ -157,6 +171,10 @@ void test_suite_2(JSON_Value *root_value) {
     TEST(STREQ(json_object_get_string(root_object, "//"), "comment"));
     TEST(STREQ(json_object_get_string(root_object, "url"), "https://www.example.com/search?q=12345"));
     TEST(STREQ(json_object_get_string(root_object, "escaped chars"), "\" \\ /"));
+    
+    TEST(json_object_get_object(root_object, "empty object") != NULL);
+    TEST(json_object_get_array(root_object, "empty array") != NULL);
+
 }
 
 void test_suite_2_no_comments(void) {
@@ -165,6 +183,7 @@ void test_suite_2_no_comments(void) {
     root_value = json_parse_file(filename);
     test_suite_2(root_value);
     TEST(json_value_equals(root_value, json_parse_string(json_serialize_to_string(root_value))));
+    TEST(json_value_equals(root_value, json_parse_string(json_serialize_to_string_pretty(root_value))));
     json_value_free(root_value);
 }
 
@@ -174,6 +193,7 @@ void test_suite_2_with_comments(void) {
     root_value = json_parse_file_with_comments(filename);
     test_suite_2(root_value);
     TEST(json_value_equals(root_value, json_parse_string(json_serialize_to_string(root_value))));
+    TEST(json_value_equals(root_value, json_parse_string(json_serialize_to_string_pretty(root_value))));
     json_value_free(root_value);
 }
 
@@ -359,11 +379,37 @@ void test_suite_8(void) {
     const char *temp_filename = "tests/test_2_serialized.txt";
     JSON_Value *a = NULL;
     JSON_Value *b = NULL;
+    char *buf = NULL;
+    size_t serialization_size = 0;
     a = json_parse_file(filename);
     TEST(json_serialize_to_file(a, temp_filename) == JSONSuccess);
     b = json_parse_file(temp_filename);
     TEST(json_value_equals(a, b));
     remove(temp_filename);
+    serialization_size = json_serialization_size(a);
+    buf = json_serialize_to_string(a);
+    TEST((strlen(buf)+1) == serialization_size);
+}
+
+void test_suite_9(void) {
+    const char *filename = "tests/test_2_pretty.txt";
+    const char *temp_filename = "tests/test_2_serialized_pretty.txt";
+    char *file_contents = NULL;
+    char *serialized = NULL;
+    JSON_Value *a = NULL;
+    JSON_Value *b = NULL;
+    size_t serialization_size = 0;
+    a = json_parse_file(filename);
+    TEST(json_serialize_to_file_pretty(a, temp_filename) == JSONSuccess);
+    b = json_parse_file(temp_filename);
+    TEST(json_value_equals(a, b));
+    remove(temp_filename);
+    serialization_size = json_serialization_size_pretty(a);
+    serialized = json_serialize_to_string_pretty(a);
+    TEST((strlen(serialized)+1) == serialization_size);
+    
+    file_contents = read_file(filename);
+    TEST(STREQ(file_contents, serialized));
 }
 
 void print_commits_info(const char *username, const char *repo) {
@@ -438,4 +484,36 @@ void serialization_example(void) {
     puts(serialized_string);
     json_free_serialized_string(serialized_string);
     json_value_free(root_value);
+}
+
+static char * read_file(const char * filename) {
+    FILE *fp = fopen(filename, "r");
+    size_t file_size;
+    long pos;
+    char *file_contents;
+    if (!fp)
+        return NULL;
+    fseek(fp, 0L, SEEK_END);
+    pos = ftell(fp);
+    if (pos < 0) {
+        fclose(fp);
+        return NULL;
+    }
+    file_size = pos;
+    rewind(fp);
+    file_contents = (char*)malloc(sizeof(char) * (file_size + 1));
+    if (!file_contents) {
+        fclose(fp);
+        return NULL;
+    }
+    if (fread(file_contents, file_size, 1, fp) < 1) {
+        if (ferror(fp)) {
+            fclose(fp);
+            free(file_contents);
+            return NULL;
+        }
+    }
+    fclose(fp);
+    file_contents[file_size] = '\0';
+    return file_contents;
 }
