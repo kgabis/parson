@@ -1,36 +1,25 @@
-<!doctype html>
-<html>
+<!DOCTYPE html>
+<html lang="en-us">
   <head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta charset="UTF-8">
     <title>parson by kgabis</title>
-
-    <link rel="stylesheet" href="stylesheets/styles.css">
-    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
-    <script src="javascripts/scale.fix.js"></script>
-    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
-    <!--[if lt IE 9]>
-    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
-    <![endif]-->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="stylesheets/normalize.css" media="screen">
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
   </head>
   <body>
-    <div class="wrapper">
-      <header>
-        <h1 class="header">parson</h1>
-        <p class="header">Lightweight json library written in C.</p>
+    <section class="page-header">
+      <h1 class="project-name">parson</h1>
+      <h2 class="project-tagline">Lightweight json library written in C.</h2>
+      <a href="https://github.com/kgabis/parson" class="btn">View on GitHub</a>
+      <a href="https://github.com/kgabis/parson/zipball/master" class="btn">Download .zip</a>
+      <a href="https://github.com/kgabis/parson/tarball/master" class="btn">Download .tar.gz</a>
+    </section>
 
-        <ul>
-          <li class="download"><a class="buttons" href="https://github.com/kgabis/parson/zipball/master">Download ZIP</a></li>
-          <li class="download"><a class="buttons" href="https://github.com/kgabis/parson/tarball/master">Download TAR</a></li>
-          <li><a class="buttons github" href="https://github.com/kgabis/parson">View On GitHub</a></li>
-        </ul>
-
-        <p class="header">This project is maintained by <a class="header name" href="https://github.com/kgabis">kgabis</a></p>
-
-
-      </header>
-      <section>
-        <h2>
+    <section class="main-content">
+      <h2>
 <a id="about" class="anchor" href="#about" aria-hidden="true"><span class="octicon octicon-link"></span></a>About</h2>
 
 <p>Parson is a lighweight <a href="http://json.org">json</a> library written in C.</p>
@@ -67,44 +56,44 @@
 
 <p>Here is a function, which prints basic commit info (date, sha and author) from a github repository.  </p>
 
-<div class="highlight highlight-c"><pre><span class="pl-st">void</span> <span class="pl-en">print_commits_info</span>(<span class="pl-s">const</span> <span class="pl-st">char</span> *username, <span class="pl-s">const</span> <span class="pl-st">char</span> *repo) {
+<div class="highlight highlight-c"><pre><span class="pl-k">void</span> <span class="pl-en">print_commits_info</span>(<span class="pl-k">const</span> <span class="pl-k">char</span> *username, <span class="pl-k">const</span> <span class="pl-k">char</span> *repo) {
     JSON_Value *root_value;
     JSON_Array *commits;
     JSON_Object *commit;
-    <span class="pl-s3">size_t</span> i;
+    <span class="pl-c1">size_t</span> i;
 
-    <span class="pl-st">char</span> curl_command[<span class="pl-c1">512</span>];
-    <span class="pl-st">char</span> cleanup_command[<span class="pl-c1">256</span>];
-    <span class="pl-st">char</span> output_filename[] = <span class="pl-s1"><span class="pl-pds">"</span>commits.json<span class="pl-pds">"</span></span>;
+    <span class="pl-k">char</span> curl_command[<span class="pl-c1">512</span>];
+    <span class="pl-k">char</span> cleanup_command[<span class="pl-c1">256</span>];
+    <span class="pl-k">char</span> output_filename[] = <span class="pl-s"><span class="pl-pds">"</span>commits.json<span class="pl-pds">"</span></span>;
 
     <span class="pl-c">/* it ain't pretty, but it's not a libcurl tutorial */</span>
-    <span class="pl-s3">sprintf</span>(curl_command, 
-        <span class="pl-s1"><span class="pl-pds">"</span>curl -s <span class="pl-cce">\"</span>https://api.github.com/repos/<span class="pl-c1">%s</span>/<span class="pl-c1">%s</span>/commits<span class="pl-cce">\"</span> &gt; <span class="pl-c1">%s</span><span class="pl-pds">"</span></span>,
+    <span class="pl-c1">sprintf</span>(curl_command, 
+        <span class="pl-s"><span class="pl-pds">"</span>curl -s <span class="pl-cce">\"</span>https://api.github.com/repos/<span class="pl-c1">%s</span>/<span class="pl-c1">%s</span>/commits<span class="pl-cce">\"</span> &gt; <span class="pl-c1">%s</span><span class="pl-pds">"</span></span>,
         username, repo, output_filename);
-    <span class="pl-s3">sprintf</span>(cleanup_command, <span class="pl-s1"><span class="pl-pds">"</span>rm -f <span class="pl-c1">%s</span><span class="pl-pds">"</span></span>, output_filename);
-    <span class="pl-s3">system</span>(curl_command);
+    <span class="pl-c1">sprintf</span>(cleanup_command, <span class="pl-s"><span class="pl-pds">"</span>rm -f <span class="pl-c1">%s</span><span class="pl-pds">"</span></span>, output_filename);
+    <span class="pl-c1">system</span>(curl_command);
 
     <span class="pl-c">/* parsing json and validating output */</span>
-    root_value = <span class="pl-s3">json_parse_file</span>(output_filename);
-    <span class="pl-k">if</span> (<span class="pl-s3">json_value_get_type</span>(root_value) != JSONArray) {
-        <span class="pl-s3">system</span>(cleanup_command);
+    root_value = <span class="pl-c1">json_parse_file</span>(output_filename);
+    <span class="pl-k">if</span> (<span class="pl-c1">json_value_get_type</span>(root_value) != JSONArray) {
+        <span class="pl-c1">system</span>(cleanup_command);
         <span class="pl-k">return</span>;
     }
 
     <span class="pl-c">/* getting array from root value and printing commit info */</span>
-    commits = <span class="pl-s3">json_value_get_array</span>(root_value);
-    <span class="pl-s3">printf</span>(<span class="pl-s1"><span class="pl-pds">"</span><span class="pl-c1">%-10.10s</span> <span class="pl-c1">%-10.10s</span> <span class="pl-c1">%s</span><span class="pl-cce">\n</span><span class="pl-pds">"</span></span>, <span class="pl-s1"><span class="pl-pds">"</span>Date<span class="pl-pds">"</span></span>, <span class="pl-s1"><span class="pl-pds">"</span>SHA<span class="pl-pds">"</span></span>, <span class="pl-s1"><span class="pl-pds">"</span>Author<span class="pl-pds">"</span></span>);
-    <span class="pl-k">for</span> (i = <span class="pl-c1">0</span>; i &lt; <span class="pl-s3">json_array_get_count</span>(commits); i++) {
-        commit = <span class="pl-s3">json_array_get_object</span>(commits, i);
-        <span class="pl-s3">printf</span>(<span class="pl-s1"><span class="pl-pds">"</span><span class="pl-c1">%.10s</span> <span class="pl-c1">%.10s</span> <span class="pl-c1">%s</span><span class="pl-cce">\n</span><span class="pl-pds">"</span></span>,
-               <span class="pl-s3">json_object_dotget_string</span>(commit, <span class="pl-s1"><span class="pl-pds">"</span>commit.author.date<span class="pl-pds">"</span></span>),
-               <span class="pl-s3">json_object_get_string</span>(commit, <span class="pl-s1"><span class="pl-pds">"</span>sha<span class="pl-pds">"</span></span>),
-               <span class="pl-s3">json_object_dotget_string</span>(commit, <span class="pl-s1"><span class="pl-pds">"</span>commit.author.name<span class="pl-pds">"</span></span>));
+    commits = <span class="pl-c1">json_value_get_array</span>(root_value);
+    <span class="pl-c1">printf</span>(<span class="pl-s"><span class="pl-pds">"</span><span class="pl-c1">%-10.10s</span> <span class="pl-c1">%-10.10s</span> <span class="pl-c1">%s</span><span class="pl-cce">\n</span><span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>Date<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>SHA<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>Author<span class="pl-pds">"</span></span>);
+    <span class="pl-k">for</span> (i = <span class="pl-c1">0</span>; i &lt; <span class="pl-c1">json_array_get_count</span>(commits); i++) {
+        commit = <span class="pl-c1">json_array_get_object</span>(commits, i);
+        <span class="pl-c1">printf</span>(<span class="pl-s"><span class="pl-pds">"</span><span class="pl-c1">%.10s</span> <span class="pl-c1">%.10s</span> <span class="pl-c1">%s</span><span class="pl-cce">\n</span><span class="pl-pds">"</span></span>,
+               <span class="pl-c1">json_object_dotget_string</span>(commit, <span class="pl-s"><span class="pl-pds">"</span>commit.author.date<span class="pl-pds">"</span></span>),
+               <span class="pl-c1">json_object_get_string</span>(commit, <span class="pl-s"><span class="pl-pds">"</span>sha<span class="pl-pds">"</span></span>),
+               <span class="pl-c1">json_object_dotget_string</span>(commit, <span class="pl-s"><span class="pl-pds">"</span>commit.author.name<span class="pl-pds">"</span></span>));
     }
 
     <span class="pl-c">/* cleanup code */</span>
-    <span class="pl-s3">json_value_free</span>(root_value);
-    <span class="pl-s3">system</span>(cleanup_command);
+    <span class="pl-c1">json_value_free</span>(root_value);
+    <span class="pl-c1">system</span>(cleanup_command);
 }
 </pre></div>
 
@@ -125,22 +114,22 @@
 
 <p>In this example I'm using parson to save user information to a file and then load it and validate later.</p>
 
-<div class="highlight highlight-c"><pre><span class="pl-st">void</span> <span class="pl-en">persistence_example</span>(<span class="pl-st">void</span>) {
-    JSON_Value *schema = <span class="pl-s3">json_parse_string</span>(<span class="pl-s1"><span class="pl-pds">"</span>{<span class="pl-cce">\"</span>name<span class="pl-cce">\"</span>:<span class="pl-cce">\"\"</span>}<span class="pl-pds">"</span></span>);
-    JSON_Value *user_data = <span class="pl-s3">json_parse_file</span>(<span class="pl-s1"><span class="pl-pds">"</span>user_data.json<span class="pl-pds">"</span></span>);
-    <span class="pl-st">char</span> buf[<span class="pl-c1">256</span>];
-    <span class="pl-s">const</span> <span class="pl-st">char</span> *name = <span class="pl-c1">NULL</span>;
-    <span class="pl-k">if</span> (user_data == <span class="pl-c1">NULL</span> || <span class="pl-s3">json_validate</span>(schema, user_data) != JSONSuccess) {
-        <span class="pl-s3">puts</span>(<span class="pl-s1"><span class="pl-pds">"</span>Enter your name:<span class="pl-pds">"</span></span>);
-        <span class="pl-s3">scanf</span>(<span class="pl-s1"><span class="pl-pds">"</span><span class="pl-c1">%s</span><span class="pl-pds">"</span></span>, buf);
-        user_data = <span class="pl-s3">json_value_init_object</span>();
-        <span class="pl-s3">json_object_set_string</span>(<span class="pl-s3">json_object</span>(user_data), <span class="pl-s1"><span class="pl-pds">"</span>name<span class="pl-pds">"</span></span>, buf);
-        <span class="pl-s3">json_serialize_to_file</span>(user_data, <span class="pl-s1"><span class="pl-pds">"</span>user_data.json<span class="pl-pds">"</span></span>);
+<div class="highlight highlight-c"><pre><span class="pl-k">void</span> <span class="pl-en">persistence_example</span>(<span class="pl-k">void</span>) {
+    JSON_Value *schema = <span class="pl-c1">json_parse_string</span>(<span class="pl-s"><span class="pl-pds">"</span>{<span class="pl-cce">\"</span>name<span class="pl-cce">\"</span>:<span class="pl-cce">\"\"</span>}<span class="pl-pds">"</span></span>);
+    JSON_Value *user_data = <span class="pl-c1">json_parse_file</span>(<span class="pl-s"><span class="pl-pds">"</span>user_data.json<span class="pl-pds">"</span></span>);
+    <span class="pl-k">char</span> buf[<span class="pl-c1">256</span>];
+    <span class="pl-k">const</span> <span class="pl-k">char</span> *name = <span class="pl-c1">NULL</span>;
+    <span class="pl-k">if</span> (user_data == <span class="pl-c1">NULL</span> || <span class="pl-c1">json_validate</span>(schema, user_data) != JSONSuccess) {
+        <span class="pl-c1">puts</span>(<span class="pl-s"><span class="pl-pds">"</span>Enter your name:<span class="pl-pds">"</span></span>);
+        <span class="pl-c1">scanf</span>(<span class="pl-s"><span class="pl-pds">"</span><span class="pl-c1">%s</span><span class="pl-pds">"</span></span>, buf);
+        user_data = <span class="pl-c1">json_value_init_object</span>();
+        <span class="pl-c1">json_object_set_string</span>(<span class="pl-c1">json_object</span>(user_data), <span class="pl-s"><span class="pl-pds">"</span>name<span class="pl-pds">"</span></span>, buf);
+        <span class="pl-c1">json_serialize_to_file</span>(user_data, <span class="pl-s"><span class="pl-pds">"</span>user_data.json<span class="pl-pds">"</span></span>);
     }
-    name = <span class="pl-s3">json_object_get_string</span>(<span class="pl-s3">json_object</span>(user_data), <span class="pl-s1"><span class="pl-pds">"</span>name<span class="pl-pds">"</span></span>);
-    <span class="pl-s3">printf</span>(<span class="pl-s1"><span class="pl-pds">"</span>Hello, <span class="pl-c1">%s</span>.<span class="pl-pds">"</span></span>, name);
-    <span class="pl-s3">json_value_free</span>(schema);
-    <span class="pl-s3">json_value_free</span>(user_data);
+    name = <span class="pl-c1">json_object_get_string</span>(<span class="pl-c1">json_object</span>(user_data), <span class="pl-s"><span class="pl-pds">"</span>name<span class="pl-pds">"</span></span>);
+    <span class="pl-c1">printf</span>(<span class="pl-s"><span class="pl-pds">"</span>Hello, <span class="pl-c1">%s</span>.<span class="pl-pds">"</span></span>, name);
+    <span class="pl-c1">json_value_free</span>(schema);
+    <span class="pl-c1">json_value_free</span>(user_data);
     <span class="pl-k">return</span>;
 }</pre></div>
 
@@ -151,35 +140,35 @@
 Object hierarchy is automatically created when addressing specific fields. 
 In the following example I create a simple JSON value containing basic information about a person.</p>
 
-<div class="highlight highlight-c"><pre><span class="pl-st">void</span> <span class="pl-en">serialization_example</span>(<span class="pl-st">void</span>) {
-    JSON_Value *root_value = <span class="pl-s3">json_value_init_object</span>();
-    JSON_Object *root_object = <span class="pl-s3">json_value_get_object</span>(root_value);
-    <span class="pl-st">char</span> *serialized_string = <span class="pl-c1">NULL</span>;
-    <span class="pl-s3">json_object_set_string</span>(root_object, <span class="pl-s1"><span class="pl-pds">"</span>name<span class="pl-pds">"</span></span>, <span class="pl-s1"><span class="pl-pds">"</span>John Smith<span class="pl-pds">"</span></span>);
-    <span class="pl-s3">json_object_set_number</span>(root_object, <span class="pl-s1"><span class="pl-pds">"</span>age<span class="pl-pds">"</span></span>, <span class="pl-c1">25</span>);
-    <span class="pl-s3">json_object_dotset_string</span>(root_object, <span class="pl-s1"><span class="pl-pds">"</span>address.city<span class="pl-pds">"</span></span>, <span class="pl-s1"><span class="pl-pds">"</span>Cupertino<span class="pl-pds">"</span></span>);
-    <span class="pl-s3">json_object_dotset_value</span>(root_object, <span class="pl-s1"><span class="pl-pds">"</span>contact.emails<span class="pl-pds">"</span></span>, <span class="pl-s3">json_parse_string</span>(<span class="pl-s1"><span class="pl-pds">"</span>[<span class="pl-cce">\"</span>email@example.com<span class="pl-cce">\"</span>,<span class="pl-cce">\"</span>email2@example.com<span class="pl-cce">\"</span>]<span class="pl-pds">"</span></span>));
-    serialized_string = <span class="pl-s3">json_serialize_to_string</span>(root_value);
-    <span class="pl-s3">puts</span>(serialized_string);
-    <span class="pl-s3">json_free_serialized_string</span>(serialized_string);
-    <span class="pl-s3">json_value_free</span>(root_value);
+<div class="highlight highlight-c"><pre><span class="pl-k">void</span> <span class="pl-en">serialization_example</span>(<span class="pl-k">void</span>) {
+    JSON_Value *root_value = <span class="pl-c1">json_value_init_object</span>();
+    JSON_Object *root_object = <span class="pl-c1">json_value_get_object</span>(root_value);
+    <span class="pl-k">char</span> *serialized_string = <span class="pl-c1">NULL</span>;
+    <span class="pl-c1">json_object_set_string</span>(root_object, <span class="pl-s"><span class="pl-pds">"</span>name<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>John Smith<span class="pl-pds">"</span></span>);
+    <span class="pl-c1">json_object_set_number</span>(root_object, <span class="pl-s"><span class="pl-pds">"</span>age<span class="pl-pds">"</span></span>, <span class="pl-c1">25</span>);
+    <span class="pl-c1">json_object_dotset_string</span>(root_object, <span class="pl-s"><span class="pl-pds">"</span>address.city<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>Cupertino<span class="pl-pds">"</span></span>);
+    <span class="pl-c1">json_object_dotset_value</span>(root_object, <span class="pl-s"><span class="pl-pds">"</span>contact.emails<span class="pl-pds">"</span></span>, <span class="pl-c1">json_parse_string</span>(<span class="pl-s"><span class="pl-pds">"</span>[<span class="pl-cce">\"</span>email@example.com<span class="pl-cce">\"</span>,<span class="pl-cce">\"</span>email2@example.com<span class="pl-cce">\"</span>]<span class="pl-pds">"</span></span>));
+    serialized_string = <span class="pl-c1">json_serialize_to_string_pretty</span>(root_value);
+    <span class="pl-c1">puts</span>(serialized_string);
+    <span class="pl-c1">json_free_serialized_string</span>(serialized_string);
+    <span class="pl-c1">json_value_free</span>(root_value);
 }
 </pre></div>
 
-<p>Created value (after formatting outside parson):</p>
+<p>Output:</p>
 
-<pre><code>{  
-   "name":"John Smith",
-   "age":25,
-   "address":{  
-      "city":"Cupertino"
-   },
-   "contact":{  
-      "emails":[  
-         "email@example.com",
-         "email2@example.com"
-      ]
-   }
+<pre><code>{
+    "name": "John Smith",
+    "age": 25,
+    "address": {
+        "city": "Cupertino"
+    },
+    "contact": {
+        "emails": [
+            "email@example.com",
+            "email2@example.com"
+        ]
+    }
 }
 </code></pre>
 
@@ -194,13 +183,16 @@ Remember to follow parson's code style and write appropriate tests.</p>
 <a id="license" class="anchor" href="#license" aria-hidden="true"><span class="octicon octicon-link"></span></a>License</h2>
 
 <p><a href="http://opensource.org/licenses/mit-license.php">The MIT License (MIT)</a></p>
-      </section>
-      <footer>
-        <p><small>Hosted on <a href="http://pages.github.com">GitHub Pages</a> using the Dinky theme</small></p>
+
+      <footer class="site-footer">
+        <span class="site-footer-owner"><a href="https://github.com/kgabis/parson">parson</a> is maintained by <a href="https://github.com/kgabis">kgabis</a>.</span>
+
+        <span class="site-footer-credits">This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the <a href="https://github.com/jasonlong/cayman-theme">Cayman theme</a> by <a href="https://twitter.com/jasonlong">Jason Long</a>.</span>
       </footer>
-    </div>
-    <!--[if !IE]><script>fixScale(document);</script><![endif]-->
-		          <script type="text/javascript">
+
+    </section>
+
+            <script type="text/javascript">
             var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
             document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
           </script>
@@ -213,3 +205,4 @@ Remember to follow parson's code style and write appropriate tests.</p>
 
   </body>
 </html>
+
