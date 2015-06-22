@@ -18,8 +18,8 @@
 	"null" : null,
 	"string array" : ["lorem",/*in array*/"ipsum"],
 	"x^2 array" : [0, 1, 4, 9, 16, 25, 36, 49, 64, 81, 100],
-/*	"x^2 array" : [0, 1, 4, 9, 16, 25, 36, 49, 64, 81, 100],
-*/	"object_empty" : { }, 
+/*	"x^2 array" : [],
+*/ 
 	"/*" : null,
 	"object" : { "nested string" : "str",
 				 "nested true" : /* lorem ipsum */ true, 

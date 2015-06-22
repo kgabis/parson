@@ -27,7 +27,6 @@
         81,
         100
     ],
-    "object_empty": {},
     "/*": null,
     "object": {
         "nested string": "str",

@@ -12,7 +12,6 @@
 	"null" : null,
 	"string array" : ["lorem", "ipsum"],
 	"x^2 array" : [0, 1, 4, 9, 16, 25, 36, 49, 64, 81, 100],
-	"object_empty" : { }, 
 	"/*" : null,
 	"object" : { "nested string" : "str",
 				 "nested true" : true, 
