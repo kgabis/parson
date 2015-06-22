@@ -111,7 +111,7 @@ void serialization_example(void) {
     json_object_set_number(root_object, "age", 25);
     json_object_dotset_string(root_object, "address.city", "Cupertino");
     json_object_dotset_value(root_object, "contact.emails", json_parse_string("[\"email@example.com\",\"email2@example.com\"]"));
-    serialized_string = json_serialize_to_string(root_value);
+    serialized_string = json_serialize_to_string_pretty(root_value);
     puts(serialized_string);
     json_free_serialized_string(serialized_string);
     json_value_free(root_value);
@@ -119,20 +119,20 @@ void serialization_example(void) {
 
 ```
 
-Created value (after formatting outside parson):
+Output:
 ```
-{  
-   "name":"John Smith",
-   "age":25,
-   "address":{  
-      "city":"Cupertino"
-   },
-   "contact":{  
-      "emails":[  
-         "email@example.com",
-         "email2@example.com"
-      ]
-   }
+{
+    "name": "John Smith",
+    "age": 25,
+    "address": {
+        "city": "Cupertino"
+    },
+    "contact": {
+        "emails": [
+            "email@example.com",
+            "email2@example.com"
+        ]
+    }
 }
 ```
 
