@@ -126,8 +126,8 @@ static JSON_Value * parse_value(const char **string, size_t nesting);
 
 /* Serialization */
 static size_t json_serialization_size_r(const JSON_Value *value, char *buf, int level, int is_pretty);
-static char * json_serialize_to_buffer_r(const JSON_Value *value, char *buf, int level, int is_pretty);
-static char * json_serialize_string(const char *string, char *buf);
+static int    json_serialize_to_buffer_r(const JSON_Value *value, char *buf, int level, int is_pretty);
+static int    json_serialize_string(const char *string, char *buf);
 
 /* Various */
 static char * parson_strndup(const char *string, size_t n) {
@@ -241,11 +241,15 @@ static size_t serialization_strlen(const char *string) {
 
 static int print_indent(char *buf, int level) {
     int i;
-    char *buf_ptr = buf;
+    char *buf_start = buf;
+    int written = -1;
     for (i = 0; i < level; i++) {
-        buf_ptr += sprintf(buf_ptr, "    ");
+        written = sprintf(buf, "    ");
+        if (written < 0)
+            return -1;
+        buf += written;
     }
-    return (int)(buf_ptr - buf);
+    return (int)(buf - buf_start);
 }
 
 static char * read_file(const char * filename) {
@@ -807,7 +811,7 @@ static size_t json_serialization_size_r(const JSON_Value *value, char *buf, int 
     }
 }
 
-char* json_serialize_to_buffer_r(const JSON_Value *value, char *buf, int level, int is_pretty)
+static int json_serialize_to_buffer_r(const JSON_Value *value, char *buf, int level, int is_pretty)
 {
     const char *key = NULL, *string = NULL;
     JSON_Value *temp_value = NULL;
@@ -815,116 +819,186 @@ char* json_serialize_to_buffer_r(const JSON_Value *value, char *buf, int level, 
     JSON_Object *object = NULL;
     size_t i = 0, count = 0;
     double num = 0.0;
+    int written = -1;
+    char *buf_start = buf;
     
     switch (json_value_get_type(value)) {
         case JSONArray:
             array = json_value_get_array(value);
             count = json_array_get_count(array);
-            buf += sprintf(buf, "[");
+            written = sprintf(buf, "[");
+            if (written < 0)
+                return -1;
+            buf += written;
             if (count > 0 && is_pretty) {
-                buf += sprintf(buf, "\n");
+                written = sprintf(buf, "\n");
+                if (written < 0)
+                    return -1;
+                buf += written;
             }
             for (i = 0; i < count; i++) {
                 if (is_pretty) {
-                    buf += print_indent(buf, level+1);
+                    written = print_indent(buf, level+1);
+                    if (written < 0)
+                        return -1;
+                    buf += written;
                 }
                 temp_value = json_array_get_value(array, i);
-                buf = json_serialize_to_buffer_r(temp_value, buf, level+1, is_pretty);
-                if (buf == NULL)
-                    return NULL;
-                if (i < (count - 1))
-                    buf += sprintf(buf, ",");
+                written = json_serialize_to_buffer_r(temp_value, buf, level+1, is_pretty);
+                if (written < 0)
+                    return -1;
+                buf += written;
+                if (i < (count - 1)) {
+                    written = sprintf(buf, ",");
+                    if (written < 0)
+                        return -1;
+                    buf += written;
+                }
                 if (is_pretty) {
-                    buf += sprintf(buf, "\n");
+                    written = sprintf(buf, "\n");
+                    if (written < 0)
+                        return -1;
+                    buf += written;
                 }
             }
             if (count > 0 && is_pretty) {
-                buf += print_indent(buf, level);
+                written = print_indent(buf, level);
+                if (written < 0)
+                    return -1;
+                buf += written;
             }
-            buf += sprintf(buf, "]");
-            return buf;
+            written = sprintf(buf, "]");
+            if (written < 0)
+                return -1;
+            buf += written;
+            return (int)(buf - buf_start);
         case JSONObject:
             object = json_value_get_object(value);
             count  = json_object_get_count(object);
-            buf += sprintf(buf, "{");
+            written = sprintf(buf, "{");
+            if (written < 0)
+                return -1;
+            buf += written;
             if (count > 0 && is_pretty) {
-                buf += sprintf(buf, "\n");
+                written = sprintf(buf, "\n");
+                if (written < 0)
+                    return -1;
+                buf += written;
             }
             for (i = 0; i < count; i++) {
                 key = json_object_get_name(object, i);
                 if (is_pretty) {
-                    buf += print_indent(buf, level+1);
+                    written = print_indent(buf, level+1);
+                    if (written < 0)
+                        return -1;
+                    buf += written;
                 }
-                buf = json_serialize_string(key, buf);
-                if (buf == NULL)
-                    return NULL;
-                buf += sprintf(buf, ":");
+                written = json_serialize_string(key, buf);
+                if (written < 0)
+                    return -1;
+                buf += written;
+                written = sprintf(buf, ":");
+                if (written < 0)
+                    return -1;
+                buf += written;
                 if (is_pretty) {
-                    buf += sprintf(buf, " ");
+                    written = sprintf(buf, " ");
+                    if (written < 0)
+                        return -1;
+                    buf += written;
                 }
                 temp_value = json_object_get_value(object, key);
-                buf = json_serialize_to_buffer_r(temp_value, buf, level+1, is_pretty);
-                if (buf == NULL)
-                    return NULL;
-                if (i < (count - 1))
-                    buf += sprintf(buf, ",");
+                written = json_serialize_to_buffer_r(temp_value, buf, level+1, is_pretty);
+                if (written < 0)
+                    return -1;
+                buf += written;
+                if (i < (count - 1)) {
+                    written = sprintf(buf, ",");
+                    if (written < 0)
+                        return -1;
+                    buf += written;
+                }
                 if (is_pretty) {
-                    buf += sprintf(buf, "\n");
+                    written = sprintf(buf, "\n");
+                    if (written < 0)
+                        return -1;
+                    buf += written;
                 }
             }
             if (count > 0 && is_pretty) {
-                buf += print_indent(buf, level);
+                written = print_indent(buf, level);
+                if (written < 0)
+                    return -1;
+                buf += written;
             }
-            buf += sprintf(buf, "}");
-            return buf;
+            written = sprintf(buf, "}");
+            if (written < 0)
+                return -1;
+            buf += written;
+            return (int)(buf - buf_start);
         case JSONString:
             string = json_value_get_string(value);
-            buf = json_serialize_string(string, buf);
-            return buf;
+            written = json_serialize_string(string, buf);
+            if (written < 0)
+                return -1;
+            buf += written;
+            return (int)(buf - buf_start);
         case JSONBoolean:
             if (json_value_get_boolean(value)) {
-                buf += sprintf(buf, "true");
+                written = sprintf(buf, "true");
             } else {
-                buf += sprintf(buf, "false");
+                written = sprintf(buf, "false");
             }
-            return buf;
+            if (written < 0)
+                return -1;
+            buf += written;
+            return (int)(buf - buf_start);
         case JSONNumber:
             num = json_value_get_number(value);
             if (num == ((double)(int)num)) { /*  check if num is integer */
-                buf += sprintf(buf, "%d", (int)num);
+                written = sprintf(buf, "%d", (int)num);
             } else {
-                buf += sprintf(buf, DOUBLE_SERIALIZATION_FORMAT, num);
+                written = sprintf(buf, DOUBLE_SERIALIZATION_FORMAT, num);
             }
-            return buf;
+            if (written < 0)
+                return -1;
+            buf += written;
+            return (int)(buf - buf_start);
         case JSONNull:
-            buf += sprintf(buf, "null");
-            return buf;
+            written = sprintf(buf, "null");
+            if (written < 0)
+                return -1;
+            buf += written;
+            return (int)(buf - buf_start);
         case JSONError:
-            return NULL;
+            return -1;
         default:
-            return NULL;
+            return -1;
     }
 }
 
-static char * json_serialize_string(const char *string, char *buf) {
+static int json_serialize_string(const char *string, char *buf) {
     size_t i = 0, len = strlen(string);
     char c = '\0';
-    buf += sprintf(buf, "\"");
+    char *buf_start = buf;
+    buf[0] = '\"';
+    buf++;
     for (i = 0; i < len; i++) {
         c = string[i];
         switch (c) {
-            case '\"': buf += sprintf(buf, "\\\"");  break;
-            case '\\': buf += sprintf(buf, "\\\\");  break;
-            case '\b': buf += sprintf(buf, "\\b");   break;
-            case '\f': buf += sprintf(buf, "\\f");   break;
-            case '\n': buf += sprintf(buf, "\\n");   break;
-            case '\r': buf += sprintf(buf, "\\r");   break;
-            case '\t': buf += sprintf(buf, "\\t");   break;
-            default:   buf += sprintf(buf, "%c", c); break;
+            case '\"': buf[0] = '\\'; buf[1] = '\"'; buf += 2; break;
+            case '\\': buf[0] = '\\'; buf[1] = '\\'; buf += 2; break;
+            case '\b': buf[0] = '\\'; buf[1] = 'b'; buf += 2; break;
+            case '\f': buf[0] = '\\'; buf[1] = 'f'; buf += 2; break;
+            case '\n': buf[0] = '\\'; buf[1] = 'n'; buf += 2; break;
+            case '\r': buf[0] = '\\'; buf[1] = 'r'; buf += 2; break;
+            case '\t': buf[0] = '\\'; buf[1] = 't'; buf += 2; break;
+            default:   buf[0] = c; buf+= 1; break;
         }
     }
-    buf += sprintf(buf, "\"");
-    return buf;
+    buf[0] = '\"';
+    buf++;
+    return (int)(buf - buf_start);
 }
 
 /* Parser API */
@@ -1264,13 +1338,13 @@ size_t json_serialization_size(const JSON_Value *value) {
 }
 
 JSON_Status json_serialize_to_buffer(const JSON_Value *value, char *buf, size_t buf_size_in_bytes) {
-    char *serialization_result = NULL;
+    int written = -1;
     size_t needed_size_in_bytes = json_serialization_size(value);
     if (buf_size_in_bytes < needed_size_in_bytes) {
         return JSONFailure;
     }
-    serialization_result = json_serialize_to_buffer_r(value, buf, 0, 0);
-    if(serialization_result == NULL)
+    written = json_serialize_to_buffer_r(value, buf, 0, 0);
+    if (written < 0)
         return JSONFailure;
     return JSONSuccess;
 }
@@ -1315,13 +1389,13 @@ size_t json_serialization_size_pretty(const JSON_Value *value) {
 }
 
 JSON_Status json_serialize_to_buffer_pretty(const JSON_Value *value, char *buf, size_t buf_size_in_bytes) {
-    char *serialization_result = NULL;
+    int written = -1;
     size_t needed_size_in_bytes = json_serialization_size_pretty(value);
     if (buf_size_in_bytes < needed_size_in_bytes) {
         return JSONFailure;
     }
-    serialization_result = json_serialize_to_buffer_r(value, buf, 0, 1);
-    if(serialization_result == NULL)
+    written = json_serialize_to_buffer_r(value, buf, 0, 1);
+    if (written < 0)
         return JSONFailure;
     return JSONSuccess;
 }
