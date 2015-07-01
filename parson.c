@@ -1212,7 +1212,8 @@ JSON_Value * json_value_deep_copy(const JSON_Value *value) {
 
 size_t json_serialization_size(const JSON_Value *value) {
     char num_buf[1100]; /* recursively allocating buffer on stack is a bad idea, so let's do it only once */
-    return (size_t)(json_serialize_to_buffer_r(value, NULL, 0, 0, num_buf) + 1);
+    int res = json_serialize_to_buffer_r(value, NULL, 0, 0, num_buf);
+    return res < 0 ? 0 : (size_t)(res + 1);
 }
 
 JSON_Status json_serialize_to_buffer(const JSON_Value *value, char *buf, size_t buf_size_in_bytes) {
@@ -1263,7 +1264,8 @@ char * json_serialize_to_string(const JSON_Value *value) {
 
 size_t json_serialization_size_pretty(const JSON_Value *value) {
     char num_buf[1100]; /* recursively allocating buffer on stack is a bad idea, so let's do it only once */
-    return (size_t)(json_serialize_to_buffer_r(value, NULL, 0, 1, num_buf) + 1);
+    int res = json_serialize_to_buffer_r(value, NULL, 0, 1, num_buf);
+    return res < 0 ? 0 : (size_t)(res + 1);
 }
 
 JSON_Status json_serialize_to_buffer_pretty(const JSON_Value *value, char *buf, size_t buf_size_in_bytes) {
