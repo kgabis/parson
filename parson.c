@@ -1219,7 +1219,7 @@ size_t json_serialization_size(const JSON_Value *value) {
 JSON_Status json_serialize_to_buffer(const JSON_Value *value, char *buf, size_t buf_size_in_bytes) {
     int written = -1;
     size_t needed_size_in_bytes = json_serialization_size(value);
-    if (buf_size_in_bytes < needed_size_in_bytes) {
+    if (needed_size_in_bytes == 0 || buf_size_in_bytes < needed_size_in_bytes) {
         return JSONFailure;
     }
     written = json_serialize_to_buffer_r(value, buf, 0, 0, NULL);
@@ -1251,7 +1251,11 @@ JSON_Status json_serialize_to_file(const JSON_Value *value, const char *filename
 char * json_serialize_to_string(const JSON_Value *value) {
     JSON_Status serialization_result = JSONFailure;
     size_t buf_size_bytes = json_serialization_size(value);
-    char *buf = (char*)parson_malloc(buf_size_bytes);
+    char *buf = NULL;
+    if (buf_size_bytes == 0) {
+        return NULL;
+    }
+    buf = (char*)parson_malloc(buf_size_bytes);
     if (buf == NULL)
         return NULL;
     serialization_result = json_serialize_to_buffer(value, buf, buf_size_bytes);
@@ -1271,7 +1275,7 @@ size_t json_serialization_size_pretty(const JSON_Value *value) {
 JSON_Status json_serialize_to_buffer_pretty(const JSON_Value *value, char *buf, size_t buf_size_in_bytes) {
     int written = -1;
     size_t needed_size_in_bytes = json_serialization_size_pretty(value);
-    if (buf_size_in_bytes < needed_size_in_bytes)
+    if (needed_size_in_bytes == 0 || buf_size_in_bytes < needed_size_in_bytes)
         return JSONFailure;
     written = json_serialize_to_buffer_r(value, buf, 0, 1, NULL);
     if (written < 0)
@@ -1302,7 +1306,11 @@ JSON_Status json_serialize_to_file_pretty(const JSON_Value *value, const char *f
 char * json_serialize_to_string_pretty(const JSON_Value *value) {
     JSON_Status serialization_result = JSONFailure;
     size_t buf_size_bytes = json_serialization_size_pretty(value);
-    char *buf = (char*)parson_malloc(buf_size_bytes);
+    char *buf = NULL;
+    if (buf_size_bytes == 0) {
+        return NULL;
+    }
+    buf = (char*)parson_malloc(buf_size_bytes);
     if (buf == NULL)
         return NULL;
     serialization_result = json_serialize_to_buffer_pretty(value, buf, buf_size_bytes);
