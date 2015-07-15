@@ -128,14 +128,16 @@ int           json_object_dotget_boolean(const JSON_Object *object, const char *
 size_t        json_object_get_count(const JSON_Object *object);
 const char  * json_object_get_name (const JSON_Object *object, size_t index);
     
-/* Creates new name-value pair or frees and replaces old value with new one. */
+/* Creates new name-value pair or frees and replaces old value with a new one. 
+ * json_object_set_value does not copy passed value so it shouldn't be freed afterwards. */
 JSON_Status json_object_set_value(JSON_Object *object, const char *name, JSON_Value *value);
 JSON_Status json_object_set_string(JSON_Object *object, const char *name, const char *string);
 JSON_Status json_object_set_number(JSON_Object *object, const char *name, double number);
 JSON_Status json_object_set_boolean(JSON_Object *object, const char *name, int boolean);
 JSON_Status json_object_set_null(JSON_Object *object, const char *name);
 
-/* Works like dotget functions, but creates whole hierarchy if necessary. */
+/* Works like dotget functions, but creates whole hierarchy if necessary.
+ * json_object_dotset_value does not copy passed value so it shouldn't be freed afterwards. */
 JSON_Status json_object_dotset_value(JSON_Object *object, const char *name, JSON_Value *value);
 JSON_Status json_object_dotset_string(JSON_Object *object, const char *name, const char *string);
 JSON_Status json_object_dotset_number(JSON_Object *object, const char *name, double number);
@@ -167,7 +169,8 @@ size_t        json_array_get_count  (const JSON_Array *array);
 JSON_Status json_array_remove(JSON_Array *array, size_t i);
 
 /* Frees and removes from array value at given index and replaces it with given one.
- * Does nothing and returns JSONFailure if index doesn't exist. */
+ * Does nothing and returns JSONFailure if index doesn't exist. 
+ * json_array_replace_value does not copy passed value so it shouldn't be freed afterwards. */
 JSON_Status json_array_replace_value(JSON_Array *array, size_t i, JSON_Value *value);
 JSON_Status json_array_replace_string(JSON_Array *array, size_t i, const char* string);
 JSON_Status json_array_replace_number(JSON_Array *array, size_t i, double number);
@@ -177,7 +180,8 @@ JSON_Status json_array_replace_null(JSON_Array *array, size_t i);
 /* Frees and removes all values from array */
 JSON_Status json_array_clear(JSON_Array *array);
 
-/* Appends new value at the end of array. */
+/* Appends new value at the end of array.
+ * json_array_append_value does not copy passed value so it shouldn't be freed afterwards. */
 JSON_Status json_array_append_value(JSON_Array *array, JSON_Value *value);
 JSON_Status json_array_append_string(JSON_Array *array, const char *string);
 JSON_Status json_array_append_number(JSON_Array *array, double number);
