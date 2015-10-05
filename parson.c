@@ -404,7 +404,7 @@ static JSON_Status json_array_resize(JSON_Array *array, size_t new_capacity) {
     if (new_capacity == 0) {
         return JSONFailure;
     }
-    new_items = parson_malloc(new_capacity * sizeof(JSON_Value*));
+    new_items = (JSON_Value**)parson_malloc(new_capacity * sizeof(JSON_Value*));
     if (new_items == NULL) {
         return JSONFailure;
     }
