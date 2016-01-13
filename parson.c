@@ -1,6 +1,6 @@
 /*
  Parson ( http://kgabis.github.com/parson/ )
- Copyright (c) 2012 - 2015 Krzysztof Gabis
+ Copyright (c) 2012 - 2016 Krzysztof Gabis
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated documentation files (the "Software"), to deal
@@ -1322,21 +1322,26 @@ char * json_serialize_to_string_pretty(const JSON_Value *value) {
     return buf;
 }
 
-
 void json_free_serialized_string(char *string) {
     parson_free(string);
 }
 
 JSON_Status json_array_remove(JSON_Array *array, size_t ix) {
+    JSON_Value *temp_value = NULL;
     size_t last_element_ix = 0;
     if (array == NULL || ix >= json_array_get_count(array)) {
         return JSONFailure;
     }
     last_element_ix = json_array_get_count(array) - 1;
     json_value_free(json_array_get_value(array, ix));
+    if (ix != last_element_ix) { /* Replace value with one from the end of array */
+        temp_value = json_array_get_value(array, last_element_ix);
+        if (temp_value == NULL) {
+            return JSONFailure;
+        }
+        array->items[ix] = temp_value;
+    }
     array->count -= 1;
-    if (ix != last_element_ix) /* Replace value with one from the end of array */
-        array->items[ix] = json_array_get_value(array, last_element_ix);
     return JSONSuccess;
 }
 

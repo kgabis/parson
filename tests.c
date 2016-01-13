@@ -1,6 +1,6 @@
 /*
  Parson ( http://kgabis.github.com/parson/ )
- Copyright (c) 2012 - 2015 Krzysztof Gabis
+ Copyright (c) 2012 - 2016 Krzysztof Gabis
  
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated documentation files (the "Software"), to deal
@@ -311,7 +311,14 @@ void test_suite_5(void) {
     
     TEST(json_array_append_string(json_object_get_array(obj, "interests"), NULL) == JSONFailure);
     
+    TEST(json_array_append_string(interests_arr, "Writing") == JSONSuccess);
+    TEST(json_array_remove(interests_arr, 0) == JSONSuccess);
+    TEST(json_array_remove(interests_arr, 1) == JSONSuccess);
+    TEST(json_array_remove(interests_arr, 0) == JSONSuccess);
+    TEST(json_array_remove(interests_arr, 0) == JSONFailure); /* should be empty by now */
     
+    TEST(json_object_remove(obj, "interests") == JSONSuccess);
+
     /* UTF-8 tests */
     TEST(json_object_set_string(obj, "correct string", "κόσμε") == JSONSuccess);
     
