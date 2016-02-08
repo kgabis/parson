@@ -336,7 +336,7 @@ static JSON_Status json_object_resize(JSON_Object *object, size_t new_capacity) 
         return JSONFailure;
     
     temp_values = (JSON_Value**)parson_malloc(new_capacity * sizeof(JSON_Value*));
-    if (temp_names == NULL) {
+    if (temp_values == NULL) {
         parson_free(temp_names);
         return JSONFailure;
     }
