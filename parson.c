@@ -1237,13 +1237,15 @@ JSON_Status json_serialize_to_file(const JSON_Value *value, const char *filename
         return JSONFailure;
     }
     fp = fopen (filename, "w");
-    if (fp != NULL) {
-        if (fputs (serialized_string, fp) == EOF) {
-            return_code = JSONFailure;
-        }
-        if (fclose (fp) == EOF) {
-            return_code = JSONFailure;
-        }
+    if (fp == NULL) {
+        json_free_serialized_string(serialized_string);
+        return JSONFailure;
+    }
+    if (fputs(serialized_string, fp) == EOF) {
+        return_code = JSONFailure;
+    }
+    if (fclose(fp) == EOF) {
+        return_code = JSONFailure;
     }
     json_free_serialized_string(serialized_string);
     return return_code;
@@ -1292,13 +1294,15 @@ JSON_Status json_serialize_to_file_pretty(const JSON_Value *value, const char *f
         return JSONFailure;
     }
     fp = fopen (filename, "w");
-    if (fp != NULL) {
-        if (fputs (serialized_string, fp) == EOF) {
-            return_code = JSONFailure;
-        }
-        if (fclose (fp) == EOF) {
-            return_code = JSONFailure;
-        }
+    if (fp == NULL) {
+        json_free_serialized_string(serialized_string);
+        return JSONFailure;
+    }
+    if (fputs(serialized_string, fp) == EOF) {
+        return_code = JSONFailure;
+    }
+    if (fclose(fp) == EOF) {
+        return_code = JSONFailure;
     }
     json_free_serialized_string(serialized_string);
     return return_code;
