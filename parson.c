@@ -38,9 +38,11 @@
 #define MAX_NESTING               19
 #define DOUBLE_SERIALIZATION_FORMAT "%f"
 
+unsigned int JSON_Lines_Parsed = 0;
+
 #define SIZEOF_TOKEN(a)       (sizeof(a) - 1)
 #define SKIP_CHAR(str)        ((*str)++)
-#define SKIP_WHITESPACES(str) while (isspace(**str)) { SKIP_CHAR(str); }
+#define SKIP_WHITESPACES(str) while (isspace(**str)) { if ((**str) == '\n') JSON_Lines_Parsed++; SKIP_CHAR(str); }
 #define MAX(a, b)             ((a) > (b) ? (a) : (b))
 
 #undef malloc
@@ -272,13 +274,13 @@ static void remove_comments(char *string, const char *start_token, const char *e
             in_string = !in_string;
         } else if (!in_string && strncmp(string, start_token, start_token_len) == 0) {
 			for(i = 0; i < start_token_len; i++)
-                string[i] = ' ';
+                string[i] = (string[i] == '\n' ? '\n': ' ');
         	string = string + start_token_len;
             ptr = strstr(string, end_token);
             if (!ptr)
                 return;
             for (i = 0; i < (ptr - string) + end_token_len; i++)
-                string[i] = ' ';
+                string[i] = (string[i] == '\n' ? '\n': ' ');
           	string = ptr + end_token_len - 1;
         }
         escaped = 0;

@@ -31,6 +31,8 @@ extern "C"
     
 #include <stddef.h>   /* size_t */    
     
+extern unsigned int JSON_Lines_Parsed;
+
 /* Types and enums */
 typedef struct json_object_t JSON_Object;
 typedef struct json_array_t  JSON_Array;
