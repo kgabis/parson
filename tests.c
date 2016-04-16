@@ -41,7 +41,7 @@ void test_suite_1(void); /* Test 3 files from json.org + serialization*/
 void test_suite_2(JSON_Value *value); /* Test correctness of parsed values */
 void test_suite_2_no_comments(void);
 void test_suite_2_with_comments(void);
-void test_suite_3(void); /* Test incorrect values */
+void test_suite_3(void); /* Test parsing valid and invalid strings */
 void test_suite_4(void); /* Test deep copy funtion */
 void test_suite_5(void); /* Test building json values from scratch */
 void test_suite_6(void); /* Test value comparing verification */
@@ -63,6 +63,7 @@ int main() {
     /* print_commits_info("torvalds", "linux"); */
     /* serialization_example(); */
     /* persistence_example(); */
+    
     test_suite_1();
     test_suite_2_no_comments();
     test_suite_2_with_comments();
@@ -199,6 +200,16 @@ void test_suite_2_with_comments(void) {
 
 void test_suite_3(void) {
     char nested_20x[] = "[[[[[[[[[[[[[[[[[[[[\"hi\"]]]]]]]]]]]]]]]]]]]]";
+    
+    puts("Testing valid strings:");
+    TEST(json_parse_string("{\"lorem\":\"ipsum\"}") != NULL);
+    TEST(json_parse_string("[\"lorem\"]") != NULL);
+    TEST(json_parse_string("null") != NULL);
+    TEST(json_parse_string("true") != NULL);
+    TEST(json_parse_string("false") != NULL);
+    TEST(json_parse_string("\"string\"") != NULL);
+    TEST(json_parse_string("123") != NULL);
+    
     puts("Testing invalid strings:");
     TEST(json_parse_string(NULL) == NULL);
     TEST(json_parse_string("") == NULL); /* empty string */
@@ -217,7 +228,6 @@ void test_suite_3(void) {
     TEST(json_parse_string("{") == NULL);
     TEST(json_parse_string("}") == NULL);
     TEST(json_parse_string("x") == NULL);
-    TEST(json_parse_string("\"string\"") == NULL);
     TEST(json_parse_string("{:\"no name\"}") == NULL);
     TEST(json_parse_string("[,\"no first value\"]") == NULL);
     TEST(json_parse_string("[\"\\u00zz\"]") == NULL); /* invalid utf value */

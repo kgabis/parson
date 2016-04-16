@@ -241,7 +241,7 @@ static char * read_file(const char * filename) {
     file_contents = (char*)parson_malloc(sizeof(char) * (file_size + 1));
     if (!file_contents) {
         fclose(fp);
-        return NULL;
+        return NULL;        
     }
     if (fread(file_contents, file_size, 1, fp) < 1) {
         if (ferror(fp)) {
@@ -303,6 +303,9 @@ static JSON_Status json_object_add(JSON_Object *object, const char *name, JSON_V
     if (object == NULL || name == NULL || value == NULL) {
         return JSONFailure;
     }
+    if (json_object_get_value(object, name) != NULL) {
+        return JSONFailure;
+    }
     if (object->count >= object->capacity) {
         size_t new_capacity = MAX(object->capacity * 2, STARTING_CAPACITY);
         if (new_capacity > OBJECT_MAX_CAPACITY)
@@ -310,8 +313,6 @@ static JSON_Status json_object_add(JSON_Object *object, const char *name, JSON_V
         if (json_object_resize(object, new_capacity) == JSONFailure)
             return JSONFailure;
     }
-    if (json_object_get_value(object, name) != NULL)
-        return JSONFailure;
     index = object->count;
     object->names[index] = parson_strdup(name);
     if (object->names[index] == NULL)
@@ -546,8 +547,6 @@ static char * get_quoted_string(const char **string) {
     const char *string_start = *string;
     size_t string_len = 0;
     skip_quotes(string);
-    if (**string == '\0')
-        return NULL;
     string_len = *string - string_start - 2; /* length without quotes */
     return process_string(string_start + 1, string_len);
 }
@@ -904,9 +903,6 @@ JSON_Value * json_parse_file_with_comments(const char *filename) {
 JSON_Value * json_parse_string(const char *string) {
     if (string == NULL)
         return NULL;
-    SKIP_WHITESPACES(&string);
-    if (*string != '{' && *string != '[')
-        return NULL;
     return parse_value((const char**)&string, 0);
 }
 
@@ -920,10 +916,6 @@ JSON_Value * json_parse_string_with_comments(const char *string) {
     remove_comments(string_mutable_copy, "//", "\n");
     string_mutable_copy_ptr = string_mutable_copy;
     SKIP_WHITESPACES(&string_mutable_copy_ptr);
-    if (*string_mutable_copy_ptr != '{' && *string_mutable_copy_ptr != '[') {
-        parson_free(string_mutable_copy);
-        return NULL;
-    }
     result = parse_value((const char**)&string_mutable_copy_ptr, 0);
     parson_free(string_mutable_copy);
     return result;
