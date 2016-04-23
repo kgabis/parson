@@ -104,7 +104,7 @@ int  json_value_equals(const JSON_Value *a, const JSON_Value *b);
 JSON_Status json_validate(const JSON_Value *schema, const JSON_Value *value);
 
 /*
- * JSON Objec
+ * JSON Object
  */
 JSON_Value  * json_object_get_value  (const JSON_Object *object, const char *name);
 const char  * json_object_get_string (const JSON_Object *object, const char *name);
