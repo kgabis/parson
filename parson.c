@@ -21,8 +21,10 @@
  THE SOFTWARE.
 */
 #ifdef _MSC_VER
+#ifndef _CRT_SECURE_NO_WARNINGS
 #define _CRT_SECURE_NO_WARNINGS
-#endif
+#endif /* _CRT_SECURE_NO_WARNINGS */
+#endif /* _MSC_VER */
 
 #include "parson.h"
 
