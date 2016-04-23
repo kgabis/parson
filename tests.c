@@ -1,17 +1,17 @@
 /*
  Parson ( http://kgabis.github.com/parson/ )
  Copyright (c) 2012 - 2016 Krzysztof Gabis
- 
+
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated documentation files (the "Software"), to deal
  in the Software without restriction, including without limitation the rights
  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  copies of the Software, and to permit persons to whom the Software is
  furnished to do so, subject to the following conditions:
- 
+
  The above copyright notice and this permission notice shall be included in
  all copies or substantial portions of the Software.
- 
+
  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -31,8 +31,8 @@
 #include <string.h>
 #include <math.h>
 
-#define TEST(A) printf("%-72s-",#A);              \
-                if(A){puts(" OK");tests_passed++;} \
+#define TEST(A) printf("%-72s-",#A);\
+                if(A){puts(" OK");tests_passed++;}\
                 else{puts(" FAIL");tests_failed++;}
 #define STREQ(A, B) ((A) && (B) ? strcmp((A), (B)) == 0 : 0)
 #define EPSILON 0.000001
@@ -63,7 +63,7 @@ int main() {
     /* print_commits_info("torvalds", "linux"); */
     /* serialization_example(); */
     /* persistence_example(); */
-    
+
     test_suite_1();
     test_suite_2_no_comments();
     test_suite_2_with_comments();
@@ -85,27 +85,27 @@ void test_suite_1(void) {
     TEST(json_value_equals(json_parse_string(json_serialize_to_string(val)), val));
     TEST(json_value_equals(json_parse_string(json_serialize_to_string_pretty(val)), val));
     if (val) { json_value_free(val); }
-    
+
     TEST((val = json_parse_file("tests/test_1_2.txt")) != NULL);
     TEST(json_value_equals(json_parse_string(json_serialize_to_string(val)), val));
     TEST(json_value_equals(json_parse_string(json_serialize_to_string_pretty(val)), val));
     if (val) { json_value_free(val); }
-    
+
     TEST((val = json_parse_file("tests/test_1_3.txt")) != NULL);
     TEST(json_value_equals(json_parse_string(json_serialize_to_string(val)), val));
     TEST(json_value_equals(json_parse_string(json_serialize_to_string_pretty(val)), val));
     if (val) { json_value_free(val); }
-    
+
     TEST((val = json_parse_file_with_comments("tests/test_1_1.txt")) != NULL);
     TEST(json_value_equals(json_parse_string(json_serialize_to_string(val)), val));
     TEST(json_value_equals(json_parse_string(json_serialize_to_string_pretty(val)), val));
     if (val) { json_value_free(val); }
-    
+
     TEST((val = json_parse_file_with_comments("tests/test_1_2.txt")) != NULL);
     TEST(json_value_equals(json_parse_string(json_serialize_to_string(val)), val));
     TEST(json_value_equals(json_parse_string(json_serialize_to_string_pretty(val)), val));
     if (val) { json_value_free(val); }
-    
+
     TEST((val = json_parse_file_with_comments("tests/test_1_3.txt")) != NULL);
     TEST(json_value_equals(json_parse_string(json_serialize_to_string(val)), val));
     TEST(json_value_equals(json_parse_string(json_serialize_to_string_pretty(val)), val));
@@ -129,7 +129,7 @@ void test_suite_2(JSON_Value *root_value) {
     TEST(json_object_get_boolean(root_object, "boolean true") == 1);
     TEST(json_object_get_boolean(root_object, "boolean false") == 0);
     TEST(json_value_get_type(json_object_get_value(root_object, "null")) == JSONNull);
-    
+
     array = json_object_get_array(root_object, "string array");
     if (array != NULL && json_array_get_count(array) > 1) {
         TEST(STREQ(json_array_get_string(array, 0), "lorem"));
@@ -137,7 +137,7 @@ void test_suite_2(JSON_Value *root_value) {
     } else {
         tests_failed++;
     }
-    
+
     array = json_object_get_array(root_object, "x^2 array");
     if (array != NULL) {
         for (i = 0; i < json_array_get_count(array); i++) {
@@ -146,19 +146,19 @@ void test_suite_2(JSON_Value *root_value) {
     } else {
         tests_failed++;
     }
-    
+
     TEST(json_object_get_array(root_object, "non existent array") == NULL);
     TEST(STREQ(json_object_dotget_string(root_object, "object.nested string"), "str"));
     TEST(json_object_dotget_boolean(root_object, "object.nested true") == 1);
     TEST(json_object_dotget_boolean(root_object, "object.nested false") == 0);
     TEST(json_object_dotget_value(root_object, "object.nested null") != NULL);
     TEST(json_object_dotget_number(root_object, "object.nested number") == 123);
-    
+
     TEST(json_object_dotget_value(root_object, "should.be.null") == NULL);
     TEST(json_object_dotget_value(root_object, "should.be.null.") == NULL);
     TEST(json_object_dotget_value(root_object, ".") == NULL);
     TEST(json_object_dotget_value(root_object, "") == NULL);
-    
+
     array = json_object_dotget_array(root_object, "object.nested array");
     TEST(array != NULL);
     TEST(json_array_get_count(array) > 1);
@@ -167,12 +167,12 @@ void test_suite_2(JSON_Value *root_value) {
         TEST(STREQ(json_array_get_string(array, 1), "ipsum"));
     }
     TEST(json_object_dotget_boolean(root_object, "nested true"));
-    
+
     TEST(STREQ(json_object_get_string(root_object, "/**/"), "comment"));
     TEST(STREQ(json_object_get_string(root_object, "//"), "comment"));
     TEST(STREQ(json_object_get_string(root_object, "url"), "https://www.example.com/search?q=12345"));
     TEST(STREQ(json_object_get_string(root_object, "escaped chars"), "\" \\ /"));
-    
+
     TEST(json_object_get_object(root_object, "empty object") != NULL);
     TEST(json_object_get_array(root_object, "empty array") != NULL);
 
@@ -200,7 +200,7 @@ void test_suite_2_with_comments(void) {
 
 void test_suite_3(void) {
     char nested_20x[] = "[[[[[[[[[[[[[[[[[[[[\"hi\"]]]]]]]]]]]]]]]]]]]]";
-    
+
     puts("Testing valid strings:");
     TEST(json_parse_string("{\"lorem\":\"ipsum\"}") != NULL);
     TEST(json_parse_string("[\"lorem\"]") != NULL);
@@ -209,7 +209,7 @@ void test_suite_3(void) {
     TEST(json_parse_string("false") != NULL);
     TEST(json_parse_string("\"string\"") != NULL);
     TEST(json_parse_string("123") != NULL);
-    
+
     puts("Testing invalid strings:");
     TEST(json_parse_string(NULL) == NULL);
     TEST(json_parse_string("") == NULL); /* empty string */
@@ -267,29 +267,29 @@ void test_suite_4() {
 
 void test_suite_5(void) {
     JSON_Value *val_from_file = json_parse_file("tests/test_5.txt");
-    
+
     JSON_Value *val = NULL;
     JSON_Object *obj = NULL;
     JSON_Array *interests_arr = NULL;
-    
+
     val = json_value_init_object();
     TEST(val != NULL);
-    
+
     obj = json_value_get_object(val);
     TEST(obj != NULL);
-    
+
     TEST(json_object_set_string(obj, "first", "John") == JSONSuccess);
     TEST(json_object_set_string(obj, "last", "Doe") == JSONSuccess);
     TEST(json_object_set_number(obj, "age", 25) == JSONSuccess);
     TEST(json_object_set_boolean(obj, "registered", 1) == JSONSuccess);
-    
+
     TEST(json_object_set_value(obj, "interests", json_value_init_array()) == JSONSuccess);
     interests_arr = json_object_get_array(obj, "interests");
     TEST(interests_arr != NULL);
     TEST(json_array_append_string(interests_arr, "Writing") == JSONSuccess);
     TEST(json_array_append_string(interests_arr, "Mountain Biking") == JSONSuccess);
     TEST(json_array_replace_string(interests_arr, 0, "Reading") == JSONSuccess);
-    
+
     TEST(json_object_dotset_string(obj, "favorites.color", "blue") == JSONSuccess);
     TEST(json_object_dotset_string(obj, "favorites.sport", "running") == JSONSuccess);
     TEST(json_object_dotset_string(obj, "favorites.fruit", "apple") == JSONSuccess);
@@ -299,55 +299,55 @@ void test_suite_5(void) {
     TEST(json_object_set_string(obj, "surrogate string", "lorem𝄞ipsum𝍧lorem") == JSONSuccess);
     TEST(json_object_set_string(obj, "windows path", "C:\\Windows\\Path") == JSONSuccess);
     TEST(json_value_equals(val_from_file, val));
-    
+
     TEST(json_object_set_string(obj, NULL, "") == JSONFailure);
     TEST(json_object_set_string(obj, "last", NULL) == JSONFailure);
     TEST(json_object_set_string(obj, NULL, NULL) == JSONFailure);
     TEST(json_object_set_value(obj, NULL, NULL) == JSONFailure);
-    
+
     TEST(json_object_dotset_string(obj, NULL, "") == JSONFailure);
     TEST(json_object_dotset_string(obj, "favorites.color", NULL) == JSONFailure);
     TEST(json_object_dotset_string(obj, NULL, NULL) == JSONFailure);
     TEST(json_object_dotset_value(obj, NULL, NULL) == JSONFailure);
-    
+
     TEST(json_array_append_string(NULL, "lorem") == JSONFailure);
     TEST(json_array_append_value(interests_arr, NULL) == JSONFailure);
     TEST(json_array_append_value(NULL, NULL) == JSONFailure);
-    
+
     TEST(json_array_remove(NULL, 0) == JSONFailure);
     TEST(json_array_replace_value(interests_arr, 0, NULL) == JSONFailure);
     TEST(json_array_replace_string(NULL, 0, "lorem") == JSONFailure);
     TEST(json_array_replace_string(interests_arr, 100, "not existing") == JSONFailure);
-    
+
     TEST(json_array_append_string(json_object_get_array(obj, "interests"), NULL) == JSONFailure);
-    
+
     TEST(json_array_append_string(interests_arr, "Writing") == JSONSuccess);
     TEST(json_array_remove(interests_arr, 0) == JSONSuccess);
     TEST(json_array_remove(interests_arr, 1) == JSONSuccess);
     TEST(json_array_remove(interests_arr, 0) == JSONSuccess);
     TEST(json_array_remove(interests_arr, 0) == JSONFailure); /* should be empty by now */
-    
+
     TEST(json_object_remove(obj, "interests") == JSONSuccess);
 
     /* UTF-8 tests */
     TEST(json_object_set_string(obj, "correct string", "κόσμε") == JSONSuccess);
-    
+
     TEST(json_object_set_string(obj, "boundary 1", "\xed\x9f\xbf") == JSONSuccess);
     TEST(json_object_set_string(obj, "boundary 2", "\xee\x80\x80") == JSONSuccess);
     TEST(json_object_set_string(obj, "boundary 3", "\xef\xbf\xbd") == JSONSuccess);
     TEST(json_object_set_string(obj, "boundary 4", "\xf4\x8f\xbf\xbf") == JSONSuccess);
-    
+
     TEST(json_object_set_string(obj, "first continuation byte", "\x80") == JSONFailure);
     TEST(json_object_set_string(obj, "last continuation byte", "\xbf") == JSONFailure);
-    
+
     TEST(json_object_set_string(obj, "impossible sequence 1", "\xfe") == JSONFailure);
     TEST(json_object_set_string(obj, "impossible sequence 2", "\xff") == JSONFailure);
     TEST(json_object_set_string(obj, "impossible sequence 3", "\xfe\xfe\xff\xff") == JSONFailure);
-    
+
     TEST(json_object_set_string(obj, "overlong 1", "\xc0\xaf") == JSONFailure);
     TEST(json_object_set_string(obj, "overlong 2", "\xc1\xbf") == JSONFailure);
     TEST(json_object_set_string(obj, "overlong 3", "\xe0\x80\xaf") == JSONFailure);
-    TEST(json_object_set_string(obj, "overlong 4", "\xe0\x9f\xbf") == JSONFailure);    
+    TEST(json_object_set_string(obj, "overlong 4", "\xe0\x9f\xbf") == JSONFailure);
     TEST(json_object_set_string(obj, "overlong 5", "\xf0\x80\x80\xaf") == JSONFailure);
     TEST(json_object_set_string(obj, "overlong 6", "\xf0\x8f\xbf\xbf") == JSONFailure);
     TEST(json_object_set_string(obj, "overlong 7", "\xf0\x8f\xbf\xbf") == JSONFailure);
@@ -357,7 +357,7 @@ void test_suite_5(void) {
     TEST(json_object_set_string(obj, "overlong null 3", "\xf0\x80\x80\x80") == JSONFailure);
     TEST(json_object_set_string(obj, "overlong null 4", "\xf8\x80\x80\x80\x80") == JSONFailure);
     TEST(json_object_set_string(obj, "overlong null 5", "\xfc\x80\x80\x80\x80\x80") == JSONFailure);
-    
+
     TEST(json_object_set_string(obj, "single surrogate 1", "\xed\xa0\x80") == JSONFailure);
     TEST(json_object_set_string(obj, "single surrogate 2", "\xed\xaf\xbf") == JSONFailure);
     TEST(json_object_set_string(obj, "single surrogate 3", "\xed\xbf\xbf") == JSONFailure);
@@ -424,7 +424,7 @@ void test_suite_9(void) {
     serialization_size = json_serialization_size_pretty(a);
     serialized = json_serialize_to_string_pretty(a);
     TEST((strlen(serialized)+1) == serialization_size);
-    
+
     file_contents = read_file(filename);
     TEST(STREQ(file_contents, serialized));
 }
@@ -434,25 +434,25 @@ void print_commits_info(const char *username, const char *repo) {
     JSON_Array *commits;
     JSON_Object *commit;
     size_t i;
-    
+
     char curl_command[512];
     char cleanup_command[256];
     char output_filename[] = "commits.json";
-    
+
     /* it ain't pretty, but it's not a libcurl tutorial */
-    sprintf(curl_command, 
+    sprintf(curl_command,
         "curl -s \"https://api.github.com/repos/%s/%s/commits\" > %s",
         username, repo, output_filename);
     sprintf(cleanup_command, "rm -f %s", output_filename);
     system(curl_command);
-    
+
     /* parsing json and validating output */
     root_value = json_parse_file(output_filename);
     if (json_value_get_type(root_value) != JSONArray) {
         system(cleanup_command);
         return;
     }
-    
+
     /* getting array from root value and printing commit info */
     commits = json_value_get_array(root_value);
     printf("%-10.10s %-10.10s %s\n", "Date", "SHA", "Author");
@@ -463,7 +463,7 @@ void print_commits_info(const char *username, const char *repo) {
                json_object_get_string(commit, "sha"),
                json_object_dotget_string(commit, "commit.author.name"));
     }
-    
+
     /* cleanup code */
     json_value_free(root_value);
     system(cleanup_command);
