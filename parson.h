@@ -127,6 +127,7 @@ int           json_object_dotget_boolean(const JSON_Object *object, const char *
 /* Functions to get available names */
 size_t        json_object_get_count(const JSON_Object *object);
 const char  * json_object_get_name (const JSON_Object *object, size_t index);
+JSON_Value  * json_object_get_value_at(const JSON_Object *object, size_t index);
     
 /* Creates new name-value pair or frees and replaces old value with a new one. 
  * json_object_set_value does not copy passed value so it shouldn't be freed afterwards. */

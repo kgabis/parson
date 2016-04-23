@@ -983,14 +983,20 @@ size_t json_object_get_count(const JSON_Object *object) {
 }
 
 const char * json_object_get_name(const JSON_Object *object, size_t index) {
-    if (index >= json_object_get_count(object))
+    if (object == NULL || index >= json_object_get_count(object))
         return NULL;
     return object->names[index];
 }
 
+JSON_Value * json_object_get_value_at(const JSON_Object *object, size_t index) {
+    if (object == NULL || index >= json_object_get_count(object))
+        return NULL;
+    return object->values[index];
+}
+
 /* JSON Array API */
 JSON_Value * json_array_get_value(const JSON_Array *array, size_t index) {
-    if (index >= json_array_get_count(array))
+    if (array == NULL || index >= json_array_get_count(array))
         return NULL;
     return array->items[index];
 }
