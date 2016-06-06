@@ -1646,7 +1646,7 @@ JSON_Status json_validate(const JSON_Value *schema, const JSON_Value *value) {
             temp_schema_value = json_array_get_value(schema_array, 0);
             for (i = 0; i < json_array_get_count(value_array); i++) {
                 temp_value = json_array_get_value(value_array, i);
-                if (json_validate(temp_schema_value, temp_value) == 0) {
+                if (json_validate(temp_schema_value, temp_value) == JSONFailure) {
                     return JSONFailure;
                 }
             }
