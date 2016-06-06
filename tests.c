@@ -382,9 +382,13 @@ void test_suite_7(void) {
     JSON_Value *val_from_file = json_parse_file("tests/test_5.txt");
     JSON_Value *schema = json_value_init_object();
     JSON_Object *schema_obj = json_value_get_object(schema);
+    JSON_Array *interests_arr = NULL;
     json_object_set_string(schema_obj, "first", "");
     json_object_set_string(schema_obj, "last", "");
     json_object_set_number(schema_obj, "age", 0);
+    json_object_set_value(schema_obj, "interests", json_value_init_array());
+    interests_arr = json_object_get_array(schema_obj, "interests");
+    json_array_append_string(interests_arr, "");
     json_object_set_null(schema_obj, "favorites");
     TEST(json_validate(schema, val_from_file) == JSONSuccess);
     json_object_set_string(schema_obj, "age", "");
