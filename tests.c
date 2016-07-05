@@ -119,10 +119,42 @@ void test_suite_2(JSON_Value *root_value) {
     TEST(root_value);
     TEST(json_value_get_type(root_value) == JSONObject);
     root_object = json_value_get_object(root_value);
+
+    TEST(json_object_has_value(root_object, "string"));
+    TEST(!json_object_has_value(root_object, "_string"));
+    TEST(json_object_has_value_of_type(root_object, "object", JSONObject));
+    TEST(!json_object_has_value_of_type(root_object, "string array", JSONObject));
+    TEST(json_object_has_value_of_type(root_object, "string array", JSONArray));
+    TEST(!json_object_has_value_of_type(root_object, "object", JSONArray));
+    TEST(json_object_has_value_of_type(root_object, "string", JSONString));
+    TEST(!json_object_has_value_of_type(root_object, "positive one", JSONString));
+    TEST(json_object_has_value_of_type(root_object, "positive one", JSONNumber));
+    TEST(!json_object_has_value_of_type(root_object, "string", JSONNumber));
+    TEST(json_object_has_value_of_type(root_object, "boolean true", JSONBoolean));
+    TEST(!json_object_has_value_of_type(root_object, "positive one", JSONBoolean));
+    TEST(json_object_has_value_of_type(root_object, "null", JSONNull));
+    TEST(!json_object_has_value_of_type(root_object, "object", JSONNull));
+
+    TEST(json_object_dothas_value(root_object, "object.nested array"));
+    TEST(!json_object_dothas_value(root_object, "_object.nested array"));
+    TEST(json_object_dothas_value_of_type(root_object, "object.nested object", JSONObject));
+    TEST(!json_object_dothas_value_of_type(root_object, "object.nested array", JSONObject));
+    TEST(json_object_dothas_value_of_type(root_object, "object.nested array", JSONArray));
+    TEST(!json_object_dothas_value_of_type(root_object, "object.nested object", JSONArray));
+    TEST(json_object_dothas_value_of_type(root_object, "object.nested string", JSONString));
+    TEST(!json_object_dothas_value_of_type(root_object, "object.nested number", JSONString));
+    TEST(json_object_dothas_value_of_type(root_object, "object.nested number", JSONNumber));
+    TEST(!json_object_dothas_value_of_type(root_object, "_object.nested whatever", JSONNumber));
+    TEST(json_object_dothas_value_of_type(root_object, "object.nested true", JSONBoolean));
+    TEST(!json_object_dothas_value_of_type(root_object, "object.nested number", JSONBoolean));
+    TEST(json_object_dothas_value_of_type(root_object, "object.nested null", JSONNull));
+    TEST(!json_object_dothas_value_of_type(root_object, "object.nested object", JSONNull));
+
     TEST(STREQ(json_object_get_string(root_object, "string"), "lorem ipsum"));
     TEST(STREQ(json_object_get_string(root_object, "utf string"), "lorem ipsum"));
     TEST(STREQ(json_object_get_string(root_object, "utf-8 string"), "あいうえお"));
     TEST(STREQ(json_object_get_string(root_object, "surrogate string"), "lorem𝄞ipsum𝍧lorem"));
+
     TEST(json_object_get_number(root_object, "positive one") == 1.0);
     TEST(json_object_get_number(root_object, "negative one") == -1.0);
     TEST(fabs(json_object_get_number(root_object, "hard to parse number") - (-0.000314)) < EPSILON);
@@ -166,7 +198,7 @@ void test_suite_2(JSON_Value *root_value) {
         TEST(STREQ(json_array_get_string(array, 0), "lorem"));
         TEST(STREQ(json_array_get_string(array, 1), "ipsum"));
     }
-    TEST(json_object_dotget_boolean(root_object, "nested true"));
+    TEST(json_object_dotget_boolean(root_object, "object.nested true") == 1);
 
     TEST(STREQ(json_object_get_string(root_object, "/**/"), "comment"));
     TEST(STREQ(json_object_get_string(root_object, "//"), "comment"));

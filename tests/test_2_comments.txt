@@ -22,11 +22,13 @@
 */ 
 	"/*" : null,
 	"object" : { "nested string" : "str",
-				 "nested true" : /* lorem ipsum */ true, 
+				 "nested true" : /* lorem ipsum */ true,
 				 "nested false" : false,
 				 "nested null" : null, // lorem ipsum
 				 "nested number" : 123,
-				 "nested array" : ["lorem", "ipsum"] },
+				 "nested array" : ["lorem", "ipsum"],
+				 "nested object" : {"lorem": "ipsum"}
+	},
 	"*/" : null,
 	"/**/" : "comment",
 	"//" : "comment",
