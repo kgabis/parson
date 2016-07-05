@@ -109,7 +109,7 @@ static void         json_array_free(JSON_Array *array);
 static JSON_Value * json_value_init_string_no_copy(char *string);
 
 /* Parser */
-static int          skip_quotes(const char **string);
+static JSON_Status  skip_quotes(const char **string);
 static int          parse_utf_16(const char **unprocessed, char **processed);
 static char *       process_string(const char *input, size_t len);
 static char *       get_quoted_string(const char **string);
@@ -438,24 +438,24 @@ static JSON_Value * json_value_init_string_no_copy(char *string) {
 }
 
 /* Parser */
-static int skip_quotes(const char **string) {
+static JSON_Status skip_quotes(const char **string) {
     if (**string != '\"') {
-        return 0;
+        return JSONFailure;
     }
     SKIP_CHAR(string);
     while (**string != '\"') {
         if (**string == '\0') {
-            return 0;
+            return JSONFailure;
         } else if (**string == '\\') {
             SKIP_CHAR(string);
             if (**string == '\0') {
-                return 0;
+                return JSONFailure;
             }
         }
         SKIP_CHAR(string);
     }
     SKIP_CHAR(string);
-    return 1;
+    return JSONSuccess;
 }
 
 static int parse_utf_16(const char **unprocessed, char **processed) {
@@ -554,8 +554,8 @@ error:
 static char * get_quoted_string(const char **string) {
     const char *string_start = *string;
     size_t string_len = 0;
-    int succeeded = skip_quotes(string);
-    if (!succeeded) {
+    JSON_Status status = skip_quotes(string);
+    if (status != JSONSuccess) {
         return NULL;
     }
     string_len = *string - string_start - 2; /* length without quotes */
@@ -1231,8 +1231,9 @@ JSON_Status json_serialize_to_buffer(const JSON_Value *value, char *buf, size_t 
         return JSONFailure;
     }
     written = json_serialize_to_buffer_r(value, buf, 0, 0, NULL);
-    if (written < 0)
+    if (written < 0) {
         return JSONFailure;
+    }
     return JSONSuccess;
 }
 
