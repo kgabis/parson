@@ -109,7 +109,7 @@ static void         json_array_free(JSON_Array *array);
 static JSON_Value * json_value_init_string_no_copy(char *string);
 
 /* Parser */
-static void         skip_quotes(const char **string);
+static int          skip_quotes(const char **string);
 static int          parse_utf_16(const char **unprocessed, char **processed);
 static char *       process_string(const char *input, size_t len);
 static char *       get_quoted_string(const char **string);
@@ -438,19 +438,24 @@ static JSON_Value * json_value_init_string_no_copy(char *string) {
 }
 
 /* Parser */
-static void skip_quotes(const char **string) {
+static int skip_quotes(const char **string) {
+    if (**string != '\"') {
+        return 0;
+    }
     SKIP_CHAR(string);
     while (**string != '\"') {
-        if (**string == '\0')
-            return;
-        if (**string == '\\') {
+        if (**string == '\0') {
+            return 0;
+        } else if (**string == '\\') {
             SKIP_CHAR(string);
-            if (**string == '\0')
-                return;
+            if (**string == '\0') {
+                return 0;
+            }
         }
         SKIP_CHAR(string);
     }
     SKIP_CHAR(string);
+    return 1;
 }
 
 static int parse_utf_16(const char **unprocessed, char **processed) {
@@ -532,6 +537,7 @@ static char* process_string(const char *input, size_t len) {
     *output_ptr = '\0';
     /* resize to new length */
     final_size = (size_t)(output_ptr-output) + 1;
+    /* todo: don't resize if final_size == initial_size */
     resized_output = (char*)parson_malloc(final_size);
     if (resized_output == NULL)
         goto error;
@@ -548,7 +554,10 @@ error:
 static char * get_quoted_string(const char **string) {
     const char *string_start = *string;
     size_t string_len = 0;
-    skip_quotes(string);
+    int succeeded = skip_quotes(string);
+    if (!succeeded) {
+        return NULL;
+    }
     string_len = *string - string_start - 2; /* length without quotes */
     return process_string(string_start + 1, string_len);
 }
@@ -581,7 +590,7 @@ static JSON_Value * parse_object_value(const char **string, size_t nesting) {
     JSON_Value *output_value = json_value_init_object(), *new_value = NULL;
     JSON_Object *output_object = json_value_get_object(output_value);
     char *new_key = NULL;
-    if (output_value == NULL)
+    if (output_value == NULL || **string != '{')
         return NULL;
     SKIP_CHAR(string);
     SKIP_WHITESPACES(string);
@@ -629,7 +638,7 @@ static JSON_Value * parse_object_value(const char **string, size_t nesting) {
 static JSON_Value * parse_array_value(const char **string, size_t nesting) {
     JSON_Value *output_value = json_value_init_array(), *new_array_value = NULL;
     JSON_Array *output_array = json_value_get_array(output_value);
-    if (!output_value)
+    if (!output_value || **string != '[')
         return NULL;
     SKIP_CHAR(string);
     SKIP_WHITESPACES(string);
