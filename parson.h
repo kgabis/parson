@@ -75,6 +75,7 @@ JSON_Value * json_parse_string(const char *string);
 JSON_Value * json_parse_string_with_comments(const char *string);
 
 /* Serialization */
+char *      json_encode_string(const char *string);
 size_t      json_serialization_size(const JSON_Value *value); /* returns 0 on fail */
 JSON_Status json_serialize_to_buffer(const JSON_Value *value, char *buf, size_t buf_size_in_bytes);
 JSON_Status json_serialize_to_file(const JSON_Value *value, const char *filename);

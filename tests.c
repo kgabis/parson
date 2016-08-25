@@ -48,6 +48,7 @@ void test_suite_6(void); /* Test value comparing verification */
 void test_suite_7(void); /* Test schema validation */
 void test_suite_8(void); /* Test serialization */
 void test_suite_9(void); /* Test serialization (pretty) */
+void test_suite_10(void); /* Test string encoding */
 
 void print_commits_info(const char *username, const char *repo);
 void persistence_example(void);
@@ -74,6 +75,7 @@ int main() {
     test_suite_7();
     test_suite_8();
     test_suite_9();
+    test_suite_10();
     printf("Tests failed: %d\n", tests_failed);
     printf("Tests passed: %d\n", tests_passed);
     return 0;
@@ -463,6 +465,14 @@ void test_suite_9(void) {
 
     file_contents = read_file(filename);
     TEST(STREQ(file_contents, serialized));
+}
+
+void test_suite_10(void) {
+    const char *raw_str = "\"\\/\b\f\n\r\t\"test";
+    char *enc_str = json_encode_string(raw_str);
+
+    TEST(STREQ(enc_str, "\"\\\"\\\\\\/\\b\\f\\n\\r\\t\\\"test\""));
+    free(enc_str);
 }
 
 void print_commits_info(const char *username, const char *repo) {
