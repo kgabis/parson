@@ -1929,3 +1929,119 @@ void json_set_allocation_functions(JSON_Malloc_Function malloc_fun, JSON_Free_Fu
     parson_malloc = malloc_fun;
     parson_free = free_fun;
 }
+
+JSON_Value * json_value_query_value(JSON_Value *value, const char *query) {
+    const char *query_start = query, *field_start = query, *field_end = NULL;
+    char *name = NULL;
+    JSON_Value *return_value = NULL;
+    int in_bracket = 0, is_digit = 1;
+    while (query != NULL && *query != '\0') {
+        switch (*query) {
+            case '[':
+                if (in_bracket) {
+                    // Ignore
+                } else if (field_start == query) {
+                    field_start = query + 1;
+                    in_bracket = 1;
+                } else if (field_start < query) {
+                    field_end = query;
+                }
+                break;
+            case ']':
+                if (in_bracket) {
+                    field_end = query;
+                    query++;
+                } else {
+                    return NULL;
+                }
+                break;
+            case '.':
+                if (in_bracket) {
+                    // Ignore
+                } else if (field_start == query) {
+                    if (query_start == query) {
+                        field_start = query + 1;
+                    } else {
+                        // Query ".."
+                        field_end = query;
+                    }
+                } else if (field_start < query) {
+                    field_end = query;
+                    query++;
+                }
+                break;
+            case '0': case '1': case '2': case '3': case '4':
+            case '5': case '6': case '7': case '8': case '9':
+                // Keep is_digit = 1
+                break;
+            default :
+                is_digit = 0;
+                break;
+        }
+        if (field_end != NULL) {
+            break;
+        } else {
+            query++;
+        }
+    }
+    if (query != NULL && query_start < query && !in_bracket && field_end == NULL) {
+        field_end = query;
+    }
+    if (field_end == NULL) {
+        return NULL;
+    }
+    name = parson_strndup(field_start, field_end - field_start);
+    if (name == NULL) {
+        return NULL;
+    }
+    if (0 < strlen(name)) {
+        switch (json_type(value)) {
+            case JSONObject:
+                if (is_digit) {
+                    return_value = json_object_get_value_at(json_value_get_object(value), atol(name));
+                } else {
+                    return_value = json_object_get_value(json_value_get_object(value), name);
+                }
+                break;
+            case JSONArray:
+                if (!is_digit) {
+                    return NULL;
+                }
+                return_value = json_array_get_value(json_value_get_array(value), atol(name));
+                break;
+            default:
+                return NULL;
+        }
+    } else {
+        return_value = value;
+    }
+    parson_free(name);
+    if (*query != '\0' && return_value != NULL) {
+        return_value = json_value_query_value(return_value, query);
+    }
+    return return_value;
+}
+
+const char * json_value_query_string(JSON_Value *value, const char *query) {
+    return json_value_get_string(json_value_query_value(value, query));
+}
+
+JSON_Object * json_value_query_object(JSON_Value *value, const char *query) {
+    return json_value_get_object(json_value_query_value(value, query));
+}
+
+JSON_Array * json_value_query_array(JSON_Value *value, const char *query) {
+    return json_value_get_array(json_value_query_value(value, query));
+}
+
+double json_value_query_number(JSON_Value *value, const char *query) {
+    return json_value_get_number(json_value_query_value(value, query));
+}
+
+int json_value_query_boolean(JSON_Value *value, const char *query) {
+    return json_value_get_boolean(json_value_query_value(value, query));
+}
+
+JSON_Value * json_query(JSON_Value *value, const char *query) {
+    return json_value_query_value(value, query);
+}
