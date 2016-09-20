@@ -142,8 +142,8 @@ static char * parson_strdup(const char *string) {
     return parson_strndup(string, strlen(string));
 }
 
-static int is_utf16_hex(const unsigned char *s) {
-    return isxdigit(s[0]) && isxdigit(s[1]) && isxdigit(s[2]) && isxdigit(s[3]);
+static int is_utf16_hex(const unsigned char *string) {
+    return isxdigit(string[0]) && isxdigit(string[1]) && isxdigit(string[2]) && isxdigit(string[3]);
 }
 
 static int num_bytes_in_utf8_sequence(unsigned char c) {
