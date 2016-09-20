@@ -874,6 +874,8 @@ static int json_serialize_to_buffer_r(const JSON_Value *value, char *buf, int le
             }
             if (num == ((double)(int)num)) { /*  check if num is integer */
                 written = sprintf(num_buf, "%d", (int)num);
+	    } else if (num == ((double)(unsigned int)num)) {
+                written = sprintf(num_buf, "%u", (unsigned int)num);
             } else {
                 written = sprintf(num_buf, DOUBLE_SERIALIZATION_FORMAT, num);
             }
