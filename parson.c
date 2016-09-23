@@ -33,6 +33,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <math.h>
+#include <unistd.h>
 
 #define STARTING_CAPACITY         15
 #define ARRAY_MAX_CAPACITY    122880 /* 15*(2^13) */
@@ -1381,6 +1382,9 @@ JSON_Status json_serialize_to_file(const JSON_Value *value, const char *filename
     if (fputs(serialized_string, fp) == EOF) {
         return_code = JSONFailure;
     }
+    if(fsync(fileno(fp)) < 0){
+	return_code = JSONFailure;
+    }
     if (fclose(fp) == EOF) {
         return_code = JSONFailure;
     }
@@ -1440,6 +1444,9 @@ JSON_Status json_serialize_to_file_pretty(const JSON_Value *value, const char *f
     }
     if (fputs(serialized_string, fp) == EOF) {
         return_code = JSONFailure;
+    }
+    if(fsync(fileno(fp)) < 0){
+    	return_code = JSONFailure;
     }
     if (fclose(fp) == EOF) {
         return_code = JSONFailure;
