@@ -1,31 +1,43 @@
 <!DOCTYPE html>
-<html lang="en-us">
-  <head>
-    <meta charset="UTF-8">
-    <title>parson by kgabis</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" type="text/css" href="stylesheets/normalize.css" media="screen">
-    <link href='http://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
-    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
-    <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
-  </head>
-  <body>
-    <section class="page-header">
-      <h1 class="project-name">parson</h1>
-      <h2 class="project-tagline">Lightweight json library written in C.</h2>
-      <a href="https://github.com/kgabis/parson" class="btn">View on GitHub</a>
-      <a href="https://github.com/kgabis/parson/zipball/master" class="btn">Download .zip</a>
-      <a href="https://github.com/kgabis/parson/tarball/master" class="btn">Download .tar.gz</a>
-    </section>
+<html>
 
-    <section class="main-content">
-      <h2>
-<a id="about" class="anchor" href="#about" aria-hidden="true"><span class="octicon octicon-link"></span></a>About</h2>
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="description" content="parson : Lightweight json library written in C.">
+
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>parson</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/kgabis/parson">View on GitHub</a>
+
+          <h1 id="project_title">parson</h1>
+          <h2 id="project_tagline">Lightweight json library written in C.</h2>
+
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/kgabis/parson/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/kgabis/parson/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        <h2>
+<a id="about" class="anchor" href="#about" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>About</h2>
 
 <p>Parson is a lighweight <a href="http://json.org">json</a> library written in C.</p>
 
 <h2>
-<a id="features" class="anchor" href="#features" aria-hidden="true"><span class="octicon octicon-link"></span></a>Features</h2>
+<a id="features" class="anchor" href="#features" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Features</h2>
 
 <ul>
 <li>Full JSON support</li>
@@ -37,7 +49,7 @@
 </ul>
 
 <h2>
-<a id="installation" class="anchor" href="#installation" aria-hidden="true"><span class="octicon octicon-link"></span></a>Installation</h2>
+<a id="installation" class="anchor" href="#installation" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Installation</h2>
 
 <p>Run:</p>
 
@@ -49,14 +61,14 @@
 <p>Run <code>make test</code> to compile and run tests.</p>
 
 <h2>
-<a id="examples" class="anchor" href="#examples" aria-hidden="true"><span class="octicon octicon-link"></span></a>Examples</h2>
+<a id="examples" class="anchor" href="#examples" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Examples</h2>
 
 <h3>
-<a id="parsing-json" class="anchor" href="#parsing-json" aria-hidden="true"><span class="octicon octicon-link"></span></a>Parsing JSON</h3>
+<a id="parsing-json" class="anchor" href="#parsing-json" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Parsing JSON</h3>
 
 <p>Here is a function, which prints basic commit info (date, sha and author) from a github repository.  </p>
 
-<div class="highlight highlight-c"><pre><span class="pl-k">void</span> <span class="pl-en">print_commits_info</span>(<span class="pl-k">const</span> <span class="pl-k">char</span> *username, <span class="pl-k">const</span> <span class="pl-k">char</span> *repo) {
+<div class="highlight highlight-source-c"><pre><span class="pl-k">void</span> <span class="pl-en">print_commits_info</span>(<span class="pl-k">const</span> <span class="pl-k">char</span> *username, <span class="pl-k">const</span> <span class="pl-k">char</span> *repo) {
     JSON_Value *root_value;
     JSON_Array *commits;
     JSON_Object *commit;
@@ -110,11 +122,11 @@
 </code></pre>
 
 <h3>
-<a id="persistence" class="anchor" href="#persistence" aria-hidden="true"><span class="octicon octicon-link"></span></a>Persistence</h3>
+<a id="persistence" class="anchor" href="#persistence" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Persistence</h3>
 
 <p>In this example I'm using parson to save user information to a file and then load it and validate later.</p>
 
-<div class="highlight highlight-c"><pre><span class="pl-k">void</span> <span class="pl-en">persistence_example</span>(<span class="pl-k">void</span>) {
+<div class="highlight highlight-source-c"><pre><span class="pl-k">void</span> <span class="pl-en">persistence_example</span>(<span class="pl-k">void</span>) {
     JSON_Value *schema = <span class="pl-c1">json_parse_string</span>(<span class="pl-s"><span class="pl-pds">"</span>{<span class="pl-cce">\"</span>name<span class="pl-cce">\"</span>:<span class="pl-cce">\"\"</span>}<span class="pl-pds">"</span></span>);
     JSON_Value *user_data = <span class="pl-c1">json_parse_file</span>(<span class="pl-s"><span class="pl-pds">"</span>user_data.json<span class="pl-pds">"</span></span>);
     <span class="pl-k">char</span> buf[<span class="pl-c1">256</span>];
@@ -134,13 +146,13 @@
 }</pre></div>
 
 <h3>
-<a id="serialization" class="anchor" href="#serialization" aria-hidden="true"><span class="octicon octicon-link"></span></a>Serialization</h3>
+<a id="serialization" class="anchor" href="#serialization" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Serialization</h3>
 
 <p>Creating JSON values is very simple thanks to the dot notation. 
 Object hierarchy is automatically created when addressing specific fields. 
 In the following example I create a simple JSON value containing basic information about a person.</p>
 
-<div class="highlight highlight-c"><pre><span class="pl-k">void</span> <span class="pl-en">serialization_example</span>(<span class="pl-k">void</span>) {
+<div class="highlight highlight-source-c"><pre><span class="pl-k">void</span> <span class="pl-en">serialization_example</span>(<span class="pl-k">void</span>) {
     JSON_Value *root_value = <span class="pl-c1">json_value_init_object</span>();
     JSON_Object *root_object = <span class="pl-c1">json_value_get_object</span>(root_value);
     <span class="pl-k">char</span> *serialized_string = <span class="pl-c1">NULL</span>;
@@ -173,26 +185,27 @@ In the following example I create a simple JSON value containing basic informati
 </code></pre>
 
 <h2>
-<a id="contributing" class="anchor" href="#contributing" aria-hidden="true"><span class="octicon octicon-link"></span></a>Contributing</h2>
+<a id="contributing" class="anchor" href="#contributing" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Contributing</h2>
 
-<p>I will always merge <em>working</em> bug fixes. However, if you want to add something to the API, 
-I <em>won't</em> merge it without prior discussion.
+<p>I will always merge <em>working</em> bug fixes. However, if you want to add something new to the API, please create an "issue" on github for this first so we can discuss if it should end up in the library before you start implementing it.
 Remember to follow parson's code style and write appropriate tests.</p>
 
 <h2>
-<a id="license" class="anchor" href="#license" aria-hidden="true"><span class="octicon octicon-link"></span></a>License</h2>
+<a id="license" class="anchor" href="#license" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>License</h2>
 
 <p><a href="http://opensource.org/licenses/mit-license.php">The MIT License (MIT)</a></p>
+      </section>
+    </div>
 
-      <footer class="site-footer">
-        <span class="site-footer-owner"><a href="https://github.com/kgabis/parson">parson</a> is maintained by <a href="https://github.com/kgabis">kgabis</a>.</span>
-
-        <span class="site-footer-credits">This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the <a href="https://github.com/jasonlong/cayman-theme">Cayman theme</a> by <a href="https://twitter.com/jasonlong">Jason Long</a>.</span>
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">parson maintained by <a href="https://github.com/kgabis">kgabis</a></p>
+        <p>Published with <a href="https://pages.github.com">GitHub Pages</a></p>
       </footer>
+    </div>
 
-    </section>
-
-            <script type="text/javascript">
+              <script type="text/javascript">
             var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
             document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
           </script>
@@ -203,6 +216,6 @@ Remember to follow parson's code style and write appropriate tests.</p>
             } catch(err) {}
           </script>
 
+
   </body>
 </html>
-
