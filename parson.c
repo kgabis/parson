@@ -1004,6 +1004,9 @@ JSON_Value * json_parse_string(const char *string) {
     if (string == NULL) {
         return NULL;
     }
+    if (string[0] == '\xEF' && string[1] == '\xBB' && string[2] == '\xBF') {
+        string = string + 3; /* Support for UTF-8 BOM */
+    }
     return parse_value((const char**)&string, 0);
 }
 

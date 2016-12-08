@@ -1,4 +1,4 @@
-{
+﻿{
     "string" : "lorem ipsum",
     "utf string" : "\u006corem\u0020ipsum",
     "utf-8 string": "あいうえお",
