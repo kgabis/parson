@@ -208,6 +208,36 @@ void test_suite_2(JSON_Value *root_value) {
     TEST(json_object_get_object(root_object, "empty object") != NULL);
     TEST(json_object_get_array(root_object, "empty array") != NULL);
 
+    TEST((json_value_query_value(root_value, ".") == root_value));
+    TEST((json_value_query_value(root_value, "..") == root_value));
+    TEST((json_value_query_value(root_value, "...") == root_value));
+    TEST((json_value_query_value(root_value, "[]") == root_value));
+    TEST((json_value_query_value(root_value, NULL) == NULL));
+    TEST((json_value_query_value(root_value, "") == NULL));
+    TEST((json_value_query_value(root_value, "noexist") == NULL));
+    TEST((json_value_query_value(root_value, ".noexist") == NULL));
+    TEST((json_value_query_value(root_value, "..noexist") == NULL));
+    TEST((json_value_query_value(root_value, "noexist.prop") == NULL));
+    TEST((json_value_query_value(root_value, ".noexist.prop") == NULL));
+    TEST((json_value_query_value(root_value, "..noexist.prop") == NULL));
+    TEST((json_value_query_value(root_value, ".[.no[[exist].prop") == NULL));
+    TEST((json_value_query_value(root_value, ".object].nested true") == NULL));
+    TEST(STREQ(json_value_query_string(root_value, "[0]"), "lorem ipsum"));
+    TEST(STREQ(json_value_query_string(root_value, "object.nested object.lorem"), "ipsum"));
+    TEST(STREQ(json_value_query_string(root_value, "object.nested object[0]"), "ipsum"));
+    TEST(STREQ(json_value_query_string(root_value, "object.nested array[0]"), "lorem"));
+    TEST(STREQ(json_value_query_string(root_value, ".object[nested array][1]"), "ipsum"));
+    TEST((json_value_query_number(root_value, ".object[nested number]") == 123));
+    TEST((json_value_query_boolean(root_value, ".object[nested true]") == 1));
+
+    array = json_value_query_array(root_value, ".object[nested array][]");
+    TEST(array != NULL);
+    TEST(json_array_get_count(array) == 2);
+
+    array = json_value_query_array(root_value, ".[x^2 array][]");
+    TEST(array != NULL);
+    TEST(json_array_get_count(array) == 11);
+
 }
 
 void test_suite_2_no_comments(void) {

@@ -224,6 +224,15 @@ const char  *   json_string (const JSON_Value *value);
 double          json_number (const JSON_Value *value);
 int             json_boolean(const JSON_Value *value);
 
+/* Query */
+JSON_Value  * json_value_query_value  (JSON_Value *value, const char *query);
+const char  * json_value_query_string (JSON_Value *value, const char *query);
+JSON_Object * json_value_query_object (JSON_Value *value, const char *query);
+JSON_Array  * json_value_query_array  (JSON_Value *value, const char *query);
+double        json_value_query_number (JSON_Value *value, const char *query); /* returns 0 on fail */
+int           json_value_query_boolean(JSON_Value *value, const char *query); /* returns -1 on fail */
+JSON_Value  * json_query              (JSON_Value *value, const char *query); /* shorter version of json_value_query_value */
+
 #ifdef __cplusplus
 }
 #endif

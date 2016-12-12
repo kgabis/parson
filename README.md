@@ -75,6 +75,50 @@ Date       SHA        Author
 ...
 ```
 
+###Query
+When you simply read JSON and get values without modifying it, you can use '.' and '[]' to traverse object and array hierarchy.
+```c
+void query_example(void) {
+    JSON_Value *root_value;
+    char *json_string;
+    
+    /* json string to parse */
+    json_string = "{"
+            "\"list\":["
+                "{"
+                    "\"index\":0,"
+                    "\"data\":{"
+                        "\"prop\":\"value\""
+                    "}"
+                "},"
+                "{"
+                    "\"index\":1,"
+                    "\"data\":{"
+                        "\"prop\":null"
+                    "}"
+                "},"
+                "{"
+                    "\"index\":2,"
+                    "\"data\":{"
+                        "\"prop\":123"
+                    "}"
+                "}"
+            "]"
+        "}";
+    
+    /* parsing json string */
+    root_value = json_parse_string(json_string);
+    
+    if (JSONObject == json_type(root_value)) {
+        printf("Query: \"%s\", Result: \"%s\"\n", ".list[0].data.prop", json_value_query_string(root_value, ".list[0].data.prop"));
+        printf("Query: \"%s\", Result: \"%d\"\n", ".list[2].data.prop", (int)json_value_query_number(root_value, ".list[2].data.prop"));
+    }
+    
+    /* cleanup code */
+    json_value_free(root_value);
+}
+```
+
 ###Persistence
 In this example I'm using parson to save user information to a file and then load it and validate later.
 ```c
