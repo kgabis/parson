@@ -115,6 +115,7 @@ void test_suite_1(void) {
 void test_suite_2(JSON_Value *root_value) {
     JSON_Object *root_object;
     JSON_Array *array;
+    JSON_Value *array_value;
     size_t i;
     TEST(root_value);
     TEST(json_value_get_type(root_value) == JSONObject);
@@ -207,7 +208,13 @@ void test_suite_2(JSON_Value *root_value) {
 
     TEST(json_object_get_object(root_object, "empty object") != NULL);
     TEST(json_object_get_array(root_object, "empty array") != NULL);
-
+    
+    TEST(json_object_get_wrapping_value(root_object) == root_value);
+    array = json_object_get_array(root_object, "string array");
+    array_value = json_object_get_value(root_object, "string array");
+    TEST(json_array_get_wrapping_value(array) == array_value);
+    TEST(json_value_get_parent(array_value) == root_value);
+    TEST(json_value_get_parent(root_value) == NULL);
 }
 
 void test_suite_2_no_comments(void) {
@@ -300,7 +307,7 @@ void test_suite_4() {
 void test_suite_5(void) {
     JSON_Value *val_from_file = json_parse_file("tests/test_5.txt");
 
-    JSON_Value *val = NULL;
+    JSON_Value *val = NULL, *val_parent;
     JSON_Object *obj = NULL;
     JSON_Array *interests_arr = NULL;
 
@@ -359,6 +366,18 @@ void test_suite_5(void) {
     TEST(json_array_remove(interests_arr, 0) == JSONSuccess);
     TEST(json_array_remove(interests_arr, 0) == JSONFailure); /* should be empty by now */
 
+    val_parent = json_value_init_null();
+    TEST(json_object_set_value(obj, "x", val_parent) == JSONSuccess);
+    TEST(json_object_set_value(obj, "x", val_parent) == JSONFailure);
+
+    val_parent = json_value_init_null();
+    TEST(json_array_append_value(interests_arr, val_parent) == JSONSuccess);
+    TEST(json_array_append_value(interests_arr, val_parent) == JSONFailure);
+
+    val_parent = json_value_init_null();
+    TEST(json_array_replace_value(interests_arr, 0, val_parent) == JSONSuccess);
+    TEST(json_array_replace_value(interests_arr, 0, val_parent) == JSONFailure);
+    
     TEST(json_object_remove(obj, "interests") == JSONSuccess);
 
     /* UTF-8 tests */
