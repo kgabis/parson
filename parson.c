@@ -820,6 +820,9 @@ static int json_serialize_to_buffer_r(const JSON_Value *value, char *buf, int le
             }
             for (i = 0; i < count; i++) {
                 key = json_object_get_name(object, i);
+                if (key == NULL) {
+                    return -1;
+                }
                 if (is_pretty) {
                     APPEND_INDENT(level+1);
                 }
@@ -858,6 +861,9 @@ static int json_serialize_to_buffer_r(const JSON_Value *value, char *buf, int le
             return written_total;
         case JSONString:
             string = json_value_get_string(value);
+            if (string == NULL) {
+                return -1;
+            }
             written = json_serialize_string(string, buf);
             if (written < 0) {
                 return -1;
@@ -1354,6 +1360,9 @@ JSON_Value * json_value_deep_copy(const JSON_Value *value) {
             return json_value_init_number(json_value_get_number(value));
         case JSONString:
             temp_string = json_value_get_string(value);
+            if (temp_string == NULL) {
+                return NULL;
+            }
             temp_string_copy = parson_strdup(temp_string);
             if (temp_string_copy == NULL) {
                 return NULL;
@@ -1916,6 +1925,9 @@ JSON_Status json_value_equals(const JSON_Value *a, const JSON_Value *b) {
         case JSONString:
             a_string = json_value_get_string(a);
             b_string = json_value_get_string(b);
+            if (a_string == NULL || b_string == NULL) {
+                return 0; /* shouldn't happen */
+            }
             return strcmp(a_string, b_string) == 0;
         case JSONBoolean:
             return json_value_get_boolean(a) == json_value_get_boolean(b);
