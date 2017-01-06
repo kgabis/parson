@@ -33,6 +33,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <math.h>
+#include <errno.h>
 
 #define STARTING_CAPACITY         15
 #define ARRAY_MAX_CAPACITY    122880 /* 15*(2^13) */
@@ -737,15 +738,14 @@ static JSON_Value * parse_boolean_value(const char **string) {
 
 static JSON_Value * parse_number_value(const char **string) {
     char *end;
-    double number = strtod(*string, &end);
-    JSON_Value *output_value;
-    if (is_decimal(*string, end - *string)) {
-        *string = end;
-        output_value = json_value_init_number(number);
-    } else {
-        output_value = NULL;
+    double number = 0;
+    errno = 0;
+    number = strtod(*string, &end);
+    if (errno || !is_decimal(*string, end - *string)) {
+        return NULL;
     }
-    return output_value;
+    *string = end;
+    return json_value_init_number(number);
 }
 
 static JSON_Value * parse_null_value(const char **string) {

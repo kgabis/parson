@@ -291,6 +291,8 @@ void test_suite_3(void) {
     TEST(json_parse_string("[-007]") == NULL);
     TEST(json_parse_string("[-07.0]") == NULL);
     TEST(json_parse_string("[\"\\uDF67\\uD834\"]") == NULL); /* wrong order surrogate pair */
+    TEST(json_parse_string("[1.7976931348623157e309]") == NULL);
+    TEST(json_parse_string("[-1.7976931348623157e309]") == NULL);
 }
 
 void test_suite_4() {
