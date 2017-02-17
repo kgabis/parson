@@ -1,0 +1,28 @@
+# from pacakge.json
+set (PARSON_VERSION 0.0.0 CACHE STRING "set library version")
+
+if (PARSON_VERSION STREQUAL 0.0.0)
+	execute_process (
+		COMMAND git rev-parse --short HEAD
+		WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+		OUTPUT_VARIABLE git_rev
+		OUTPUT_STRIP_TRAILING_WHITESPACE
+		ERROR_VARIABLE git_err
+	)
+
+	if (git_err)
+		message (FATAL_ERROR
+			"${git_err}"
+			"*** Please define PARSON_VERSION ***\n"
+		)
+	endif ()
+
+	set (PARSON_VERSION ${PARSON_VERSION}.${git_rev})
+endif ()
+
+string (REPLACE "." ";" version_list ${PARSON_VERSION})
+
+list (GET version_list 0 so_version)
+
+message (STATUS "set SOVERSION to ${so_version}")
+message (STATUS "set VERSION to ${PARSON_VERSION}")
