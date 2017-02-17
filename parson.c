@@ -501,18 +501,22 @@ static int scan_hex(const char c) {
 }
 
 static int scan_utf_16(const char *str, unsigned int *cp) {
-    unsigned int cp1 = scan_hex(*str++) << 12;
-    unsigned int cp2 = scan_hex(*str++) << 8;
-    unsigned int cp3 = scan_hex(*str++) << 4;
-    unsigned int cp4 = scan_hex(*str);
+    int i = 4;
+    int intermediate;
 
-    if (cp1 == EOF || cp2 == EOF || cp3 == EOF || cp4 == EOF) {
-        return EOF;
-    } else {
-        *cp = cp1 | cp2 | cp3 | cp4;
+    *cp = 0;
 
-        return 1;
+    while (i--) {
+        intermediate = scan_hex(*str++);
+
+        if (intermediate == EOF) {
+            return EOF;
+        }
+
+        *cp |= intermediate << (i << 2);
     }
+
+    return 1;
 }
 
 static int parse_utf_16(const char **unprocessed, char **processed) {
