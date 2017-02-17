@@ -114,6 +114,8 @@ static JSON_Value * json_value_init_string_no_copy(char *string);
 
 /* Parser */
 static JSON_Status  skip_quotes(const char **string);
+static int          scan_hex(const char c);
+static int          scan_utf_16(const char *str, unsigned int *cp);
 static int          parse_utf_16(const char **unprocessed, char **processed);
 static char *       process_string(const char *input, size_t len);
 static char *       get_quoted_string(const char **string);
@@ -486,12 +488,43 @@ static JSON_Status skip_quotes(const char **string) {
     return JSONSuccess;
 }
 
+static int scan_hex(const char c) {
+    if (c >= '0' && c <= '9') {
+        return c - '0';
+    } else if (c >= 'A' && c <= 'F') {
+        return c - 'A' + 10;
+    } else if (c >= 'a' && c <= 'f') {
+        return c - 'a' + 10;
+    } else {
+        return EOF;
+    }
+}
+
+static int scan_utf_16(const char *str, unsigned int *cp) {
+    int i = 4;
+    int intermediate;
+
+    *cp = 0;
+
+    while (i--) {
+        intermediate = scan_hex(*str++);
+
+        if (intermediate == EOF) {
+            return EOF;
+        }
+
+        *cp |= intermediate << (i << 2);
+    }
+
+    return 1;
+}
+
 static int parse_utf_16(const char **unprocessed, char **processed) {
     unsigned int cp, lead, trail;
     char *processed_ptr = *processed;
     const char *unprocessed_ptr = *unprocessed;
     unprocessed_ptr++; /* skips u */
-    if (!is_utf16_hex((const unsigned char*)unprocessed_ptr) || sscanf(unprocessed_ptr, "%4x", &cp) == EOF) {
+    if (!is_utf16_hex((const unsigned char*)unprocessed_ptr) || scan_utf_16(unprocessed_ptr, &cp) == EOF) {
         return JSONFailure;
     }
     if (cp < 0x80) {
@@ -508,7 +541,7 @@ static int parse_utf_16(const char **unprocessed, char **processed) {
         unprocessed_ptr += 4; /* should always be within the buffer, otherwise previous sscanf would fail */
         if (*unprocessed_ptr++ != '\\' || *unprocessed_ptr++ != 'u' || /* starts with \u? */
             !is_utf16_hex((const unsigned char*)unprocessed_ptr)    ||
-            sscanf(unprocessed_ptr, "%4x", &trail) == EOF           ||
+            scan_utf_16(unprocessed_ptr, &trail) == EOF             ||
             trail < 0xDC00 || trail > 0xDFFF) { /* valid trail surrogate? (0xDC00..0xDFFF) */
                 return JSONFailure;
         }
