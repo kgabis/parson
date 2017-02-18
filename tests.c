@@ -31,7 +31,7 @@
 #include <string.h>
 #include <math.h>
 
-#define TEST(A) printf("%-72s-",#A);\
+#define TEST(A) printf("%d %-72s-", __LINE__, #A);\
                 if(A){puts(" OK");tests_passed++;}\
                 else{puts(" FAIL");tests_failed++;}
 #define STREQ(A, B) ((A) && (B) ? strcmp((A), (B)) == 0 : 0)

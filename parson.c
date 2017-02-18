@@ -35,6 +35,10 @@
 #include <math.h>
 #include <errno.h>
 
+/* Apparently sscanf is not implemented in some "standard" libraries, so don't use it, if you
+ * don't have to. */
+#define sscanf THINK_TWICE_ABOUT_USING_SSCANF
+
 #define STARTING_CAPACITY         15
 #define ARRAY_MAX_CAPACITY    122880 /* 15*(2^13) */
 #define OBJECT_MAX_CAPACITY      960 /* 15*(2^6)  */
@@ -90,7 +94,8 @@ static char * read_file(const char *filename);
 static void   remove_comments(char *string, const char *start_token, const char *end_token);
 static char * parson_strndup(const char *string, size_t n);
 static char * parson_strdup(const char *string);
-static int    is_utf16_hex(const unsigned char *string);
+static int    hex_char_to_int(char c);
+static int    parse_utf16_hex(const char *string, unsigned int *result);
 static int    num_bytes_in_utf8_sequence(unsigned char c);
 static int    verify_utf8_sequence(const unsigned char *string, int *len);
 static int    is_valid_utf8(const char *string, size_t string_len);
@@ -114,7 +119,7 @@ static JSON_Value * json_value_init_string_no_copy(char *string);
 
 /* Parser */
 static JSON_Status  skip_quotes(const char **string);
-static int          parse_utf_16(const char **unprocessed, char **processed);
+static int          parse_utf16(const char **unprocessed, char **processed);
 static char *       process_string(const char *input, size_t len);
 static char *       get_quoted_string(const char **string);
 static JSON_Value * parse_object_value(const char **string, size_t nesting);
@@ -146,8 +151,31 @@ static char * parson_strdup(const char *string) {
     return parson_strndup(string, strlen(string));
 }
 
-static int is_utf16_hex(const unsigned char *s) {
-    return isxdigit(s[0]) && isxdigit(s[1]) && isxdigit(s[2]) && isxdigit(s[3]);
+static int hex_char_to_int(char c) {
+    if (c >= '0' && c <= '9') {
+        return c - '0';
+    } else if (c >= 'a' && c <= 'f') {
+        return c - 'a' + 10;
+    } else if (c >= 'A' && c <= 'F') {
+        return c - 'A' + 10;
+    }
+    return -1;
+}
+
+static int parse_utf16_hex(const char *s, unsigned int *result) {
+    int x1, x2, x3, x4;
+    if (s[0] == '\0' || s[1] == '\0' || s[2] == '\0' || s[3] == '\0') {
+        return 0;
+    }
+    x1 = hex_char_to_int(s[0]);
+    x2 = hex_char_to_int(s[1]);
+    x3 = hex_char_to_int(s[2]);
+    x4 = hex_char_to_int(s[3]);
+    if (x1 == -1 || x2 == -1 || x3 == -1 || x4 == -1) {
+        return 0;
+    }
+    *result = (unsigned int)((x1 << 12) | (x2 << 8) | (x3 << 4) | x4);
+    return 1;
 }
 
 static int num_bytes_in_utf8_sequence(unsigned char c) {
@@ -486,16 +514,18 @@ static JSON_Status skip_quotes(const char **string) {
     return JSONSuccess;
 }
 
-static int parse_utf_16(const char **unprocessed, char **processed) {
+static int parse_utf16(const char **unprocessed, char **processed) {
     unsigned int cp, lead, trail;
+    int parse_succeeded = 0;
     char *processed_ptr = *processed;
     const char *unprocessed_ptr = *unprocessed;
     unprocessed_ptr++; /* skips u */
-    if (!is_utf16_hex((const unsigned char*)unprocessed_ptr) || sscanf(unprocessed_ptr, "%4x", &cp) == EOF) {
+    parse_succeeded = parse_utf16_hex(unprocessed_ptr, &cp);
+    if (!parse_succeeded) {
         return JSONFailure;
     }
     if (cp < 0x80) {
-        *processed_ptr = cp; /* 0xxxxxxx */
+        *processed_ptr = (char)cp; /* 0xxxxxxx */
     } else if (cp < 0x800) {
         *processed_ptr++ = ((cp >> 6) & 0x1F) | 0xC0; /* 110xxxxx */
         *processed_ptr   = ((cp     ) & 0x3F) | 0x80; /* 10xxxxxx */
@@ -506,11 +536,12 @@ static int parse_utf_16(const char **unprocessed, char **processed) {
     } else if (cp >= 0xD800 && cp <= 0xDBFF) { /* lead surrogate (0xD800..0xDBFF) */
         lead = cp;
         unprocessed_ptr += 4; /* should always be within the buffer, otherwise previous sscanf would fail */
-        if (*unprocessed_ptr++ != '\\' || *unprocessed_ptr++ != 'u' || /* starts with \u? */
-            !is_utf16_hex((const unsigned char*)unprocessed_ptr)    ||
-            sscanf(unprocessed_ptr, "%4x", &trail) == EOF           ||
-            trail < 0xDC00 || trail > 0xDFFF) { /* valid trail surrogate? (0xDC00..0xDFFF) */
-                return JSONFailure;
+        if (*unprocessed_ptr++ != '\\' || *unprocessed_ptr++ != 'u') {
+            return JSONFailure;
+        }
+        parse_succeeded = parse_utf16_hex(unprocessed_ptr, &trail);
+        if (!parse_succeeded || trail < 0xDC00 || trail > 0xDFFF) { /* valid trail surrogate? (0xDC00..0xDFFF) */
+            return JSONFailure;
         }
         cp = ((((lead-0xD800)&0x3FF)<<10)|((trail-0xDC00)&0x3FF))+0x010000;
         *processed_ptr++ = (((cp >> 18) & 0x07) | 0xF0); /* 11110xxx */
@@ -549,7 +580,7 @@ static char* process_string(const char *input, size_t len) {
                 case 'r':  *output_ptr = '\r'; break;
                 case 't':  *output_ptr = '\t'; break;
                 case 'u':
-                    if (parse_utf_16(&input_ptr, &output_ptr) == JSONFailure) {
+                    if (parse_utf16(&input_ptr, &output_ptr) == JSONFailure) {
                         goto error;
                     }
                     break;
