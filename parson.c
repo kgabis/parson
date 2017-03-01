@@ -417,9 +417,10 @@ static JSON_Value * json_object_nget_value(const JSON_Object *object, const char
 }
 
 static void json_object_free(JSON_Object *object) {
-    while(object->count--) {
-        parson_free(object->names[object->count]);
-        json_value_free(object->values[object->count]);
+    size_t i;
+    for (i = 0; i < object->count; i++) {
+        parson_free(object->names[i]);
+        json_value_free(object->values[i]);
     }
     parson_free(object->names);
     parson_free(object->values);
@@ -474,8 +475,9 @@ static JSON_Status json_array_resize(JSON_Array *array, size_t new_capacity) {
 }
 
 static void json_array_free(JSON_Array *array) {
-    while (array->count--) {
-        json_value_free(array->items[array->count]);
+    size_t i;
+    for (i = 0; i < array->count; i++) {
+        json_value_free(array->items[i]);
     }
     parson_free(array->items);
     parson_free(array);
