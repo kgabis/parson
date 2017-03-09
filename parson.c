@@ -566,9 +566,12 @@ static char* process_string(const char *input, size_t len) {
     const char *input_ptr = input;
     size_t initial_size = (len + 1) * sizeof(char);
     size_t final_size = 0;
-    char *output = (char*)parson_malloc(initial_size);
-    char *output_ptr = output;
-    char *resized_output = NULL;
+    char *output = NULL, *output_ptr = NULL, *resized_output = NULL;
+    output = (char*)parson_malloc(initial_size);
+    if (output == NULL) {
+        goto error;
+    }
+    output_ptr = output;
     while ((*input_ptr != '\0') && (size_t)(input_ptr - input) < len) {
         if (*input_ptr == '\\') {
             input_ptr++;
@@ -678,9 +681,9 @@ static JSON_Value * parse_object_value(const char **string, size_t nesting) {
             json_value_free(output_value);
             return NULL;
         }
-        if(json_object_add(output_object, new_key, new_value) == JSONFailure) {
+        if (json_object_add(output_object, new_key, new_value) == JSONFailure) {
             parson_free(new_key);
-            parson_free(new_value);
+            json_value_free(new_value);
             json_value_free(output_value);
             return NULL;
         }
@@ -716,12 +719,12 @@ static JSON_Value * parse_array_value(const char **string, size_t nesting) {
     }
     while (**string != '\0') {
         new_array_value = parse_value(string, nesting);
-        if (!new_array_value) {
+        if (new_array_value == NULL) {
             json_value_free(output_value);
             return NULL;
         }
         if (json_array_add(output_array, new_array_value) == JSONFailure) {
-            parson_free(new_array_value);
+            json_value_free(new_array_value);
             json_value_free(output_value);
             return NULL;
         }
@@ -1829,11 +1832,10 @@ JSON_Status json_object_dotremove(JSON_Object *object, const char *name) {
     } else {
         current_name = parson_strndup(name, dot_pos - name);
         temp_obj = json_object_get_object(object, current_name);
+        parson_free(current_name);
         if (temp_obj == NULL) {
-            parson_free(current_name);
             return JSONFailure;
         }
-        parson_free(current_name);
         return json_object_dotremove(temp_obj, dot_pos + 1);
     }
 }
