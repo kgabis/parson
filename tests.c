@@ -86,9 +86,7 @@ void test_suite_1(void) {
     TEST(json_value_equals(json_parse_string(json_serialize_to_string_pretty(val)), val));
     if (val) { json_value_free(val); }
 
-    TEST((val = json_parse_file("tests/test_1_2.txt")) != NULL);
-    TEST(json_value_equals(json_parse_string(json_serialize_to_string(val)), val));
-    TEST(json_value_equals(json_parse_string(json_serialize_to_string_pretty(val)), val));
+    TEST((val = json_parse_file("tests/test_1_2.txt")) == NULL); /* Over 2048 levels of nesting */
     if (val) { json_value_free(val); }
 
     TEST((val = json_parse_file("tests/test_1_3.txt")) != NULL);
@@ -101,9 +99,7 @@ void test_suite_1(void) {
     TEST(json_value_equals(json_parse_string(json_serialize_to_string_pretty(val)), val));
     if (val) { json_value_free(val); }
 
-    TEST((val = json_parse_file_with_comments("tests/test_1_2.txt")) != NULL);
-    TEST(json_value_equals(json_parse_string(json_serialize_to_string(val)), val));
-    TEST(json_value_equals(json_parse_string(json_serialize_to_string_pretty(val)), val));
+    TEST((val = json_parse_file_with_comments("tests/test_1_2.txt")) == NULL); /* Over 2048 levels of nesting */
     if (val) { json_value_free(val); }
 
     TEST((val = json_parse_file_with_comments("tests/test_1_3.txt")) != NULL);
@@ -238,8 +234,6 @@ void test_suite_2_with_comments(void) {
 }
 
 void test_suite_3(void) {
-    char nested_20x[] = "[[[[[[[[[[[[[[[[[[[[\"hi\"]]]]]]]]]]]]]]]]]]]]";
-
     puts("Testing valid strings:");
     TEST(json_parse_string("{\"lorem\":\"ipsum\"}") != NULL);
     TEST(json_parse_string("[\"lorem\"]") != NULL);
@@ -281,7 +275,6 @@ void test_suite_3(void) {
     TEST(json_parse_string("[\"\n\"]") == NULL); /* control character */
     TEST(json_parse_string("[\"\f\"]") == NULL); /* control character */
     TEST(json_parse_string("[\"\r\"]") == NULL); /* control character */
-    TEST(json_parse_string(nested_20x) == NULL); /* too deep */
     TEST(json_parse_string("[0x2]") == NULL);    /* hex */
     TEST(json_parse_string("[0X2]") == NULL);    /* HEX */
     TEST(json_parse_string("[07]") == NULL);     /* octals */
