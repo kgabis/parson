@@ -1007,6 +1007,22 @@ static int json_serialize_string(const char *string, char *buf) {
     return written_total;
 }
 
+char *json_encode_string(const char *string) {
+    char *enc_str = NULL;
+    int buf_size_bytes = json_serialize_string(string, NULL);
+
+    if (buf_size_bytes <= 0) {
+        return NULL;
+    }
+
+    enc_str = (char*)malloc(buf_size_bytes + 1);
+    if (enc_str == NULL)
+        return NULL;
+
+    json_serialize_string(string, enc_str);
+    return enc_str;
+}
+
 static int append_indent(char *buf, int level) {
     int i;
     int written = -1, written_total = 0;
