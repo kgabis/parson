@@ -1,0 +1,52 @@
+enable_testing ()
+
+add_executable (test-c-standalone EXCLUDE_FROM_ALL tests.c parson.c)
+
+add_executable (test-c-linked EXCLUDE_FROM_ALL tests.c)
+target_link_libraries (test-c-linked parson)
+
+add_custom_command (
+	OUTPUT tests.cxx
+	COMMAND ${CMAKE_COMMAND} -E create_symlink
+		${PROJECT_SOURCE_DIR}/tests
+		${PROJECT_BINARY_DIR}/tests
+	COMMAND ${CMAKE_COMMAND} -E create_symlink
+		${PROJECT_SOURCE_DIR}/tests.c
+		${PROJECT_BINARY_DIR}/tests.cxx
+)
+
+add_executable (test-cxx-standalone EXCLUDE_FROM_ALL tests.cxx parson.c)
+
+add_executable (test-cxx-linked EXCLUDE_FROM_ALL tests.cxx)
+target_link_libraries (test-cxx-linked parson)
+
+add_test (test-c-standalone-build
+	${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}
+		--target test-c-standalone
+)
+
+add_test (test-cxx-standalone-build
+	${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}
+		--target test-cxx-standalone
+)
+
+add_test (test-c-linked-build
+	${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}
+		--target test-c-linked
+)
+
+add_test (test-cxx-linked-build
+	${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}
+		--target test-cxx-linked
+)
+
+add_test (test-c-standalone-run test-c-standalone)
+add_test (test-cxx-standalone-run test-cxx-standalone)
+add_test (test-c-linked-run test-c-linked)
+add_test (test-cxx-linked-run test-cxx-linked)
+
+add_custom_command (TARGET parson
+	POST_BUILD
+	COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}
+		--target test
+)
