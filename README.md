@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/kgabis/parson.svg?branch=master)](https://travis-ci.org/kgabis/parson)
+
 ## About
 Parson is a lighweight [json](http://json.org) library written in C.
 
