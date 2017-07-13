@@ -31,9 +31,20 @@
 #include <string.h>
 #include <math.h>
 
+/* Returning JSONError values from parse functions is currently based
+   on a preprocessor definition so adjust the pass criteria to match.
+ */
+#if defined(PARSON_RETURN_ERROR_VALUES)
+#define PARSE_PASSED(A) ((A) != NULL && json_value_get_type(A) != JSONError)
+#else
+#define PARSE_PASSED(A) ((A) != NULL)
+#endif
+
 #define TEST(A) printf("%d %-72s-", __LINE__, #A);\
                 if(A){puts(" OK");tests_passed++;}\
                 else{puts(" FAIL");tests_failed++;}
+#define TEST_PARSE_PASSES(A) { JSON_Value *v = A; TEST(PARSE_PASSED(v)) }
+#define TEST_PARSE_FAILS(A) { JSON_Value *v = A; TEST(!PARSE_PASSED(v)) }
 #define STREQ(A, B) ((A) && (B) ? strcmp((A), (B)) == 0 : 0)
 #define EPSILON 0.000001
 
@@ -81,28 +92,28 @@ int main() {
 
 void test_suite_1(void) {
     JSON_Value *val;
-    TEST((val = json_parse_file("tests/test_1_1.txt")) != NULL);
+    TEST_PARSE_PASSES(val = json_parse_file("tests/test_1_1.txt"));
     TEST(json_value_equals(json_parse_string(json_serialize_to_string(val)), val));
     TEST(json_value_equals(json_parse_string(json_serialize_to_string_pretty(val)), val));
     if (val) { json_value_free(val); }
 
-    TEST((val = json_parse_file("tests/test_1_2.txt")) == NULL); /* Over 2048 levels of nesting */
+    TEST_PARSE_FAILS(val = json_parse_file("tests/test_1_2.txt")); /* Over 2048 levels of nesting */
     if (val) { json_value_free(val); }
 
-    TEST((val = json_parse_file("tests/test_1_3.txt")) != NULL);
+    TEST_PARSE_PASSES(val = json_parse_file("tests/test_1_3.txt"));
     TEST(json_value_equals(json_parse_string(json_serialize_to_string(val)), val));
     TEST(json_value_equals(json_parse_string(json_serialize_to_string_pretty(val)), val));
     if (val) { json_value_free(val); }
 
-    TEST((val = json_parse_file_with_comments("tests/test_1_1.txt")) != NULL);
+    TEST_PARSE_PASSES(val = json_parse_file_with_comments("tests/test_1_1.txt"));
     TEST(json_value_equals(json_parse_string(json_serialize_to_string(val)), val));
     TEST(json_value_equals(json_parse_string(json_serialize_to_string_pretty(val)), val));
     if (val) { json_value_free(val); }
 
-    TEST((val = json_parse_file_with_comments("tests/test_1_2.txt")) == NULL); /* Over 2048 levels of nesting */
+    TEST_PARSE_FAILS(val = json_parse_file_with_comments("tests/test_1_2.txt")); /* Over 2048 levels of nesting */
     if (val) { json_value_free(val); }
 
-    TEST((val = json_parse_file_with_comments("tests/test_1_3.txt")) != NULL);
+    TEST_PARSE_PASSES(val = json_parse_file_with_comments("tests/test_1_3.txt"));
     TEST(json_value_equals(json_parse_string(json_serialize_to_string(val)), val));
     TEST(json_value_equals(json_parse_string(json_serialize_to_string_pretty(val)), val));
     if (val) { json_value_free(val); }
@@ -204,7 +215,7 @@ void test_suite_2(JSON_Value *root_value) {
 
     TEST(json_object_get_object(root_object, "empty object") != NULL);
     TEST(json_object_get_array(root_object, "empty array") != NULL);
-    
+
     TEST(json_object_get_wrapping_value(root_object) == root_value);
     array = json_object_get_array(root_object, "string array");
     array_value = json_object_get_value(root_object, "string array");
@@ -235,57 +246,57 @@ void test_suite_2_with_comments(void) {
 
 void test_suite_3(void) {
     puts("Testing valid strings:");
-    TEST(json_parse_string("{\"lorem\":\"ipsum\"}") != NULL);
-    TEST(json_parse_string("[\"lorem\"]") != NULL);
-    TEST(json_parse_string("null") != NULL);
-    TEST(json_parse_string("true") != NULL);
-    TEST(json_parse_string("false") != NULL);
-    TEST(json_parse_string("\"string\"") != NULL);
-    TEST(json_parse_string("123") != NULL);
+    TEST_PARSE_PASSES(json_parse_string("{\"lorem\":\"ipsum\"}"));
+    TEST_PARSE_PASSES(json_parse_string("[\"lorem\"]"));
+    TEST_PARSE_PASSES(json_parse_string("null"));
+    TEST_PARSE_PASSES(json_parse_string("true"));
+    TEST_PARSE_PASSES(json_parse_string("false"));
+    TEST_PARSE_PASSES(json_parse_string("\"string\""));
+    TEST_PARSE_PASSES(json_parse_string("123"));
 
     puts("Testing invalid strings:");
-    TEST(json_parse_string(NULL) == NULL);
-    TEST(json_parse_string("") == NULL); /* empty string */
-    TEST(json_parse_string("[\"lorem\",]") == NULL);
-    TEST(json_parse_string("{\"lorem\":\"ipsum\",}") == NULL);
-    TEST(json_parse_string("{lorem:ipsum}") == NULL);
-    TEST(json_parse_string("[,]") == NULL);
-    TEST(json_parse_string("[,") == NULL);
-    TEST(json_parse_string("[") == NULL);
-    TEST(json_parse_string("]") == NULL);
-    TEST(json_parse_string("{\"a\":0,\"a\":0}") == NULL); /* duplicate keys */
-    TEST(json_parse_string("{:,}") == NULL);
-    TEST(json_parse_string("{,}") == NULL);
-    TEST(json_parse_string("{,") == NULL);
-    TEST(json_parse_string("{:") == NULL);
-    TEST(json_parse_string("{") == NULL);
-    TEST(json_parse_string("}") == NULL);
-    TEST(json_parse_string("x") == NULL);
-    TEST(json_parse_string("{:\"no name\"}") == NULL);
-    TEST(json_parse_string("[,\"no first value\"]") == NULL);
-    TEST(json_parse_string("[\"\\u00zz\"]") == NULL); /* invalid utf value */
-    TEST(json_parse_string("[\"\\u00\"]") == NULL); /* invalid utf value */
-    TEST(json_parse_string("[\"\\u\"]") == NULL); /* invalid utf value */
-    TEST(json_parse_string("[\"\\\"]") == NULL); /* control character */
-    TEST(json_parse_string("[\"\"\"]") == NULL); /* control character */
-    TEST(json_parse_string("[\"\0\"]") == NULL); /* control character */
-    TEST(json_parse_string("[\"\a\"]") == NULL); /* control character */
-    TEST(json_parse_string("[\"\b\"]") == NULL); /* control character */
-    TEST(json_parse_string("[\"\t\"]") == NULL); /* control character */
-    TEST(json_parse_string("[\"\n\"]") == NULL); /* control character */
-    TEST(json_parse_string("[\"\f\"]") == NULL); /* control character */
-    TEST(json_parse_string("[\"\r\"]") == NULL); /* control character */
-    TEST(json_parse_string("[0x2]") == NULL);    /* hex */
-    TEST(json_parse_string("[0X2]") == NULL);    /* HEX */
-    TEST(json_parse_string("[07]") == NULL);     /* octals */
-    TEST(json_parse_string("[0070]") == NULL);
-    TEST(json_parse_string("[07.0]") == NULL);
-    TEST(json_parse_string("[-07]") == NULL);
-    TEST(json_parse_string("[-007]") == NULL);
-    TEST(json_parse_string("[-07.0]") == NULL);
-    TEST(json_parse_string("[\"\\uDF67\\uD834\"]") == NULL); /* wrong order surrogate pair */
-    TEST(json_parse_string("[1.7976931348623157e309]") == NULL);
-    TEST(json_parse_string("[-1.7976931348623157e309]") == NULL);
+    TEST_PARSE_FAILS(json_parse_string(NULL));
+    TEST_PARSE_FAILS(json_parse_string("")); /* empty string */
+    TEST_PARSE_FAILS(json_parse_string("[\"lorem\",]"));
+    TEST_PARSE_FAILS(json_parse_string("{\"lorem\":\"ipsum\",}"));
+    TEST_PARSE_FAILS(json_parse_string("{lorem:ipsum}"));
+    TEST_PARSE_FAILS(json_parse_string("[,]"));
+    TEST_PARSE_FAILS(json_parse_string("[,"));
+    TEST_PARSE_FAILS(json_parse_string("["));
+    TEST_PARSE_FAILS(json_parse_string("]"));
+    TEST_PARSE_FAILS(json_parse_string("{\"a\":0,\"a\":0}")); /* duplicate keys */
+    TEST_PARSE_FAILS(json_parse_string("{:,}"));
+    TEST_PARSE_FAILS(json_parse_string("{,}"));
+    TEST_PARSE_FAILS(json_parse_string("{,"));
+    TEST_PARSE_FAILS(json_parse_string("{:"));
+    TEST_PARSE_FAILS(json_parse_string("{"));
+    TEST_PARSE_FAILS(json_parse_string("}"));
+    TEST_PARSE_FAILS(json_parse_string("x"));
+    TEST_PARSE_FAILS(json_parse_string("{:\"no name\"}"));
+    TEST_PARSE_FAILS(json_parse_string("[,\"no first value\"]"));
+    TEST_PARSE_FAILS(json_parse_string("[\"\\u00zz\"]")); /* invalid utf value */
+    TEST_PARSE_FAILS(json_parse_string("[\"\\u00\"]")); /* invalid utf value */
+    TEST_PARSE_FAILS(json_parse_string("[\"\\u\"]")); /* invalid utf value */
+    TEST_PARSE_FAILS(json_parse_string("[\"\\\"]")); /* control character */
+    TEST_PARSE_FAILS(json_parse_string("[\"\"\"]")); /* control character */
+    TEST_PARSE_FAILS(json_parse_string("[\"\0\"]")); /* control character */
+    TEST_PARSE_FAILS(json_parse_string("[\"\a\"]")); /* control character */
+    TEST_PARSE_FAILS(json_parse_string("[\"\b\"]")); /* control character */
+    TEST_PARSE_FAILS(json_parse_string("[\"\t\"]")); /* control character */
+    TEST_PARSE_FAILS(json_parse_string("[\"\n\"]")); /* control character */
+    TEST_PARSE_FAILS(json_parse_string("[\"\f\"]")); /* control character */
+    TEST_PARSE_FAILS(json_parse_string("[\"\r\"]")); /* control character */
+    TEST_PARSE_FAILS(json_parse_string("[0x2]"));    /* hex */
+    TEST_PARSE_FAILS(json_parse_string("[0X2]"));    /* HEX */
+    TEST_PARSE_FAILS(json_parse_string("[07]"));     /* octals */
+    TEST_PARSE_FAILS(json_parse_string("[0070]"));
+    TEST_PARSE_FAILS(json_parse_string("[07.0]"));
+    TEST_PARSE_FAILS(json_parse_string("[-07]"));
+    TEST_PARSE_FAILS(json_parse_string("[-007]"));
+    TEST_PARSE_FAILS(json_parse_string("[-07.0]"));
+    TEST_PARSE_FAILS(json_parse_string("[\"\\uDF67\\uD834\"]")); /* wrong order surrogate pair */
+    TEST_PARSE_FAILS(json_parse_string("[1.7976931348623157e309]"));
+    TEST_PARSE_FAILS(json_parse_string("[-1.7976931348623157e309]"));
 }
 
 void test_suite_4() {
@@ -372,7 +383,7 @@ void test_suite_5(void) {
     val_parent = json_value_init_null();
     TEST(json_array_replace_value(interests_arr, 0, val_parent) == JSONSuccess);
     TEST(json_array_replace_value(interests_arr, 0, val_parent) == JSONFailure);
-    
+
     TEST(json_object_remove(obj, "interests") == JSONSuccess);
 
     /* UTF-8 tests */
