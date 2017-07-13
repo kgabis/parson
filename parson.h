@@ -215,6 +215,7 @@ JSON_Value_Type json_value_get_type   (const JSON_Value *value);
 JSON_Object *   json_value_get_object (const JSON_Value *value);
 JSON_Array  *   json_value_get_array  (const JSON_Value *value);
 const char  *   json_value_get_string (const JSON_Value *value);
+const char  *   json_value_get_error  (const JSON_Value *value);
 double          json_value_get_number (const JSON_Value *value);
 int             json_value_get_boolean(const JSON_Value *value);
 JSON_Value  *   json_value_get_parent (const JSON_Value *value);

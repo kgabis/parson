@@ -129,6 +129,7 @@ static JSON_Value * parse_boolean_value(const char **string);
 static JSON_Value * parse_number_value(const char **string);
 static JSON_Value * parse_null_value(const char **string);
 static JSON_Value * parse_value(const char **string, size_t nesting);
+static JSON_Value * parse_error(const char* start, const char* end);
 
 /* Serialization */
 static int    json_serialize_to_buffer_r(const JSON_Value *value, char *buf, int level, int is_pretty, char *num_buf);
@@ -1049,14 +1050,100 @@ JSON_Value * json_parse_file_with_comments(const char *filename) {
     return output_value;
 }
 
+#if defined(PARSON_RETURN_ERROR_VALUES)
+
+static size_t get_line_number(const char* start, const char* end, size_t max) {
+    size_t count = 1;
+    if (start == NULL || end == NULL) {
+        return 1;
+    }
+    while (start != end) {
+        if (*start == '\n') {
+            count++;
+
+            /* bail out early if the max is reached */
+            if (count >= max) {
+                count = max;
+                break;
+            }
+        }
+        start++;
+    }
+    return count;
+}
+
+static size_t get_line_byte_count(const char* start, size_t max) {
+    size_t i = 0;
+    if (start == NULL) {
+        return 0;
+    }
+    while (i < max && start[i] != '\0' && start[i] != '\r' && start[i] != '\n') {
+        i++;
+    }
+    return i;
+}
+
+static JSON_Value * parse_error(const char* start, const char* end) {
+    /* If the type of the display number is changed
+       the error format string and value of n need changed too. */
+    unsigned long display_number, max_display_number = (unsigned long)-1;
+    size_t n, max_line_length, line_length, line_number;
+    char *error_string;
+    JSON_Value *value = NULL;
+    const char* error_format = "Error on line %lu: %.*s";
+
+    value = (JSON_Value*)parson_malloc(sizeof(JSON_Value));
+    if (value == NULL) {
+        return NULL;
+    }
+
+    /* Create a string long enough for the error message */
+    max_line_length = 50;
+    /* Subtract the specifier characters from the format and
+       add enough space to hold a 64 bit unsigned integer. */
+    n = strlen(error_format) - 7 + 20 + max_line_length + 1;
+    error_string = (char*)parson_malloc(n);
+    if (!error_string) {
+        parson_free(value);
+        return NULL;
+    }
+
+    line_length = get_line_byte_count(end, max_line_length);
+    line_number = get_line_number(start, end, max_display_number);
+    display_number = line_number;
+
+    /* If the format string is changed, the malloc() size needs changed too */
+    sprintf(error_string, error_format, display_number, (int)line_length, end);
+    error_string[n] = '\0';
+
+    value->parent = NULL;
+    value->type = JSONError;
+    value->value.string = error_string;
+    return value;
+}
+#else
+static JSON_Value * parse_error(const char* start, const char* end) {
+    /* Ignore the unused arguments */
+    (void)start;
+    (void)end;
+    return NULL;
+}
+#endif
+
 JSON_Value * json_parse_string(const char *string) {
+    JSON_Value *value;
+    const char *string_start = string;
     if (string == NULL) {
         return NULL;
     }
     if (string[0] == '\xEF' && string[1] == '\xBB' && string[2] == '\xBF') {
         string = string + 3; /* Support for UTF-8 BOM */
     }
-    return parse_value((const char**)&string, 0);
+    value = parse_value((const char**)&string, 0);
+    if (!value) {
+        value = parse_error(string_start, string);
+    }
+    return value;
 }
 
 JSON_Value * json_parse_string_with_comments(const char *string) {
@@ -1070,6 +1157,10 @@ JSON_Value * json_parse_string_with_comments(const char *string) {
     remove_comments(string_mutable_copy, "//", "\n");
     string_mutable_copy_ptr = string_mutable_copy;
     result = parse_value((const char**)&string_mutable_copy_ptr, 0);
+    if (!result) {
+        /* Note that line numbers may be off from multi-line comments */
+        result = parse_error(string_mutable_copy, string_mutable_copy_ptr);
+    }
     parson_free(string_mutable_copy);
     return result;
 }
@@ -1225,6 +1316,10 @@ const char * json_value_get_string(const JSON_Value *value) {
     return json_value_get_type(value) == JSONString ? value->value.string : NULL;
 }
 
+const char * json_value_get_error(const JSON_Value *value) {
+    return json_value_get_type(value) == JSONError ? value->value.string : NULL;
+}
+
 double json_value_get_number(const JSON_Value *value) {
     return json_value_get_type(value) == JSONNumber ? value->value.number : 0;
 }
@@ -1243,6 +1338,7 @@ void json_value_free(JSON_Value *value) {
             json_object_free(value->value.object);
             break;
         case JSONString:
+        case JSONError:
             parson_free(value->value.string);
             break;
         case JSONArray:
@@ -2005,3 +2101,4 @@ void json_set_allocation_functions(JSON_Malloc_Function malloc_fun, JSON_Free_Fu
     parson_malloc = malloc_fun;
     parson_free = free_fun;
 }
+
