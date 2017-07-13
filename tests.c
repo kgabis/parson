@@ -35,7 +35,7 @@
    on a preprocessor definition so adjust the pass criteria to match.
  */
 #if defined(PARSON_RETURN_ERROR_VALUES)
-#define PARSE_PASSED(A) ((A) != NULL && json_value_get_type(A) != JSONError)
+#define PARSE_PASSED(A) (json_value_get_type(A) != JSONError)
 #else
 #define PARSE_PASSED(A) ((A) != NULL)
 #endif
@@ -43,8 +43,8 @@
 #define TEST(A) printf("%d %-72s-", __LINE__, #A);\
                 if(A){puts(" OK");tests_passed++;}\
                 else{puts(" FAIL");tests_failed++;}
-#define TEST_PARSE_PASSES(A) { JSON_Value *v = A; TEST(PARSE_PASSED(v)) }
-#define TEST_PARSE_FAILS(A) { JSON_Value *v = A; TEST(!PARSE_PASSED(v)) }
+#define TEST_PARSE_PASSES(A) TEST(PARSE_PASSED(A))
+#define TEST_PARSE_FAILS(A) TEST(!PARSE_PASSED(A))
 #define STREQ(A, B) ((A) && (B) ? strcmp((A), (B)) == 0 : 0)
 #define EPSILON 0.000001
 
