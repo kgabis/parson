@@ -314,7 +314,7 @@ static void remove_comments(char *string, const char *start_token, const char *e
             in_string = !in_string;
         } else if (!in_string && strncmp(string, start_token, start_token_len) == 0) {
             for(i = 0; i < start_token_len; i++) {
-                string[i] = ' ';
+                string[i] = (string[i] == '\n') ? '\n' : ' ';
             }
             string = string + start_token_len;
             ptr = strstr(string, end_token);
@@ -322,7 +322,7 @@ static void remove_comments(char *string, const char *start_token, const char *e
                 return;
             }
             for (i = 0; i < (ptr - string) + end_token_len; i++) {
-                string[i] = ' ';
+                string[i] = (string[i] == '\n') ? '\n' : ' ';
             }
             string = ptr + end_token_len - 1;
         }
@@ -1158,7 +1158,6 @@ JSON_Value * json_parse_string_with_comments(const char *string) {
     string_mutable_copy_ptr = string_mutable_copy;
     result = parse_value((const char**)&string_mutable_copy_ptr, 0);
     if (!result) {
-        /* Note that line numbers may be off from multi-line comments */
         result = parse_error(string_mutable_copy, string_mutable_copy_ptr);
     }
     parson_free(string_mutable_copy);
