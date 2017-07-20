@@ -129,7 +129,7 @@ static JSON_Value * parse_boolean_value(const char **string);
 static JSON_Value * parse_number_value(const char **string);
 static JSON_Value * parse_null_value(const char **string);
 static JSON_Value * parse_value(const char **string, size_t nesting);
-static JSON_Value * parse_error(const char* start, const char* end);
+static JSON_Value * parse_error(const char *start, const char *end);
 
 /* Serialization */
 static int    json_serialize_to_buffer_r(const JSON_Value *value, char *buf, int level, int is_pretty, char *num_buf);
@@ -1052,7 +1052,7 @@ JSON_Value * json_parse_file_with_comments(const char *filename) {
 
 #if defined(PARSON_RETURN_ERROR_VALUES)
 
-static size_t get_line_number(const char* start, const char* end, size_t max) {
+static size_t get_line_number(const char *start, const char *end, size_t max) {
     size_t count = 1;
     if (start == NULL || end == NULL) {
         return 1;
@@ -1072,7 +1072,7 @@ static size_t get_line_number(const char* start, const char* end, size_t max) {
     return count;
 }
 
-static size_t get_line_byte_count(const char* start, size_t max) {
+static size_t get_line_byte_count(const char *start, size_t max) {
     size_t i = 0;
     if (start == NULL) {
         return 0;
@@ -1083,14 +1083,14 @@ static size_t get_line_byte_count(const char* start, size_t max) {
     return i;
 }
 
-static JSON_Value * parse_error(const char* start, const char* end) {
+static JSON_Value * parse_error(const char *start, const char *end) {
     /* If the type of the display number is changed
        the error format string and value of n need changed too. */
     unsigned long display_number, max_display_number = (unsigned long)-1;
     size_t n, max_line_length, line_length, line_number;
     char *error_string;
     JSON_Value *value = NULL;
-    const char* error_format = "Error on line %lu: %.*s";
+    const char *error_format = "Error on line %lu: %.*s";
 
     value = (JSON_Value*)parson_malloc(sizeof(JSON_Value));
     if (value == NULL) {
@@ -1102,8 +1102,8 @@ static JSON_Value * parse_error(const char* start, const char* end) {
     /* Subtract the specifier characters from the format and
        add enough space to hold a 64 bit unsigned integer. */
     n = strlen(error_format) - 7 + 20 + max_line_length + 1;
-    error_string = (char*)parson_malloc(n);
-    if (!error_string) {
+    error_string = (char*)parson_malloc(sizeof(char) * n);
+    if (error_string == NULL) {
         parson_free(value);
         return NULL;
     }
@@ -1122,7 +1122,7 @@ static JSON_Value * parse_error(const char* start, const char* end) {
     return value;
 }
 #else
-static JSON_Value * parse_error(const char* start, const char* end) {
+static JSON_Value * parse_error(const char *start, const char *end) {
     /* Ignore the unused arguments */
     (void)start;
     (void)end;
