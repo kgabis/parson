@@ -1543,20 +1543,20 @@ void json_free_serialized_string(char *string) {
 
 JSON_Status json_array_remove(JSON_Array *array, size_t ix) {
     JSON_Value *temp_value = NULL;
-    size_t last_element_ix = 0;
+    size_t element_count = 0;
+    size_t ix_iter = ix+1;
     if (array == NULL || ix >= json_array_get_count(array)) {
         return JSONFailure;
     }
-    last_element_ix = json_array_get_count(array) - 1;
+    element_count = json_array_get_count(array);
     json_value_free(json_array_get_value(array, ix));
-    if (ix != last_element_ix) { /* Replace value with one from the end of array */
-        temp_value = json_array_get_value(array, last_element_ix);
-        if (temp_value == NULL) {
+    for (ix_iter=ix; ix_iter<element_count-1; ix_iter++){
+        if (array->items[ix_iter+1]!=NULL)
+            array->items[ix_iter] = array->items[ix_iter+1];
+        else
             return JSONFailure;
-        }
-        array->items[ix] = temp_value;
     }
-    array->count -= 1;
+    array->items[--array->count]=NULL;
     return JSONSuccess;
 }
 
