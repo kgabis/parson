@@ -263,6 +263,7 @@ void test_suite_3(void) {
     TEST(json_parse_string("x") == NULL);
     TEST(json_parse_string("{:\"no name\"}") == NULL);
     TEST(json_parse_string("[,\"no first value\"]") == NULL);
+    TEST(json_parse_string("{\"key\"\"value\"}") == NULL);
     TEST(json_parse_string("[\"\\u00zz\"]") == NULL); /* invalid utf value */
     TEST(json_parse_string("[\"\\u00\"]") == NULL); /* invalid utf value */
     TEST(json_parse_string("[\"\\u\"]") == NULL); /* invalid utf value */
@@ -305,6 +306,9 @@ void test_suite_5(void) {
     JSON_Value *val = NULL, *val_parent;
     JSON_Object *obj = NULL;
     JSON_Array *interests_arr = NULL;
+
+    JSON_Value *remove_test_val = NULL;
+    JSON_Array *remove_test_arr = NULL;
 
     val = json_value_init_object();
     TEST(val != NULL);
@@ -407,6 +411,16 @@ void test_suite_5(void) {
     TEST(json_object_set_string(obj, "single surrogate 1", "\xed\xa0\x80") == JSONFailure);
     TEST(json_object_set_string(obj, "single surrogate 2", "\xed\xaf\xbf") == JSONFailure);
     TEST(json_object_set_string(obj, "single surrogate 3", "\xed\xbf\xbf") == JSONFailure);
+
+    /* Testing removing values from array, order of the elements should be preserved */
+    remove_test_val = json_parse_string("[1, 2, 3, 4, 5]");
+    remove_test_arr = json_array(remove_test_val);
+    json_array_remove(remove_test_arr, 2);
+    TEST(json_value_equals(remove_test_val, json_parse_string("[1, 2, 4, 5]")));
+    json_array_remove(remove_test_arr, 0);
+    TEST(json_value_equals(remove_test_val, json_parse_string("[2, 4, 5]")));
+    json_array_remove(remove_test_arr, 2);
+    TEST(json_value_equals(remove_test_val, json_parse_string("[2, 4]")));
 }
 
 void test_suite_6(void) {

@@ -1547,20 +1547,13 @@ void json_free_serialized_string(char *string) {
 }
 
 JSON_Status json_array_remove(JSON_Array *array, size_t ix) {
-    JSON_Value *temp_value = NULL;
-    size_t last_element_ix = 0;
+    size_t to_move_bytes = 0;
     if (array == NULL || ix >= json_array_get_count(array)) {
         return JSONFailure;
     }
-    last_element_ix = json_array_get_count(array) - 1;
     json_value_free(json_array_get_value(array, ix));
-    if (ix != last_element_ix) { /* Replace value with one from the end of array */
-        temp_value = json_array_get_value(array, last_element_ix);
-        if (temp_value == NULL) {
-            return JSONFailure;
-        }
-        array->items[ix] = temp_value;
-    }
+    to_move_bytes = (json_array_get_count(array) - 1 - ix) * sizeof(JSON_Value**);
+    memmove(array->items + ix, array->items + ix + 1, to_move_bytes);
     array->count -= 1;
     return JSONSuccess;
 }
@@ -1918,7 +1911,7 @@ JSON_Status json_validate(const JSON_Value *schema, const JSON_Value *value) {
     }
 }
 
-JSON_Status json_value_equals(const JSON_Value *a, const JSON_Value *b) {
+int json_value_equals(const JSON_Value *a, const JSON_Value *b) {
     JSON_Object *a_object = NULL, *b_object = NULL;
     JSON_Array *a_array = NULL, *b_array = NULL;
     const char *a_string = NULL, *b_string = NULL;
