@@ -53,6 +53,10 @@ void print_commits_info(const char *username, const char *repo);
 void persistence_example(void);
 void serialization_example(void);
 
+static int malloc_count;
+static void *counted_malloc(size_t size);
+static void counted_free(void *ptr);
+
 static char * read_file(const char * filename);
 
 static int tests_passed;
@@ -63,7 +67,7 @@ int main() {
     /* print_commits_info("torvalds", "linux"); */
     /* serialization_example(); */
     /* persistence_example(); */
-
+    json_set_allocation_functions(counted_malloc, counted_free);
     test_suite_1();
     test_suite_2_no_comments();
     test_suite_2_with_comments();
@@ -244,6 +248,7 @@ void test_suite_3(void) {
     TEST(json_parse_string("123") != NULL);
 
     puts("Testing invalid strings:");
+    malloc_count = 0;
     TEST(json_parse_string(NULL) == NULL);
     TEST(json_parse_string("") == NULL); /* empty string */
     TEST(json_parse_string("[\"lorem\",]") == NULL);
@@ -264,6 +269,7 @@ void test_suite_3(void) {
     TEST(json_parse_string("{:\"no name\"}") == NULL);
     TEST(json_parse_string("[,\"no first value\"]") == NULL);
     TEST(json_parse_string("{\"key\"\"value\"}") == NULL);
+    TEST(json_parse_string("{\"a\"}") == NULL);
     TEST(json_parse_string("[\"\\u00zz\"]") == NULL); /* invalid utf value */
     TEST(json_parse_string("[\"\\u00\"]") == NULL); /* invalid utf value */
     TEST(json_parse_string("[\"\\u\"]") == NULL); /* invalid utf value */
@@ -287,6 +293,7 @@ void test_suite_3(void) {
     TEST(json_parse_string("[\"\\uDF67\\uD834\"]") == NULL); /* wrong order surrogate pair */
     TEST(json_parse_string("[1.7976931348623157e309]") == NULL);
     TEST(json_parse_string("[-1.7976931348623157e309]") == NULL);
+    TEST(malloc_count == 0);
 }
 
 void test_suite_4() {
@@ -597,4 +604,19 @@ static char * read_file(const char * filename) {
     fclose(fp);
     file_contents[file_size] = '\0';
     return file_contents;
+}
+
+static void *counted_malloc(size_t size) {
+    void *res = malloc(size);
+    if (res != NULL) {
+        malloc_count++;
+    }
+    return res;
+}
+
+static void counted_free(void *ptr) {
+    if (ptr != NULL) {
+        malloc_count--;
+    }
+    free(ptr);
 }
