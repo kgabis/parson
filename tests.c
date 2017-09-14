@@ -247,6 +247,12 @@ void test_suite_3(void) {
     TEST(json_parse_string("\"string\"") != NULL);
     TEST(json_parse_string("123") != NULL);
 
+    puts("Test UTF-16 parsing:");
+    TEST(STREQ(json_string(json_parse_string("\"\\u0024x\"")), "$x"));
+    TEST(STREQ(json_string(json_parse_string("\"\\u00A2x\"")), "¢x"));
+    TEST(STREQ(json_string(json_parse_string("\"\\u20ACx\"")), "€x"));
+    TEST(STREQ(json_string(json_parse_string("\"\\uD801\\uDC37x\"")), "𐐷x"));
+
     puts("Testing invalid strings:");
     malloc_count = 0;
     TEST(json_parse_string(NULL) == NULL);

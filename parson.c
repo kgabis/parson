@@ -527,14 +527,16 @@ static int parse_utf16(const char **unprocessed, char **processed) {
         return JSONFailure;
     }
     if (cp < 0x80) {
-        *processed_ptr = (char)cp; /* 0xxxxxxx */
+        processed_ptr[0] = (char)cp; /* 0xxxxxxx */
     } else if (cp < 0x800) {
-        *processed_ptr++ = ((cp >> 6) & 0x1F) | 0xC0; /* 110xxxxx */
-        *processed_ptr   = ((cp     ) & 0x3F) | 0x80; /* 10xxxxxx */
+        processed_ptr[0] = ((cp >> 6) & 0x1F) | 0xC0; /* 110xxxxx */
+        processed_ptr[1] = ((cp)      & 0x3F) | 0x80; /* 10xxxxxx */
+        processed_ptr += 1;
     } else if (cp < 0xD800 || cp > 0xDFFF) {
-        *processed_ptr++ = ((cp >> 12) & 0x0F) | 0xE0; /* 1110xxxx */
-        *processed_ptr++ = ((cp >> 6)  & 0x3F) | 0x80; /* 10xxxxxx */
-        *processed_ptr   = ((cp     )  & 0x3F) | 0x80; /* 10xxxxxx */
+        processed_ptr[0] = ((cp >> 12) & 0x0F) | 0xE0; /* 1110xxxx */
+        processed_ptr[1] = ((cp >> 6)  & 0x3F) | 0x80; /* 10xxxxxx */
+        processed_ptr[2] = ((cp)       & 0x3F) | 0x80; /* 10xxxxxx */
+        processed_ptr += 2;
     } else if (cp >= 0xD800 && cp <= 0xDBFF) { /* lead surrogate (0xD800..0xDBFF) */
         lead = cp;
         unprocessed_ptr += 4; /* should always be within the buffer, otherwise previous sscanf would fail */
@@ -545,11 +547,12 @@ static int parse_utf16(const char **unprocessed, char **processed) {
         if (!parse_succeeded || trail < 0xDC00 || trail > 0xDFFF) { /* valid trail surrogate? (0xDC00..0xDFFF) */
             return JSONFailure;
         }
-        cp = ((((lead-0xD800)&0x3FF)<<10)|((trail-0xDC00)&0x3FF))+0x010000;
-        *processed_ptr++ = (((cp >> 18) & 0x07) | 0xF0); /* 11110xxx */
-        *processed_ptr++ = (((cp >> 12) & 0x3F) | 0x80); /* 10xxxxxx */
-        *processed_ptr++ = (((cp >> 6)  & 0x3F) | 0x80); /* 10xxxxxx */
-        *processed_ptr   = (((cp     )  & 0x3F) | 0x80); /* 10xxxxxx */
+        cp = ((((lead - 0xD800) & 0x3FF) << 10) | ((trail - 0xDC00) & 0x3FF)) + 0x010000;
+        processed_ptr[0] = (((cp >> 18) & 0x07) | 0xF0); /* 11110xxx */
+        processed_ptr[1] = (((cp >> 12) & 0x3F) | 0x80); /* 10xxxxxx */
+        processed_ptr[2] = (((cp >> 6)  & 0x3F) | 0x80); /* 10xxxxxx */
+        processed_ptr[3] = (((cp)       & 0x3F) | 0x80); /* 10xxxxxx */
+        processed_ptr += 3;
     } else { /* trail surrogate before lead surrogate */
         return JSONFailure;
     }
@@ -1552,7 +1555,7 @@ JSON_Status json_array_remove(JSON_Array *array, size_t ix) {
         return JSONFailure;
     }
     json_value_free(json_array_get_value(array, ix));
-    to_move_bytes = (json_array_get_count(array) - 1 - ix) * sizeof(JSON_Value**);
+    to_move_bytes = (json_array_get_count(array) - 1 - ix) * sizeof(JSON_Value*);
     memmove(array->items + ix, array->items + ix + 1, to_move_bytes);
     array->count -= 1;
     return JSONSuccess;
