@@ -48,6 +48,7 @@ void test_suite_6(void); /* Test value comparing verification */
 void test_suite_7(void); /* Test schema validation */
 void test_suite_8(void); /* Test serialization */
 void test_suite_9(void); /* Test serialization (pretty) */
+void test_suite_10(void); /* Testing for memory leaks */
 
 void print_commits_info(const char *username, const char *repo);
 void persistence_example(void);
@@ -78,6 +79,7 @@ int main() {
     test_suite_7();
     test_suite_8();
     test_suite_9();
+    test_suite_10();
     printf("Tests failed: %d\n", tests_failed);
     printf("Tests passed: %d\n", tests_passed);
     return 0;
@@ -504,6 +506,29 @@ void test_suite_9(void) {
 
     file_contents = read_file(filename);
     TEST(STREQ(file_contents, serialized));
+}
+
+void test_suite_10(void) {
+    JSON_Value *val1;
+    char *serialized;
+
+    malloc_count = 0;
+
+    val1 = json_parse_file("tests/test_1_1.txt");
+    json_value_free(val1);
+
+    val1 = json_parse_file("tests/test_1_3.txt");
+    json_value_free(val1);
+
+    val1 = json_parse_file("tests/test_2.txt");
+    serialized = json_serialize_to_string_pretty(val1);
+    json_free_serialized_string(serialized);
+    json_value_free(val1);
+
+    val1 = json_parse_file("tests/test_2_pretty.txt");
+    json_value_free(val1);
+
+    TEST(malloc_count == 0);
 }
 
 void print_commits_info(const char *username, const char *repo) {
