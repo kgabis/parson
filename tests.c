@@ -436,6 +436,10 @@ void test_suite_5(void) {
     TEST(json_value_equals(remove_test_val, json_parse_string("[2, 4, 5]")));
     json_array_remove(remove_test_arr, 2);
     TEST(json_value_equals(remove_test_val, json_parse_string("[2, 4]")));
+
+    /* Testing nan and inf */
+    TEST(json_object_set_number(obj, "num", 0.0 / 0.0) == JSONFailure);
+    TEST(json_object_set_number(obj, "num", 1.0 / 0.0) == JSONFailure);
 }
 
 void test_suite_6(void) {
@@ -505,28 +509,29 @@ void test_suite_9(void) {
     TEST((strlen(serialized)+1) == serialization_size);
 
     file_contents = read_file(filename);
+
     TEST(STREQ(file_contents, serialized));
 }
 
 void test_suite_10(void) {
-    JSON_Value *val1;
+    JSON_Value *val;
     char *serialized;
 
     malloc_count = 0;
 
-    val1 = json_parse_file("tests/test_1_1.txt");
-    json_value_free(val1);
+    val = json_parse_file("tests/test_1_1.txt");
+    json_value_free(val);
 
-    val1 = json_parse_file("tests/test_1_3.txt");
-    json_value_free(val1);
+    val = json_parse_file("tests/test_1_3.txt");
+    json_value_free(val);
 
-    val1 = json_parse_file("tests/test_2.txt");
-    serialized = json_serialize_to_string_pretty(val1);
+    val = json_parse_file("tests/test_2.txt");
+    serialized = json_serialize_to_string_pretty(val);
     json_free_serialized_string(serialized);
-    json_value_free(val1);
+    json_value_free(val);
 
-    val1 = json_parse_file("tests/test_2_pretty.txt");
-    json_value_free(val1);
+    val = json_parse_file("tests/test_2_pretty.txt");
+    json_value_free(val);
 
     TEST(malloc_count == 0);
 }
