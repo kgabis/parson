@@ -42,7 +42,7 @@ void test_suite_2(JSON_Value *value); /* Test correctness of parsed values */
 void test_suite_2_no_comments(void);
 void test_suite_2_with_comments(void);
 void test_suite_3(void); /* Test parsing valid and invalid strings */
-void test_suite_4(void); /* Test deep copy funtion */
+void test_suite_4(void); /* Test deep copy function */
 void test_suite_5(void); /* Test building json values from scratch */
 void test_suite_6(void); /* Test value comparing verification */
 void test_suite_7(void); /* Test schema validation */
