@@ -1718,7 +1718,7 @@ JSON_Status json_object_dotset_value(JSON_Object *object, const char *name, JSON
     char *current_name = NULL;
     JSON_Object *temp_obj = NULL;
     JSON_Value *new_value = NULL;
-    if (value == NULL || name == NULL || value == NULL) {
+    if (object == NULL || name == NULL || value == NULL) {
         return JSONFailure;
     }
     dot_pos = strchr(name, '.');
