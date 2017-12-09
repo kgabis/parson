@@ -45,7 +45,7 @@
 
 #define SIZEOF_TOKEN(a)       (sizeof(a) - 1)
 #define SKIP_CHAR(str)        ((*str)++)
-#define SKIP_WHITESPACES(str) while (isspace(**str)) { SKIP_CHAR(str); }
+#define SKIP_WHITESPACES(str) while (isspace((unsigned char)(**str))) { SKIP_CHAR(str); }
 #define MAX(a, b)             ((a) > (b) ? (a) : (b))
 
 #undef malloc
