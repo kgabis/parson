@@ -1,0 +1,19 @@
+language: cpp
+
+matrix:
+  include:
+    - os: linux
+      dist: trusty
+      sudo: true
+      compiler: gcc
+      addons:
+       apt:
+         packages:
+           - gcc-4.8
+           - g++-4.8
+           - cmake
+script:
+     - cmake -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=ON .
+     - cmake --build .
+     - cmake --build . --target test
+     - sudo cmake --build . --target install
