@@ -210,7 +210,7 @@ void test_suite_2(JSON_Value *root_value) {
 
     TEST(json_object_get_object(root_object, "empty object") != NULL);
     TEST(json_object_get_array(root_object, "empty array") != NULL);
-    
+
     TEST(json_object_get_wrapping_value(root_object) == root_value);
     array = json_object_get_array(root_object, "string array");
     array_value = json_object_get_value(root_object, "string array");
@@ -391,7 +391,7 @@ void test_suite_5(void) {
     val_parent = json_value_init_null();
     TEST(json_array_replace_value(interests_arr, 0, val_parent) == JSONSuccess);
     TEST(json_array_replace_value(interests_arr, 0, val_parent) == JSONFailure);
-    
+
     TEST(json_object_remove(obj, "interests") == JSONSuccess);
 
     /* UTF-8 tests */
@@ -438,8 +438,10 @@ void test_suite_5(void) {
     TEST(json_value_equals(remove_test_val, json_parse_string("[2, 4]")));
 
     /* Testing nan and inf */
+    #ifndef _MSC_VER // Skip MSVC C2124
     TEST(json_object_set_number(obj, "num", 0.0 / 0.0) == JSONFailure);
     TEST(json_object_set_number(obj, "num", 1.0 / 0.0) == JSONFailure);
+    #endif
 }
 
 void test_suite_6(void) {
