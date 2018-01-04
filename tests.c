@@ -316,6 +316,8 @@ void test_suite_4() {
 }
 
 void test_suite_5(void) {
+    double zero = 0.0; /* msvc is silly (workaround for error C2124) */
+
     JSON_Value *val_from_file = json_parse_file("tests/test_5.txt");
 
     JSON_Value *val = NULL, *val_parent;
@@ -438,8 +440,8 @@ void test_suite_5(void) {
     TEST(json_value_equals(remove_test_val, json_parse_string("[2, 4]")));
 
     /* Testing nan and inf */
-    TEST(json_object_set_number(obj, "num", 0.0 / 0.0) == JSONFailure);
-    TEST(json_object_set_number(obj, "num", 1.0 / 0.0) == JSONFailure);
+    TEST(json_object_set_number(obj, "num", 0.0 / zero) == JSONFailure);
+    TEST(json_object_set_number(obj, "num", 1.0 / zero) == JSONFailure);
 }
 
 void test_suite_6(void) {
