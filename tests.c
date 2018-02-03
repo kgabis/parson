@@ -35,6 +35,7 @@
                 if(A){puts(" OK");tests_passed++;}\
                 else{puts(" FAIL");tests_failed++;}
 #define STREQ(A, B) ((A) && (B) ? strcmp((A), (B)) == 0 : 0)
+#define STRNEQ(A, B, N) ((A) && (B) ? strncmp((A), (B), (N)) == 0 : 0)
 #define EPSILON 0.000001
 
 void test_suite_1(void); /* Test 3 files from json.org + serialization*/
@@ -512,7 +513,7 @@ void test_suite_9(void) {
 
     file_contents = read_file(filename);
 
-    TEST(STREQ(file_contents, serialized));
+    TEST(STRNEQ(file_contents, serialized, serialization_size - 1));
 }
 
 void test_suite_10(void) {
