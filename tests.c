@@ -614,33 +614,34 @@ void serialization_example(void) {
 
 static char * read_file(const char * filename) {
     FILE *fp = fopen(filename, "r");
-    size_t file_size;
+    size_t size_to_read = 0;
+    size_t size_read = 0;
     long pos;
     char *file_contents;
-    if (!fp)
+    if (!fp) {
         return NULL;
+    }
     fseek(fp, 0L, SEEK_END);
     pos = ftell(fp);
     if (pos < 0) {
         fclose(fp);
         return NULL;
     }
-    file_size = pos;
+    size_to_read = pos;
     rewind(fp);
-    file_contents = (char*)malloc(sizeof(char) * (file_size + 1));
+    file_contents = (char*)malloc(sizeof(char) * (size_to_read + 1));
     if (!file_contents) {
         fclose(fp);
         return NULL;
     }
-    if (fread(file_contents, file_size, 1, fp) < 1) {
-        if (ferror(fp)) {
-            fclose(fp);
-            free(file_contents);
-            return NULL;
-        }
+    size_read = fread(file_contents, 1, size_to_read, fp);
+    if (size_read == 0 || ferror(fp)) {
+        fclose(fp);
+        free(file_contents);
+        return NULL;
     }
     fclose(fp);
-    file_contents[file_size] = '\0';
+    file_contents[size_read] = '\0';
     return file_contents;
 }
 

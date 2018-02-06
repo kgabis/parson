@@ -262,7 +262,8 @@ static int is_decimal(const char *string, size_t length) {
 
 static char * read_file(const char * filename) {
     FILE *fp = fopen(filename, "r");
-    size_t file_size;
+    size_t size_to_read = 0;
+    size_t size_read = 0;
     long pos;
     char *file_contents;
     if (!fp) {
@@ -274,22 +275,21 @@ static char * read_file(const char * filename) {
         fclose(fp);
         return NULL;
     }
-    file_size = pos;
+    size_to_read = pos;
     rewind(fp);
-    file_contents = (char*)parson_malloc(sizeof(char) * (file_size + 1));
+    file_contents = (char*)parson_malloc(sizeof(char) * (size_to_read + 1));
     if (!file_contents) {
         fclose(fp);
         return NULL;
     }
-    if (fread(file_contents, file_size, 1, fp) < 1) {
-        if (ferror(fp)) {
-            fclose(fp);
-            parson_free(file_contents);
-            return NULL;
-        }
+    size_read = fread(file_contents, 1, size_to_read, fp);
+    if (size_read == 0 || ferror(fp)) {
+        fclose(fp);
+        parson_free(file_contents);
+        return NULL;
     }
     fclose(fp);
-    file_contents[file_size] = '\0';
+    file_contents[size_read] = '\0';
     return file_contents;
 }
 
@@ -1441,7 +1441,7 @@ JSON_Status json_serialize_to_file(const JSON_Value *value, const char *filename
     if (serialized_string == NULL) {
         return JSONFailure;
     }
-    fp = fopen (filename, "w");
+    fp = fopen(filename, "w");
     if (fp == NULL) {
         json_free_serialized_string(serialized_string);
         return JSONFailure;
@@ -1501,7 +1501,7 @@ JSON_Status json_serialize_to_file_pretty(const JSON_Value *value, const char *f
     if (serialized_string == NULL) {
         return JSONFailure;
     }
-    fp = fopen (filename, "w");
+    fp = fopen(filename, "w");
     if (fp == NULL) {
         json_free_serialized_string(serialized_string);
         return JSONFailure;
