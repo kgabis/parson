@@ -49,6 +49,9 @@ void test_suite_7(void); /* Test schema validation */
 void test_suite_8(void); /* Test serialization */
 void test_suite_9(void); /* Test serialization (pretty) */
 void test_suite_10(void); /* Testing for memory leaks */
+#ifdef JSON_FIXED_NUMBER
+void test_suite_11(void); /* Testing for fixed number */
+#endif
 
 void print_commits_info(const char *username, const char *repo);
 void persistence_example(void);
@@ -80,6 +83,9 @@ int main() {
     test_suite_8();
     test_suite_9();
     test_suite_10();
+#ifdef JSON_FIXED_NUMBER
+    test_suite_11();
+#endif
     printf("Tests failed: %d\n", tests_failed);
     printf("Tests passed: %d\n", tests_passed);
     return 0;
@@ -537,6 +543,16 @@ void test_suite_10(void) {
 
     TEST(malloc_count == 0);
 }
+
+#ifdef JSON_FIXED_NUMBER
+void test_suite_11(void) {
+    JSON_Value *val;
+
+    TEST((val = json_parse_string("{\"foo\": -1096377938905861812}")) != NULL);
+    TEST(json_value_equals(json_parse_string(json_serialize_to_string(val)), val));
+    if (val) { json_value_free(val); }
+}
+#endif
 
 void print_commits_info(const char *username, const char *repo) {
     JSON_Value *root_value;
