@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -O0 -g -Wall -Wextra -std=c89 -pedantic-errors
+CFLAGS = -O0 -g -Wall -Wextra -std=c89 -pedantic-errors -DJSON_FIXED_NUMBER  -Wno-format -Wlong-long
 
 CPPC = g++
 CPPFLAGS = -O0 -g -Wall -Wextra
