@@ -784,7 +784,9 @@ static JSON_Value * parse_number_value(const char **string) {
     char *end;
     double number = 0;
 #ifdef JSON_FIXED_NUMBER
-    intmax_t fixed = strtoimax(*string, &end, 10);
+    intmax_t fixed;
+    errno = 0;
+    fixed = strtoimax(*string, &end, 10);
     if (errno == 0 && INT64_MIN <= fixed && fixed <= INT64_MAX) {
         *string = end;
         return json_value_init_fixed(fixed);
