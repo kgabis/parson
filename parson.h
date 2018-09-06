@@ -174,7 +174,7 @@ double        json_array_get_number (const JSON_Array *array, size_t index); /* 
 int           json_array_get_boolean(const JSON_Array *array, size_t index); /* returns -1 on fail */
 size_t        json_array_get_count  (const JSON_Array *array);
 JSON_Value  * json_array_get_wrapping_value(const JSON_Array *array);
-    
+
 /* Frees and removes value at given index, does nothing and returns JSONFailure if index doesn't exist.
  * Order of values in array may change during execution.  */
 JSON_Status json_array_remove(JSON_Array *array, size_t i);
