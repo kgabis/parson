@@ -62,6 +62,8 @@
 static JSON_Malloc_Function parson_malloc = malloc;
 static JSON_Free_Function parson_free = free;
 
+static int parson_escape_slashes = 1;
+
 #define IS_CONT(b) (((unsigned char)(b) & 0xC0) == 0x80) /* is utf-8 continuation byte */
 
 /* Type definitions */
@@ -1018,7 +1020,6 @@ static int json_serialize_string(const char *string, char *buf) {
         switch (c) {
             case '\"': APPEND_STRING("\\\""); break;
             case '\\': APPEND_STRING("\\\\"); break;
-            case '/':  APPEND_STRING("\\/"); break; /* to make json embeddable in xml\/html */
             case '\b': APPEND_STRING("\\b"); break;
             case '\f': APPEND_STRING("\\f"); break;
             case '\n': APPEND_STRING("\\n"); break;
@@ -1056,6 +1057,13 @@ static int json_serialize_string(const char *string, char *buf) {
             case '\x1d': APPEND_STRING("\\u001d"); break;
             case '\x1e': APPEND_STRING("\\u001e"); break;
             case '\x1f': APPEND_STRING("\\u001f"); break;
+            case '/':
+                if (parson_escape_slashes) {
+                    APPEND_STRING("\\/");  /* to make json embeddable in xml\/html */
+                } else {
+                    APPEND_STRING("/");
+                }
+                break;
             default:
                 if (buf != NULL) {
                     buf[0] = c;
@@ -2043,4 +2051,8 @@ int json_boolean(const JSON_Value *value) {
 void json_set_allocation_functions(JSON_Malloc_Function malloc_fun, JSON_Free_Function free_fun) {
     parson_malloc = malloc_fun;
     parson_free = free_fun;
+}
+
+void json_set_escape_slashes(int escape_slashes) {
+    parson_escape_slashes = escape_slashes;
 }

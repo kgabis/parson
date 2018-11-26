@@ -60,6 +60,10 @@ typedef void   (*JSON_Free_Function)(void *);
    from stdlib will be used for all allocations */
 void json_set_allocation_functions(JSON_Malloc_Function malloc_fun, JSON_Free_Function free_fun);
 
+/* Sets if slashes should be escaped or not when serializing JSON. By default slashes are escaped.
+ This function sets a global setting and is not thread safe. */
+void json_set_escape_slashes(int escape_slashes);
+
 /* Parses first JSON value in a file, returns NULL in case of error */
 JSON_Value * json_parse_file(const char *filename);
 

@@ -49,6 +49,7 @@ void test_suite_7(void); /* Test schema validation */
 void test_suite_8(void); /* Test serialization */
 void test_suite_9(void); /* Test serialization (pretty) */
 void test_suite_10(void); /* Testing for memory leaks */
+void test_suite_11(void); /* Additional things that require testing */
 
 void print_commits_info(const char *username, const char *repo);
 void persistence_example(void);
@@ -80,6 +81,8 @@ int main() {
     test_suite_8();
     test_suite_9();
     test_suite_10();
+    test_suite_11();
+
     printf("Tests failed: %d\n", tests_failed);
     printf("Tests passed: %d\n", tests_passed);
     return 0;
@@ -536,6 +539,24 @@ void test_suite_10(void) {
     json_value_free(val);
 
     TEST(malloc_count == 0);
+}
+
+void test_suite_11() {
+    const char * array_with_slashes = "[\"a/b/c\"]";
+    const char * array_with_escaped_slashes = "[\"a\\/b\\/c\"]";
+    char *serialized = NULL;
+    JSON_Value *value = json_parse_string(array_with_slashes);
+
+    serialized = json_serialize_to_string(value);
+    TEST(STREQ(array_with_escaped_slashes, serialized));
+
+    json_set_escape_slashes(0);
+    serialized = json_serialize_to_string(value);
+    TEST(STREQ(array_with_slashes, serialized));
+
+    json_set_escape_slashes(1);
+    serialized = json_serialize_to_string(value);
+    TEST(STREQ(array_with_escaped_slashes, serialized));
 }
 
 void print_commits_info(const char *username, const char *repo) {
