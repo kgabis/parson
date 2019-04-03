@@ -143,6 +143,7 @@ Remember to follow parson's code style and write appropriate tests.
 
 ## My other projects
 [kgflags](https://github.com/kgabis/kgflags) - easy to use command-line flag parsing library
+[agnes](https://github.com/kgabis/agnes) - header-only NES emulation library
 
 ## License
 [The MIT License (MIT)](http://opensource.org/licenses/mit-license.php)
