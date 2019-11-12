@@ -52,6 +52,7 @@ void test_suite_8(void); /* Test serialization */
 void test_suite_9(void); /* Test serialization (pretty) */
 void test_suite_10(void); /* Testing for memory leaks */
 void test_suite_11(void); /* Additional things that require testing */
+void test_memory_leaks(void);
 
 void print_commits_info(const char *username, const char *repo);
 void persistence_example(void);
@@ -84,6 +85,7 @@ int main() {
     test_suite_9();
     test_suite_10();
     test_suite_11();
+    test_memory_leaks();
 
     printf("Tests failed: %d\n", tests_failed);
     printf("Tests passed: %d\n", tests_passed);
@@ -559,6 +561,17 @@ void test_suite_11() {
     json_set_escape_slashes(1);
     serialized = json_serialize_to_string(value);
     TEST(STREQ(array_with_escaped_slashes, serialized));
+}
+
+void test_memory_leaks() {
+    malloc_count = 0;
+
+    TEST(json_object_set_string(NULL, "lorem", "ipsum") == JSONFailure);
+    TEST(json_object_set_number(NULL, "lorem", 42) == JSONFailure);
+    TEST(json_object_set_boolean(NULL, "lorem", 0) == JSONFailure);
+    TEST(json_object_set_null(NULL, "lorem") == JSONFailure);
+
+    TEST(malloc_count == 0);
 }
 
 void print_commits_info(const char *username, const char *repo) {
