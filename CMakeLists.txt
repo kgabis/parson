@@ -3,7 +3,7 @@ project(parson C)
 
 include (GNUInstallDirs)
 
-set(PARSON_VERSION 1.0.0)
+set(PARSON_VERSION 1.0.1)
 add_library(parson parson.c)
 target_include_directories(parson PUBLIC $<INSTALL_INTERFACE:include>)
 

@@ -1,7 +1,7 @@
 /*
  SPDX-License-Identifier: MIT
 
- Parson 1.0.0 ( http://kgabis.github.com/parson/ )
+ Parson 1.0.1 ( http://kgabis.github.com/parson/ )
  Copyright (c) 2012 - 2019 Krzysztof Gabis
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -156,7 +156,7 @@ static char * parson_strndup(const char *string, size_t n) {
         return NULL;
     }
     output_string[n] = '\0';
-    strncpy(output_string, string, n);
+    memcpy(output_string, string, n);
     return output_string;
 }
 
