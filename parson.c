@@ -156,7 +156,7 @@ static char * parson_strndup(const char *string, size_t n) {
         return NULL;
     }
     output_string[n] = '\0';
-    strncpy(output_string, string, n);
+    memcpy(output_string, string, n);
     return output_string;
 }
 
