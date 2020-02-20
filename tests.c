@@ -28,6 +28,7 @@
 
 #include "parson.h"
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -58,20 +59,30 @@ void print_commits_info(const char *username, const char *repo);
 void persistence_example(void);
 void serialization_example(void);
 
-static int malloc_count;
+static const char *tests_path = "tests";
+
+static int malloc_count = 0;
 static void *counted_malloc(size_t size);
 static void counted_free(void *ptr);
 
 static char * read_file(const char * filename);
+const char* get_file_path(const char *filename);
 
 static int tests_passed;
 static int tests_failed;
 
-int main() {
+int main(int argc, char *argv[]) {
     /* Example functions from readme file:      */
     /* print_commits_info("torvalds", "linux"); */
     /* serialization_example(); */
     /* persistence_example(); */
+
+    if (argc == 2) {
+        tests_path = argv[1];
+    } else {
+        tests_path = "tests";
+    }
+
     json_set_allocation_functions(counted_malloc, counted_free);
     test_suite_1();
     test_suite_2_no_comments();
@@ -94,28 +105,28 @@ int main() {
 
 void test_suite_1(void) {
     JSON_Value *val;
-    TEST((val = json_parse_file("tests/test_1_1.txt")) != NULL);
+    TEST((val = json_parse_file(get_file_path("test_1_1.txt"))) != NULL);
     TEST(json_value_equals(json_parse_string(json_serialize_to_string(val)), val));
     TEST(json_value_equals(json_parse_string(json_serialize_to_string_pretty(val)), val));
     if (val) { json_value_free(val); }
 
-    TEST((val = json_parse_file("tests/test_1_2.txt")) == NULL); /* Over 2048 levels of nesting */
+    TEST((val = json_parse_file(get_file_path("test_1_2.txt"))) == NULL); /* Over 2048 levels of nesting */
     if (val) { json_value_free(val); }
 
-    TEST((val = json_parse_file("tests/test_1_3.txt")) != NULL);
+    TEST((val = json_parse_file(get_file_path("test_1_3.txt"))) != NULL);
     TEST(json_value_equals(json_parse_string(json_serialize_to_string(val)), val));
     TEST(json_value_equals(json_parse_string(json_serialize_to_string_pretty(val)), val));
     if (val) { json_value_free(val); }
 
-    TEST((val = json_parse_file_with_comments("tests/test_1_1.txt")) != NULL);
+    TEST((val = json_parse_file_with_comments(get_file_path("test_1_1.txt"))) != NULL);
     TEST(json_value_equals(json_parse_string(json_serialize_to_string(val)), val));
     TEST(json_value_equals(json_parse_string(json_serialize_to_string_pretty(val)), val));
     if (val) { json_value_free(val); }
 
-    TEST((val = json_parse_file_with_comments("tests/test_1_2.txt")) == NULL); /* Over 2048 levels of nesting */
+    TEST((val = json_parse_file_with_comments(get_file_path("test_1_2.txt"))) == NULL); /* Over 2048 levels of nesting */
     if (val) { json_value_free(val); }
 
-    TEST((val = json_parse_file_with_comments("tests/test_1_3.txt")) != NULL);
+    TEST((val = json_parse_file_with_comments(get_file_path("test_1_3.txt"))) != NULL);
     TEST(json_value_equals(json_parse_string(json_serialize_to_string(val)), val));
     TEST(json_value_equals(json_parse_string(json_serialize_to_string_pretty(val)), val));
     if (val) { json_value_free(val); }
@@ -227,9 +238,9 @@ void test_suite_2(JSON_Value *root_value) {
 }
 
 void test_suite_2_no_comments(void) {
-    const char *filename = "tests/test_2.txt";
+    const char *filename = "test_2.txt";
     JSON_Value *root_value = NULL;
-    root_value = json_parse_file(filename);
+    root_value = json_parse_file(get_file_path(filename));
     test_suite_2(root_value);
     TEST(json_value_equals(root_value, json_parse_string(json_serialize_to_string(root_value))));
     TEST(json_value_equals(root_value, json_parse_string(json_serialize_to_string_pretty(root_value))));
@@ -237,9 +248,9 @@ void test_suite_2_no_comments(void) {
 }
 
 void test_suite_2_with_comments(void) {
-    const char *filename = "tests/test_2_comments.txt";
+    const char *filename = "test_2_comments.txt";
     JSON_Value *root_value = NULL;
-    root_value = json_parse_file_with_comments(filename);
+    root_value = json_parse_file_with_comments(get_file_path(filename));
     test_suite_2(root_value);
     TEST(json_value_equals(root_value, json_parse_string(json_serialize_to_string(root_value))));
     TEST(json_value_equals(root_value, json_parse_string(json_serialize_to_string_pretty(root_value))));
@@ -312,10 +323,10 @@ void test_suite_3(void) {
 }
 
 void test_suite_4() {
-    const char *filename = "tests/test_2.txt";
+    const char *filename = "test_2.txt";
     JSON_Value *a = NULL, *a_copy = NULL;
     printf("Testing %s:\n", filename);
-    a = json_parse_file(filename);
+    a = json_parse_file(get_file_path(filename));
     TEST(json_value_equals(a, a)); /* test equality test */
     a_copy = json_value_deep_copy(a);
     TEST(a_copy != NULL);
@@ -325,7 +336,7 @@ void test_suite_4() {
 void test_suite_5(void) {
     double zero = 0.0; /* msvc is silly (workaround for error C2124) */
 
-    JSON_Value *val_from_file = json_parse_file("tests/test_5.txt");
+    JSON_Value *val_from_file = json_parse_file(get_file_path("test_5.txt"));
 
     JSON_Value *val = NULL, *val_parent;
     JSON_Object *obj = NULL;
@@ -452,11 +463,11 @@ void test_suite_5(void) {
 }
 
 void test_suite_6(void) {
-    const char *filename = "tests/test_2.txt";
+    const char *filename = "test_2.txt";
     JSON_Value *a = NULL;
     JSON_Value *b = NULL;
-    a = json_parse_file(filename);
-    b = json_parse_file(filename);
+    a = json_parse_file(get_file_path(filename));
+    b = json_parse_file(get_file_path(filename));
     TEST(json_value_equals(a, b));
     json_object_set_string(json_object(a), "string", "eki");
     TEST(!json_value_equals(a, b));
@@ -467,7 +478,7 @@ void test_suite_6(void) {
 }
 
 void test_suite_7(void) {
-    JSON_Value *val_from_file = json_parse_file("tests/test_5.txt");
+    JSON_Value *val_from_file = json_parse_file(get_file_path("test_5.txt"));
     JSON_Value *schema = json_value_init_object();
     JSON_Object *schema_obj = json_value_get_object(schema);
     JSON_Array *interests_arr = NULL;
@@ -484,15 +495,15 @@ void test_suite_7(void) {
 }
 
 void test_suite_8(void) {
-    const char *filename = "tests/test_2.txt";
-    const char *temp_filename = "tests/test_2_serialized.txt";
+    const char *filename = "test_2.txt";
+    const char *temp_filename = "test_2_serialized.txt";
     JSON_Value *a = NULL;
     JSON_Value *b = NULL;
     char *buf = NULL;
     size_t serialization_size = 0;
-    a = json_parse_file(filename);
-    TEST(json_serialize_to_file(a, temp_filename) == JSONSuccess);
-    b = json_parse_file(temp_filename);
+    a = json_parse_file(get_file_path(filename));
+    TEST(json_serialize_to_file(a, get_file_path(temp_filename)) == JSONSuccess);
+    b = json_parse_file(get_file_path(temp_filename));
     TEST(json_value_equals(a, b));
     remove(temp_filename);
     serialization_size = json_serialization_size(a);
@@ -501,23 +512,23 @@ void test_suite_8(void) {
 }
 
 void test_suite_9(void) {
-    const char *filename = "tests/test_2_pretty.txt";
-    const char *temp_filename = "tests/test_2_serialized_pretty.txt";
+    const char *filename = "test_2_pretty.txt";
+    const char *temp_filename = "test_2_serialized_pretty.txt";
     char *file_contents = NULL;
     char *serialized = NULL;
     JSON_Value *a = NULL;
     JSON_Value *b = NULL;
     size_t serialization_size = 0;
-    a = json_parse_file(filename);
-    TEST(json_serialize_to_file_pretty(a, temp_filename) == JSONSuccess);
-    b = json_parse_file(temp_filename);
+    a = json_parse_file(get_file_path(filename));
+    TEST(json_serialize_to_file_pretty(a, get_file_path(temp_filename)) == JSONSuccess);
+    b = json_parse_file(get_file_path(temp_filename));
     TEST(json_value_equals(a, b));
     remove(temp_filename);
     serialization_size = json_serialization_size_pretty(a);
     serialized = json_serialize_to_string_pretty(a);
     TEST((strlen(serialized)+1) == serialization_size);
 
-    file_contents = read_file(filename);
+    file_contents = read_file(get_file_path(filename));
 
     TEST(STREQ(file_contents, serialized));
 }
@@ -528,18 +539,18 @@ void test_suite_10(void) {
 
     malloc_count = 0;
 
-    val = json_parse_file("tests/test_1_1.txt");
+    val = json_parse_file(get_file_path("test_1_1.txt"));
     json_value_free(val);
 
-    val = json_parse_file("tests/test_1_3.txt");
+    val = json_parse_file(get_file_path("test_1_3.txt"));
     json_value_free(val);
 
-    val = json_parse_file("tests/test_2.txt");
+    val = json_parse_file(get_file_path("test_2.txt"));
     serialized = json_serialize_to_string_pretty(val);
     json_free_serialized_string(serialized);
     json_value_free(val);
 
-    val = json_parse_file("tests/test_2_pretty.txt");
+    val = json_parse_file(get_file_path("test_2_pretty.txt"));
     json_value_free(val);
 
     TEST(malloc_count == 0);
@@ -592,7 +603,7 @@ void print_commits_info(const char *username, const char *repo) {
     system(curl_command);
 
     /* parsing json and validating output */
-    root_value = json_parse_file(output_filename);
+    root_value = json_parse_file(get_file_path(output_filename));
     if (json_value_get_type(root_value) != JSONArray) {
         system(cleanup_command);
         return;
@@ -616,7 +627,7 @@ void print_commits_info(const char *username, const char *repo) {
 
 void persistence_example(void) {
     JSON_Value *schema = json_parse_string("{\"name\":\"\"}");
-    JSON_Value *user_data = json_parse_file("user_data.json");
+    JSON_Value *user_data = json_parse_file(get_file_path("user_data.json"));
     char buf[256];
     const char *name = NULL;
     if (user_data == NULL || json_validate(schema, user_data) != JSONSuccess) {
@@ -648,19 +659,22 @@ void serialization_example(void) {
     json_value_free(root_value);
 }
 
-static char * read_file(const char * filename) {
-    FILE *fp = fopen(filename, "r");
+static char * read_file(const char * file_path) {
+    FILE *fp = NULL;
     size_t size_to_read = 0;
     size_t size_read = 0;
     long pos;
     char *file_contents;
+    fp = fopen(file_path, "r");
     if (!fp) {
+        assert(0);
         return NULL;
     }
     fseek(fp, 0L, SEEK_END);
     pos = ftell(fp);
     if (pos < 0) {
         fclose(fp);
+        assert(0);
         return NULL;
     }
     size_to_read = pos;
@@ -668,17 +682,26 @@ static char * read_file(const char * filename) {
     file_contents = (char*)malloc(sizeof(char) * (size_to_read + 1));
     if (!file_contents) {
         fclose(fp);
+        assert(0);
         return NULL;
     }
     size_read = fread(file_contents, 1, size_to_read, fp);
     if (size_read == 0 || ferror(fp)) {
         fclose(fp);
         free(file_contents);
+        assert(0);
         return NULL;
     }
     fclose(fp);
     file_contents[size_read] = '\0';
     return file_contents;
+}
+
+const char* get_file_path(const char *filename) {
+    static char path_buf[2048] = { 0 };
+    memset(path_buf, 0, sizeof(path_buf));
+    sprintf(path_buf, "%s/%s", tests_path, filename);
+    return path_buf;
 }
 
 static void *counted_malloc(size_t size) {
