@@ -136,6 +136,7 @@ void test_suite_2(JSON_Value *root_value) {
     JSON_Object *root_object;
     JSON_Array *array;
     JSON_Value *array_value;
+    size_t len;
     size_t i;
     TEST(root_value);
     TEST(json_value_get_type(root_value) == JSONObject);
@@ -175,6 +176,10 @@ void test_suite_2(JSON_Value *root_value) {
     TEST(STREQ(json_object_get_string(root_object, "utf string"), "lorem ipsum"));
     TEST(STREQ(json_object_get_string(root_object, "utf-8 string"), "あいうえお"));
     TEST(STREQ(json_object_get_string(root_object, "surrogate string"), "lorem𝄞ipsum𝍧lorem"));
+
+    len = json_object_get_string_len(root_object, "string with null");
+    TEST(len == 7);
+    TEST(memcmp(json_object_get_string(root_object, "string with null"), "abc\0def", len) == 0);
 
     TEST(json_object_get_number(root_object, "positive one") == 1.0);
     TEST(json_object_get_number(root_object, "negative one") == -1.0);
@@ -370,6 +375,7 @@ void test_suite_5(void) {
     TEST(json_object_set_string(obj, "utf string", "lorem ipsum") == JSONSuccess);
     TEST(json_object_set_string(obj, "utf-8 string", "あいうえお") == JSONSuccess);
     TEST(json_object_set_string(obj, "surrogate string", "lorem𝄞ipsum𝍧lorem") == JSONSuccess);
+    TEST(json_object_set_string_with_len(obj, "string with null", "abc\0def", 7) == JSONSuccess);
     TEST(json_object_set_string(obj, "windows path", "C:\\Windows\\Path") == JSONSuccess);
     TEST(json_value_equals(val_from_file, val));
 

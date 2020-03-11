@@ -1,3 +1,6 @@
 .DS_Store
 test
 *.o
+testcpp
+tests/test_2_serialized.txt
+tests/test_2_serialized_pretty.txt
