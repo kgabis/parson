@@ -68,13 +68,14 @@ static int parson_escape_slashes = 1;
 
 #define IS_CONT(b) (((unsigned char)(b) & 0xC0) == 0x80) /* is utf-8 continuation byte */
 
+typedef struct json_string {
+    char *chars;
+    size_t length;
+} JSON_String;
+
 /* Type definitions */
 typedef union json_value_value {
-    struct {
-        char *chars;
-        size_t length;
-    } string;
-
+    JSON_String  string;
     double       number;
     JSON_Object *object;
     JSON_Array  *array;
@@ -133,6 +134,7 @@ static void         json_array_free(JSON_Array *array);
 
 /* JSON Value */
 static JSON_Value * json_value_init_string_no_copy(char *string, size_t length);
+static const JSON_String * json_value_get_string_desc(const JSON_Value *value);
 
 /* Parser */
 static JSON_Status  skip_quotes(const char **string);
@@ -945,6 +947,7 @@ static int json_serialize_to_buffer_r(const JSON_Value *value, char *buf, int le
                 if (is_pretty) {
                     APPEND_INDENT(level+1);
                 }
+                /* We do not support key names with embedded \0 chars */
                 written = json_serialize_string(key, strlen(key), buf);
                 if (written < 0) {
                     return -1;
@@ -1317,12 +1320,18 @@ JSON_Array * json_value_get_array(const JSON_Value *value) {
     return json_value_get_type(value) == JSONArray ? value->value.array : NULL;
 }
 
+static const JSON_String * json_value_get_string_desc(const JSON_Value *value) {
+    return json_value_get_type(value) == JSONString ? &value->value.string : NULL;
+}
+
 const char * json_value_get_string(const JSON_Value *value) {
-    return json_value_get_type(value) == JSONString ? value->value.string.chars : NULL;
+    const JSON_String *str = json_value_get_string_desc(value);
+    return str ? str->chars : NULL;
 }
 
 size_t json_value_get_string_len(const JSON_Value *value) {
-    return json_value_get_type(value) == JSONString ? value->value.string.length : 0;
+    const JSON_String *str = json_value_get_string_desc(value);
+    return str ? str->length : 0;
 }
 
 double json_value_get_number(const JSON_Value *value) {
@@ -1450,8 +1459,8 @@ JSON_Value * json_value_init_null(void) {
 JSON_Value * json_value_deep_copy(const JSON_Value *value) {
     size_t i = 0;
     JSON_Value *return_value = NULL, *temp_value_copy = NULL, *temp_value = NULL;
-    const char *temp_string = NULL, *temp_key = NULL;
-    size_t temp_string_len = 0;
+    const JSON_String *temp_string = NULL;
+    const char *temp_key = NULL;
     char *temp_string_copy = NULL;
     JSON_Array *temp_array = NULL, *temp_array_copy = NULL;
     JSON_Object *temp_object = NULL, *temp_object_copy = NULL;
@@ -1505,16 +1514,15 @@ JSON_Value * json_value_deep_copy(const JSON_Value *value) {
         case JSONNumber:
             return json_value_init_number(json_value_get_number(value));
         case JSONString:
-            temp_string = json_value_get_string(value);
+            temp_string = json_value_get_string_desc(value);
             if (temp_string == NULL) {
                 return NULL;
             }
-            temp_string_len = json_value_get_string_len(value);
-            temp_string_copy = parson_strndup(temp_string, temp_string_len);
+            temp_string_copy = parson_strndup(temp_string->chars, temp_string->length);
             if (temp_string_copy == NULL) {
                 return NULL;
             }
-            return_value = json_value_init_string_no_copy(temp_string_copy, temp_string_len);
+            return_value = json_value_init_string_no_copy(temp_string_copy, temp_string->length);
             if (return_value == NULL) {
                 parson_free(temp_string_copy);
             }
@@ -2065,8 +2073,7 @@ JSON_Status json_validate(const JSON_Value *schema, const JSON_Value *value) {
 int json_value_equals(const JSON_Value *a, const JSON_Value *b) {
     JSON_Object *a_object = NULL, *b_object = NULL;
     JSON_Array *a_array = NULL, *b_array = NULL;
-    const char *a_string = NULL, *b_string = NULL;
-    size_t a_len = 0, b_len = 0;
+    const JSON_String *a_string = NULL, *b_string = NULL;
     const char *key = NULL;
     size_t a_count = 0, b_count = 0, i = 0;
     JSON_Value_Type a_type, b_type;
@@ -2108,14 +2115,13 @@ int json_value_equals(const JSON_Value *a, const JSON_Value *b) {
             }
             return 1;
         case JSONString:
-            a_string = json_value_get_string(a);
-            a_len = json_value_get_string_len(a);
-            b_string = json_value_get_string(b);
-            b_len = json_value_get_string_len(b);
+            a_string = json_value_get_string_desc(a);
+            b_string = json_value_get_string_desc(b);
             if (a_string == NULL || b_string == NULL) {
                 return 0; /* shouldn't happen */
             }
-            return a_len == b_len && memcmp(a_string, b_string, a_len) == 0;
+            return a_string->length == b_string->length &&
+                   memcmp(a_string->chars, b_string->chars, a_string->length) == 0;
         case JSONBoolean:
             return json_value_get_boolean(a) == json_value_get_boolean(b);
         case JSONNumber:
