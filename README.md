@@ -142,6 +142,7 @@ I will always merge *working* bug fixes. However, if you want to add something n
 Remember to follow parson's code style and write appropriate tests.
 
 ## My other projects
+* [ape](https://github.com/kgabis/ape) - simple programming language implemented in C library
 * [kgflags](https://github.com/kgabis/kgflags) - easy to use command-line flag parsing library   
 * [agnes](https://github.com/kgabis/agnes) - header-only NES emulation library
 
