@@ -1,6 +1,6 @@
 {
   "name": "parson",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "repo": "kgabis/parson",
   "description": "Small json parser and reader",
   "keywords": [ "json", "parser" ],
