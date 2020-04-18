@@ -11,7 +11,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
 	JSON_Value *root_value;
 	JSON_Array *get_array;
 	JSON_Object *arr;
-	JSON_Value *schema = json_parse_string((char *)data);
+	JSON_Value *schema = json_parse_string((const char *)data);
 	int i;
 	size_t count;
 	
