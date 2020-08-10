@@ -199,7 +199,7 @@ void test_suite_2(JSON_Value *root_value) {
     array = json_object_get_array(root_object, "x^2 array");
     if (array != NULL) {
         for (i = 0; i < json_array_get_count(array); i++) {
-            TEST(json_array_get_number(array, i) == (i * i));
+            TEST((size_t)json_array_get_number(array, i) == (i * i));
         }
     } else {
         tests_failed++;
@@ -683,7 +683,7 @@ static char * read_file(const char * file_path) {
         assert(0);
         return NULL;
     }
-    size_to_read = pos;
+    size_to_read = (size_t)pos;
     rewind(fp);
     file_contents = (char*)malloc(sizeof(char) * (size_to_read + 1));
     if (!file_contents) {
