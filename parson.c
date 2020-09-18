@@ -274,7 +274,8 @@ static int is_decimal(const char *string, size_t length) {
     if (length > 2 && !strncmp(string, "-0", 2) && string[2] != '.') {
         return 0;
     }
-    while (length--) {
+    while (length) {
+        length--;
         if (strchr("xX", string[length])) {
             return 0;
         }
