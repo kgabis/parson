@@ -1,5 +1,5 @@
 ## About
-Parson is a lighweight [json](http://json.org) library written in C.
+Parson is a lightweight [json](http://json.org) library written in C.
 
 ## Features
 * Full JSON support
