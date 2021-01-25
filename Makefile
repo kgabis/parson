@@ -7,12 +7,12 @@ CPPFLAGS = -O0 -g -Wall -Wextra
 all: test testcpp
 
 .PHONY: test testcpp
-test: tests.c parson.c
-	$(CC) $(CFLAGS) -o $@ tests.c parson.c
+test: tests.c parson.c parse.c serialize.c
+	$(CC) $(CFLAGS) -o $@ tests.c parson.c parse.c serialize.c
 	./$@
 
-testcpp: tests.c parson.c
-	$(CPPC) $(CPPFLAGS) -o $@ tests.c parson.c
+testcpp: tests.c parson.c parse.c serialize.c
+	$(CPPC) $(CPPFLAGS) -o $@ tests.c parson.c parse.c serialize.c
 	./$@
 
 clean:
