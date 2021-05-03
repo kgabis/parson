@@ -588,6 +588,8 @@ void test_memory_leaks() {
     TEST(json_object_set_boolean(NULL, "lorem", 0) == JSONFailure);
     TEST(json_object_set_null(NULL, "lorem") == JSONFailure);
 
+    TEST(json_parse_string("{\"\\u0000\"") == NULL);
+
     TEST(malloc_count == 0);
 }
 

@@ -742,6 +742,9 @@ static JSON_Value * parse_object_value(const char **string, size_t nesting) {
         new_key = get_quoted_string(string, &key_len);
         /* We do not support key names with embedded \0 chars */
         if (new_key == NULL || key_len != strlen(new_key)) {
+            if (new_key) {
+                parson_free(new_key);
+            }
             json_value_free(output_value);
             return NULL;
         }
