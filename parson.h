@@ -1,7 +1,7 @@
 /*
  SPDX-License-Identifier: MIT
 
- Parson 1.1.2 ( http://kgabis.github.com/parson/ )
+ Parson 1.1.3 ( http://kgabis.github.com/parson/ )
  Copyright (c) 2012 - 2021 Krzysztof Gabis
 
  Permission is hereby granted, free of charge, to any person obtaining a copy

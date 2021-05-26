@@ -10,6 +10,7 @@
     "hard to parse number" : -3.14e-4,
     "big int": 2147483647,
     "big uint": 4294967295,
+    "double underflow": 6.9041432094973937e-310,
     "boolean true" : true,
     "boolean false" : false,
     "null" : null,

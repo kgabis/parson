@@ -1,7 +1,7 @@
 /*
  SPDX-License-Identifier: MIT
 
- Parson 1.1.2 ( http://kgabis.github.com/parson/ )
+ Parson 1.1.3 ( http://kgabis.github.com/parson/ )
  Copyright (c) 2012 - 2021 Krzysztof Gabis
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -864,7 +864,10 @@ static JSON_Value * parse_number_value(const char **string) {
     double number = 0;
     errno = 0;
     number = strtod(*string, &end);
-    if (errno || !is_decimal(*string, end - *string)) {
+    if (errno == ERANGE && (number == -HUGE_VAL || number == HUGE_VAL)) {
+        return NULL;
+    }
+    if ((errno && errno != ERANGE) || !is_decimal(*string, end - *string)) {
         return NULL;
     }
     *string = end;
