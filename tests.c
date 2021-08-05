@@ -34,11 +34,18 @@
 #include <string.h>
 #include <math.h>
 
-#define TEST(A) printf("%d %-72s-", __LINE__, #A);\
-                if(A){puts(" OK");tests_passed++;}\
-                else{puts(" FAIL");tests_failed++;}
+#define TEST(A) do {\
+if (A) {\
+    g_tests_passed++;\
+} else {\
+    printf("%d %-72s - FAILED\n", __LINE__, #A);\
+    g_tests_failed++;\
+}\
+} while(0)
+
 #define STREQ(A, B) ((A) && (B) ? strcmp((A), (B)) == 0 : 0)
-#define EPSILON 0.000001
+#define DBL_EPSILON 2.2204460492503131e-16
+#define DBL_EQ(a, b) (fabs((a) - (b)) < DBL_EPSILON)
 
 void test_suite_1(void); /* Test 3 files from json.org + serialization*/
 void test_suite_2(JSON_Value *value); /* Test correctness of parsed values */
@@ -54,33 +61,55 @@ void test_suite_9(void); /* Test serialization (pretty) */
 void test_suite_10(void); /* Testing for memory leaks */
 void test_suite_11(void); /* Additional things that require testing */
 void test_memory_leaks(void);
+void test_failing_allocations(void);
 
 void print_commits_info(const char *username, const char *repo);
 void persistence_example(void);
 void serialization_example(void);
 
-static const char *tests_path = "tests";
+static const char *g_tests_path = "tests";
 
-static int malloc_count = 0;
+static int g_malloc_count = 0;
 static void *counted_malloc(size_t size);
 static void counted_free(void *ptr);
+
+typedef struct failing_alloc {
+    int allocation_to_fail;
+    int alloc_count;
+    int total_count;
+    int has_failed;
+    int should_fail;
+} failing_alloc_t;
+
+static failing_alloc_t g_failing_alloc;
+
+static void *failing_malloc(size_t size);
+static void failing_free(void *ptr);
 
 static char * read_file(const char * filename);
 const char* get_file_path(const char *filename);
 
-static int tests_passed;
-static int tests_failed;
+static int g_tests_passed;
+static int g_tests_failed;
 
+#ifdef TESTS_MAIN
 int main(int argc, char *argv[]) {
+#else
+int tests_main(int argc, char *argv[]);
+int tests_main(int argc, char *argv[]) {
+#endif
     /* Example functions from readme file:      */
     /* print_commits_info("torvalds", "linux"); */
     /* serialization_example(); */
     /* persistence_example(); */
 
+    puts("################################################################################");
+    puts("Running parson tests");
+
     if (argc == 2) {
-        tests_path = argv[1];
+        g_tests_path = argv[1];
     } else {
-        tests_path = "tests";
+        g_tests_path = "tests";
     }
 
     json_set_allocation_functions(counted_malloc, counted_free);
@@ -97,9 +126,11 @@ int main(int argc, char *argv[]) {
     test_suite_10();
     test_suite_11();
     test_memory_leaks();
+    test_failing_allocations();
 
-    printf("Tests failed: %d\n", tests_failed);
-    printf("Tests passed: %d\n", tests_passed);
+    printf("Tests failed: %d\n", g_tests_failed);
+    printf("Tests passed: %d\n", g_tests_passed);
+    puts("################################################################################");
     return 0;
 }
 
@@ -182,8 +213,8 @@ void test_suite_2(JSON_Value *root_value) {
     TEST(memcmp(json_object_get_string(root_object, "string with null"), "abc\0def", len) == 0);
 
     TEST(json_object_get_number(root_object, "positive one") == 1.0);
-    TEST(json_object_get_number(root_object, "negative one") == -1.0);
-    TEST(fabs(json_object_get_number(root_object, "hard to parse number") - (-0.000314)) < EPSILON);
+    TEST(DBL_EQ(json_object_get_number(root_object, "negative one"), -1.0));
+    TEST(DBL_EQ(json_object_get_number(root_object, "hard to parse number"), -0.000314));
     TEST(json_object_get_boolean(root_object, "boolean true") == 1);
     TEST(json_object_get_boolean(root_object, "boolean false") == 0);
     TEST(json_value_get_type(json_object_get_value(root_object, "null")) == JSONNull);
@@ -193,16 +224,16 @@ void test_suite_2(JSON_Value *root_value) {
         TEST(STREQ(json_array_get_string(array, 0), "lorem"));
         TEST(STREQ(json_array_get_string(array, 1), "ipsum"));
     } else {
-        tests_failed++;
+        g_tests_failed++;
     }
 
     array = json_object_get_array(root_object, "x^2 array");
     if (array != NULL) {
         for (i = 0; i < json_array_get_count(array); i++) {
-            TEST(json_array_get_number(array, i) == (i * i));
+            TEST(DBL_EQ(json_array_get_number(array, i), (i * i)));
         }
     } else {
-        tests_failed++;
+        g_tests_failed++;
     }
 
     TEST(json_object_get_array(root_object, "non existent array") == NULL);
@@ -210,7 +241,7 @@ void test_suite_2(JSON_Value *root_value) {
     TEST(json_object_dotget_boolean(root_object, "object.nested true") == 1);
     TEST(json_object_dotget_boolean(root_object, "object.nested false") == 0);
     TEST(json_object_dotget_value(root_object, "object.nested null") != NULL);
-    TEST(json_object_dotget_number(root_object, "object.nested number") == 123);
+    TEST(DBL_EQ(json_object_dotget_number(root_object, "object.nested number"), 123));
 
     TEST(json_object_dotget_value(root_object, "should.be.null") == NULL);
     TEST(json_object_dotget_value(root_object, "should.be.null.") == NULL);
@@ -263,7 +294,7 @@ void test_suite_2_with_comments(void) {
 }
 
 void test_suite_3(void) {
-    puts("Testing valid strings:");
+    /* Testing valid strings */
     TEST(json_parse_string("{\"lorem\":\"ipsum\"}") != NULL);
     TEST(json_parse_string("[\"lorem\"]") != NULL);
     TEST(json_parse_string("null") != NULL);
@@ -272,14 +303,14 @@ void test_suite_3(void) {
     TEST(json_parse_string("\"string\"") != NULL);
     TEST(json_parse_string("123") != NULL);
 
-    puts("Test UTF-16 parsing:");
+    /* Test UTF-16 parsing */
     TEST(STREQ(json_string(json_parse_string("\"\\u0024x\"")), "$x"));
     TEST(STREQ(json_string(json_parse_string("\"\\u00A2x\"")), "¢x"));
     TEST(STREQ(json_string(json_parse_string("\"\\u20ACx\"")), "€x"));
     TEST(STREQ(json_string(json_parse_string("\"\\uD801\\uDC37x\"")), "𐐷x"));
 
-    puts("Testing invalid strings:");
-    malloc_count = 0;
+    /* Testing invalid strings */
+    g_malloc_count = 0;
     TEST(json_parse_string(NULL) == NULL);
     TEST(json_parse_string("") == NULL); /* empty string */
     TEST(json_parse_string("[\"lorem\",]") == NULL);
@@ -324,13 +355,12 @@ void test_suite_3(void) {
     TEST(json_parse_string("[\"\\uDF67\\uD834\"]") == NULL); /* wrong order surrogate pair */
     TEST(json_parse_string("[1.7976931348623157e309]") == NULL);
     TEST(json_parse_string("[-1.7976931348623157e309]") == NULL);
-    TEST(malloc_count == 0);
+    TEST(g_malloc_count == 0);
 }
 
 void test_suite_4() {
     const char *filename = "test_2.txt";
     JSON_Value *a = NULL, *a_copy = NULL;
-    printf("Testing %s:\n", filename);
     a = json_parse_file(get_file_path(filename));
     TEST(json_value_equals(a, a)); /* test equality test */
     a_copy = json_value_deep_copy(a);
@@ -343,7 +373,7 @@ void test_suite_5(void) {
 
     JSON_Value *val_from_file = json_parse_file(get_file_path("test_5.txt"));
 
-    JSON_Value *val = NULL, *val_parent;
+    JSON_Value *val = NULL, *val_with_parent;
     JSON_Object *obj = NULL;
     JSON_Array *interests_arr = NULL;
 
@@ -406,17 +436,17 @@ void test_suite_5(void) {
     TEST(json_array_remove(interests_arr, 0) == JSONSuccess);
     TEST(json_array_remove(interests_arr, 0) == JSONFailure); /* should be empty by now */
 
-    val_parent = json_value_init_null();
-    TEST(json_object_set_value(obj, "x", val_parent) == JSONSuccess);
-    TEST(json_object_set_value(obj, "x", val_parent) == JSONFailure);
+    val_with_parent = json_value_init_null();
+    TEST(json_object_set_value(obj, "x", val_with_parent) == JSONSuccess);
+    TEST(json_object_set_value(obj, "x", val_with_parent) == JSONFailure);
 
-    val_parent = json_value_init_null();
-    TEST(json_array_append_value(interests_arr, val_parent) == JSONSuccess);
-    TEST(json_array_append_value(interests_arr, val_parent) == JSONFailure);
+    val_with_parent = json_value_init_null();
+    TEST(json_array_append_value(interests_arr, val_with_parent) == JSONSuccess);
+    TEST(json_array_append_value(interests_arr, val_with_parent) == JSONFailure);
 
-    val_parent = json_value_init_null();
-    TEST(json_array_replace_value(interests_arr, 0, val_parent) == JSONSuccess);
-    TEST(json_array_replace_value(interests_arr, 0, val_parent) == JSONFailure);
+    val_with_parent = json_value_init_null();
+    TEST(json_array_replace_value(interests_arr, 0, val_with_parent) == JSONSuccess);
+    TEST(json_array_replace_value(interests_arr, 0, val_with_parent) == JSONFailure);
 
     TEST(json_object_remove(obj, "interests") == JSONSuccess);
 
@@ -543,7 +573,7 @@ void test_suite_10(void) {
     JSON_Value *val;
     char *serialized;
 
-    malloc_count = 0;
+    g_malloc_count = 0;
 
     val = json_parse_file(get_file_path("test_1_1.txt"));
     json_value_free(val);
@@ -559,7 +589,7 @@ void test_suite_10(void) {
     val = json_parse_file(get_file_path("test_2_pretty.txt"));
     json_value_free(val);
 
-    TEST(malloc_count == 0);
+    TEST(g_malloc_count == 0);
 }
 
 void test_suite_11() {
@@ -581,7 +611,7 @@ void test_suite_11() {
 }
 
 void test_memory_leaks() {
-    malloc_count = 0;
+    g_malloc_count = 0;
 
     TEST(json_object_set_string(NULL, "lorem", "ipsum") == JSONFailure);
     TEST(json_object_set_number(NULL, "lorem", 42) == JSONFailure);
@@ -590,7 +620,72 @@ void test_memory_leaks() {
 
     TEST(json_parse_string("{\"\\u0000\"") == NULL);
 
-    TEST(malloc_count == 0);
+    TEST(g_malloc_count == 0);
+}
+
+void test_failing_allocations() {
+    const char *filename = "test_2.txt";
+    JSON_Value *root_value = NULL;
+    JSON_Object *root_object = NULL;
+    int i = 0;
+    int n = 0;
+    char key_val_buf[32];
+
+    json_set_allocation_functions(failing_malloc, failing_free);
+
+    printf("Testing failing allocations: ");
+
+    while (1) {
+/*        printf("Failing at allocation %d\n", n); */
+        g_failing_alloc.allocation_to_fail = n;
+        g_failing_alloc.alloc_count = 0;
+        g_failing_alloc.total_count = 0;
+        g_failing_alloc.has_failed = 0;
+        g_failing_alloc.should_fail = 1;
+        n++;
+
+        root_value = json_parse_file(get_file_path(filename));
+        if (g_failing_alloc.has_failed) {
+            if (root_value) {
+                printf("Allocation has failed but parsing succeeded after allocation %d\n", n - 1);
+                g_tests_failed++;
+                return;
+            }
+        }
+
+        if (root_value) {
+            root_object = json_object(root_value);
+            for (i = 0; i < 64; i++) {
+                sprintf(key_val_buf, "%d", i);
+                json_object_set_string(root_object, key_val_buf, key_val_buf);
+            }
+
+            for (i = 0; i < 64; i++) {
+                sprintf(key_val_buf, "%d", i);
+                json_object_set_string(root_object, key_val_buf, key_val_buf);
+            }
+
+            json_object_dotset_number(root_object, "ala.ma.kota", 123);
+            json_object_dotremove(root_object, "ala.ma.kota");
+        }
+
+        json_value_free(root_value);
+
+        if (g_failing_alloc.alloc_count != 0) {
+            printf("Leak after failing allocation %d\n", n - 1);
+            g_tests_failed++;
+            return;
+        }
+
+        if (!g_failing_alloc.has_failed) {
+            break;
+        }
+    }
+
+    json_set_allocation_functions(NULL, NULL);
+    printf("OK (tested %d failing allocations)\n", n - 1);
+    g_tests_passed++;
+
 }
 
 void print_commits_info(const char *username, const char *repo) {
@@ -708,21 +803,42 @@ static char * read_file(const char * file_path) {
 const char* get_file_path(const char *filename) {
     static char path_buf[2048] = { 0 };
     memset(path_buf, 0, sizeof(path_buf));
-    sprintf(path_buf, "%s/%s", tests_path, filename);
+    sprintf(path_buf, "%s/%s", g_tests_path, filename);
     return path_buf;
 }
 
 static void *counted_malloc(size_t size) {
     void *res = malloc(size);
     if (res != NULL) {
-        malloc_count++;
+        g_malloc_count++;
     }
     return res;
 }
 
 static void counted_free(void *ptr) {
     if (ptr != NULL) {
-        malloc_count--;
+        g_malloc_count--;
+    }
+    free(ptr);
+}
+
+static void *failing_malloc(size_t size) {
+    void *res = NULL;
+    if (g_failing_alloc.should_fail && g_failing_alloc.total_count >= g_failing_alloc.allocation_to_fail) {
+        g_failing_alloc.has_failed = 1;
+        return NULL;
+    }
+    res = malloc(size);
+    if (res != NULL) {
+        g_failing_alloc.total_count++;
+        g_failing_alloc.alloc_count++;
+    }
+    return res;
+}
+
+static void failing_free(void *ptr) {
+    if (ptr != NULL) {
+        g_failing_alloc.alloc_count--;
     }
     free(ptr);
 }
