@@ -212,7 +212,7 @@ void test_suite_2(JSON_Value *root_value) {
     TEST(len == 7);
     TEST(memcmp(json_object_get_string(root_object, "string with null"), "abc\0def", len) == 0);
 
-    TEST(json_object_get_number(root_object, "positive one") == 1.0);
+    TEST(DBL_EQ(json_object_get_number(root_object, "positive one"), 1.0));
     TEST(DBL_EQ(json_object_get_number(root_object, "negative one"), -1.0));
     TEST(DBL_EQ(json_object_get_number(root_object, "hard to parse number"), -0.000314));
     TEST(json_object_get_boolean(root_object, "boolean true") == 1);

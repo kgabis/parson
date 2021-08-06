@@ -1,7 +1,7 @@
 /*
  SPDX-License-Identifier: MIT
 
- Parson 1.2.0 ( http://kgabis.github.com/parson/ )
+ Parson 1.2.1 ( http://kgabis.github.com/parson/ )
  Copyright (c) 2012 - 2021 Krzysztof Gabis
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -32,7 +32,7 @@
 
 #define PARSON_IMPL_VERSION_MAJOR 1
 #define PARSON_IMPL_VERSION_MINOR 2
-#define PARSON_IMPL_VERSION_PATCH 0
+#define PARSON_IMPL_VERSION_PATCH 1
 
 #if (PARSON_VERSION_MAJOR != PARSON_IMPL_VERSION_MAJOR)\
 || (PARSON_VERSION_MINOR != PARSON_IMPL_VERSION_MINOR)\
@@ -80,7 +80,7 @@
 #define IS_NUMBER_INVALID(x) (((x) * 0.0) != 0.0)
 #endif
 
-#define OBJECT_INVALID_IX SIZE_MAX
+#define OBJECT_INVALID_IX ((size_t)-1)
 
 static JSON_Malloc_Function parson_malloc = malloc;
 static JSON_Free_Function parson_free = free;
