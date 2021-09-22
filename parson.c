@@ -1214,7 +1214,7 @@ static int json_serialize_to_buffer_r(const JSON_Value *value, char *buf, int le
             if (buf != NULL) {
                 num_buf = buf;
             }
-            written = sprintf(num_buf, FLOAT_FORMAT, num);
+            written = sprintf(num_buf, PARSON_FLOAT_FORMAT, num);
             if (written < 0) {
                 return -1;
             }
