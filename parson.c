@@ -1579,7 +1579,11 @@ double json_value_get_number(const JSON_Value *value) {
 }
 
 int json_value_get_integer(const JSON_Value *value) {
-    return json_value_get_type(value) == JSONInteger ? value->value.integer : -1;
+    if(json_value_get_type(value) == JSONInteger) 
+        return value->value.integer;
+    if(json_value_get_type(value) == JSONNumber)
+        return (int) value->value.number;
+    return -1;
 }
 
 int json_value_get_boolean(const JSON_Value *value) {
@@ -1779,7 +1783,7 @@ JSON_Value * json_value_deep_copy(const JSON_Value *value) {
         case JSONNumber:
             return json_value_init_number(json_value_get_number(value));
         case JSONInteger:
-            return json_value_init_integer(json_value_get_number(value));
+            return json_value_init_integer(json_value_get_integer(value));
         case JSONString:
             temp_string = json_value_get_string_desc(value);
             if (temp_string == NULL) {
