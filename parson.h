@@ -30,12 +30,15 @@
 extern "C"
 {
 #endif
+#if 0
+} /* unconfuse xcode */
+#endif
 
 #define PARSON_VERSION_MAJOR 1
-#define PARSON_VERSION_MINOR 2
-#define PARSON_VERSION_PATCH 1
+#define PARSON_VERSION_MINOR 3
+#define PARSON_VERSION_PATCH 0
 
-#define PARSON_VERSION_STRING "1.2.1"
+#define PARSON_VERSION_STRING "1.3.0"
 
 #include <stddef.h>   /* size_t */
 
@@ -71,6 +74,11 @@ void json_set_allocation_functions(JSON_Malloc_Function malloc_fun, JSON_Free_Fu
 /* Sets if slashes should be escaped or not when serializing JSON. By default slashes are escaped.
  This function sets a global setting and is not thread safe. */
 void json_set_escape_slashes(int escape_slashes);
+
+/* Sets float format used for serialization of numbers.
+   Make sure it can't serialize to a string longer than PARSON_NUM_BUF_SIZE.
+   If format is null then the default format is used. */
+void json_set_float_serialization_format(const char *format);
 
 /* Parses first JSON value in a file, returns NULL in case of error */
 JSON_Value * json_parse_file(const char *filename);

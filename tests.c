@@ -62,6 +62,7 @@ void test_suite_10(void); /* Testing for memory leaks */
 void test_suite_11(void); /* Additional things that require testing */
 void test_memory_leaks(void);
 void test_failing_allocations(void);
+void test_custom_number_format(void);
 
 void print_commits_info(const char *username, const char *repo);
 void persistence_example(void);
@@ -98,6 +99,9 @@ int main(int argc, char *argv[]) {
 int tests_main(int argc, char *argv[]);
 int tests_main(int argc, char *argv[]) {
 #endif
+#if 0 /* unconfuse xcode */
+}
+#endif
     /* Example functions from readme file:      */
     /* print_commits_info("torvalds", "linux"); */
     /* serialization_example(); */
@@ -127,6 +131,7 @@ int tests_main(int argc, char *argv[]) {
     test_suite_11();
     test_memory_leaks();
     test_failing_allocations();
+    test_custom_number_format();
 
     printf("Tests failed: %d\n", g_tests_failed);
     printf("Tests passed: %d\n", g_tests_passed);
@@ -682,10 +687,19 @@ void test_failing_allocations() {
         }
     }
 
-    json_set_allocation_functions(NULL, NULL);
+    json_set_allocation_functions(malloc, free);
     printf("OK (tested %d failing allocations)\n", n - 1);
     g_tests_passed++;
+}
 
+void test_custom_number_format() {
+    char *serialized = NULL;
+    JSON_Value *val = json_value_init_number(0.6);
+    json_set_float_serialization_format("%.1f");
+    serialized = json_serialize_to_string(val);
+    TEST(STREQ(serialized, "0.6"));
+    json_free_serialized_string(serialized);
+    json_value_free(val);
 }
 
 void print_commits_info(const char *username, const char *repo) {
