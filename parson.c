@@ -1202,9 +1202,6 @@ static int json_serialize_to_buffer_r(const JSON_Value *value, char *buf, int le
             if (written < 0) {
                 return -1;
             }
-            if (buf != NULL) {
-                buf += written;
-            }
             written_total += written;
             return written_total;
         case JSONBoolean:
@@ -1227,8 +1224,14 @@ static int json_serialize_to_buffer_r(const JSON_Value *value, char *buf, int le
             if (written < 0) {
                 return -1;
             }
-            if (buf != NULL) {
-                buf += written;
+            if (written > 0 && !memchr(num_buf, 'e', written) && memchr(num_buf, '.', written)) {
+                /* strip tailing zeroes */
+                while (written > 1 && num_buf[written-1] == '0') {
+                    written--;
+                }
+                if (num_buf[written-1] == '.') {
+                    written--;
+                }
             }
             written_total += written;
             return written_total;
