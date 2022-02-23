@@ -596,7 +596,7 @@ static JSON_Status json_object_add(JSON_Object *object, char *name, JSON_Value *
 static JSON_Value * json_object_getn_value(const JSON_Object *object, const char *name, size_t name_len) {
     unsigned long hash = 0;
     parson_bool_t found = PARSON_FALSE;
-    unsigned long cell_ix = 0;
+    size_t cell_ix = 0;
     size_t item_ix = 0;
     if (!object || !name) {
         return NULL;
