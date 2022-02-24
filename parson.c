@@ -1,7 +1,7 @@
 /*
  SPDX-License-Identifier: MIT
 
- Parson 1.3.0 (https://github.com/kgabis/parson)
+ Parson 1.3.1 (https://github.com/kgabis/parson)
  Copyright (c) 2012 - 2022 Krzysztof Gabis
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -32,7 +32,7 @@
 
 #define PARSON_IMPL_VERSION_MAJOR 1
 #define PARSON_IMPL_VERSION_MINOR 3
-#define PARSON_IMPL_VERSION_PATCH 0
+#define PARSON_IMPL_VERSION_PATCH 1
 
 #if (PARSON_VERSION_MAJOR != PARSON_IMPL_VERSION_MAJOR)\
 || (PARSON_VERSION_MINOR != PARSON_IMPL_VERSION_MINOR)\
@@ -596,7 +596,7 @@ static JSON_Status json_object_add(JSON_Object *object, char *name, JSON_Value *
 static JSON_Value * json_object_getn_value(const JSON_Object *object, const char *name, size_t name_len) {
     unsigned long hash = 0;
     parson_bool_t found = PARSON_FALSE;
-    unsigned long cell_ix = 0;
+    size_t cell_ix = 0;
     size_t item_ix = 0;
     if (!object || !name) {
         return NULL;
