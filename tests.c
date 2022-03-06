@@ -307,6 +307,8 @@ void test_suite_3(void) {
     TEST(json_parse_string("false") != NULL);
     TEST(json_parse_string("\"string\"") != NULL);
     TEST(json_parse_string("123") != NULL);
+    TEST(json_parse_string("[\"lorem\",]") != NULL);
+    TEST(json_parse_string("{\"lorem\":\"ipsum\",}") != NULL);
 
     /* Test UTF-16 parsing */
     TEST(STREQ(json_string(json_parse_string("\"\\u0024x\"")), "$x"));
@@ -318,9 +320,9 @@ void test_suite_3(void) {
     g_malloc_count = 0;
     TEST(json_parse_string(NULL) == NULL);
     TEST(json_parse_string("") == NULL); /* empty string */
-    TEST(json_parse_string("[\"lorem\",]") == NULL);
-    TEST(json_parse_string("{\"lorem\":\"ipsum\",}") == NULL);
     TEST(json_parse_string("{lorem:ipsum}") == NULL);
+    TEST(json_parse_string("{\"lorem\":\"ipsum\",]") == NULL);
+    TEST(json_parse_string("{\"lorem\":\"ipsum\",,}") == NULL);
     TEST(json_parse_string("[,]") == NULL);
     TEST(json_parse_string("[,") == NULL);
     TEST(json_parse_string("[") == NULL);
