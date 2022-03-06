@@ -8,14 +8,20 @@ Parson is a lightweight [json](http://json.org) library written in C.
 * C89 compatible
 * Test suites
 
-## Installation
+## Integrating into an existing project
+1. Add parson as a wrap or subproject in a meson project
+2. Copy parson.h and parson.c to you source code tree
+3. Build from source to create a shared library.
+
+## Building from source
 Run:
 ```
-git clone https://github.com/kgabis/parson.git
+git clone https://github.com/uni-dos/parson.git
+meson build
+sudo meson install -C build (creates a shared library)
 ```
-and copy parson.h and parson.c to you source code tree.
-
-Run ```make test``` to compile and run tests.
+## Testing Parson
+Run ```make test``` to compile parson against the tests.
 
 ## Examples
 ### Parsing JSON
@@ -60,7 +66,6 @@ void print_commits_info(const char *username, const char *repo) {
     json_value_free(root_value);
     system(cleanup_command);
 }
-
 ```
 Calling ```print_commits_info("torvalds", "linux");``` prints:  
 ```
@@ -115,7 +120,6 @@ void serialization_example(void) {
     json_free_serialized_string(serialized_string);
     json_value_free(root_value);
 }
-
 ```
 
 Output:
@@ -135,15 +139,9 @@ Output:
 }
 ```
 
-## Contributing
-
-I will always merge *working* bug fixes. However, if you want to add something new to the API, please create an "issue" on github for this first so we can discuss if it should end up in the library before you start implementing it.
-Remember to follow parson's code style and write appropriate tests.
-
-## My other projects
-* [ape](https://github.com/kgabis/ape) - simple programming language implemented in C library
-* [kgflags](https://github.com/kgabis/kgflags) - easy to use command-line flag parsing library   
-* [agnes](https://github.com/kgabis/agnes) - header-only NES emulation library
+## Credit
+Thank you Krzysztof Gabis for creating this wonderful library. All I did was add the meson build file to better integrate into projects.
+[Gabis' parson repo](https://github.com/kgabis/parson) 
 
 ## License
 [The MIT License (MIT)](http://opensource.org/licenses/mit-license.php)
