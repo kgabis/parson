@@ -14,26 +14,35 @@ parson_sources = ['parson.c']
 
 parson_inc = include_directories('.')
 
-# defaults to a share library. pass -Ddefault_library=static for a static build
-parson_lib = library(
-    meson.project_name(), # library's name. becomes libparson
-    parson_sources,
-    version: meson.project_version(),
+parson_shared_lib = shared_library(
+    meson.project_name(),
+    sources: parson_sources,
     soversion: lib_so_version,
-    install: not meson.is_subproject())
+    install: true
+)
 
-parson = declare_dependency(
-    link_with : parson_lib,
-    include_directories : parson_inc
+parson_static_lib = static_library(
+    meson.project_name(),
+    sources: parson_sources,
+    install: true
 )
 
 install_headers('parson.h', subdir : 'parson')
 
+parson_shared_dep = declare_dependency(
+    include_directories : parson_inc,
+    link_with : parson_shared_lib
+)
 
-meson.override_dependency('parson', parson)
+parson_static_dep = declare_dependency(
+    include_directories : parson_inc,
+    link_with : parson_static_lib
+)
 
 pkgconfig = import('pkgconfig')
-pkgconfig.generate(parson_lib,
+
+# will create a pkg config for the shared lib only
+pkgconfig.generate(parson_shared_lib,
     version: meson.project_version(),
     filebase: meson.project_name(),
     name: meson.project_name(),
