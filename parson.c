@@ -1,7 +1,7 @@
 /*
  SPDX-License-Identifier: MIT
 
- Parson 1.3.1 (https://github.com/kgabis/parson)
+ Parson 1.4.0 (https://github.com/kgabis/parson)
  Copyright (c) 2012 - 2022 Krzysztof Gabis
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -31,8 +31,8 @@
 #include "parson.h"
 
 #define PARSON_IMPL_VERSION_MAJOR 1
-#define PARSON_IMPL_VERSION_MINOR 3
-#define PARSON_IMPL_VERSION_PATCH 1
+#define PARSON_IMPL_VERSION_MINOR 4
+#define PARSON_IMPL_VERSION_PATCH 0
 
 #if (PARSON_VERSION_MAJOR != PARSON_IMPL_VERSION_MAJOR)\
 || (PARSON_VERSION_MINOR != PARSON_IMPL_VERSION_MINOR)\
@@ -980,6 +980,9 @@ static JSON_Value * parse_object_value(const char **string, size_t nesting) {
         }
         SKIP_CHAR(string);
         SKIP_WHITESPACES(string);
+        if (**string == '}') {
+            break;
+        }
     }
     SKIP_WHITESPACES(string);
     if (**string != '}') {
@@ -1025,6 +1028,9 @@ static JSON_Value * parse_array_value(const char **string, size_t nesting) {
         }
         SKIP_CHAR(string);
         SKIP_WHITESPACES(string);
+        if (**string == ']') {
+            break;
+        }
     }
     SKIP_WHITESPACES(string);
     if (**string != ']' || /* Trim array after parsing is over */

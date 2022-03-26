@@ -31,5 +31,5 @@
     "url" : "https:\/\/www.example.com\/search?q=12345",
     "escaped chars" : "\" \\ \/",
     "empty object" : {},
-    "empty array" : []
+    "empty array" : [],
 }
