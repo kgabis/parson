@@ -1,7 +1,7 @@
 project('parson', 'c',
     version : '1.4.0',
     license : 'MIT',
-    meson_version : '>=0.54.0',
+    meson_version : '>=0.46.0',
     default_options : [
         'c_std=c89', 'optimization=2', 
         'warning_level=2'
