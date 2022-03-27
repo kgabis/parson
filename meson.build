@@ -1,5 +1,5 @@
 project('parson', 'c',
-    version : '1.3.1',
+    version : '1.4.0',
     license : 'MIT',
     meson_version : '>=0.54.0',
     default_options : [
