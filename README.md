@@ -16,7 +16,7 @@ Parson is a lightweight [json](http://json.org) library written in C.
 ## Building from source
 Run:
 ```
-git clone https://github.com/uni-dos/parson.git
+git clone https://github.com/kgabis/parson
 meson build
 sudo meson install -C build (creates a shared library)
 ```
@@ -139,9 +139,15 @@ Output:
 }
 ```
 
-## Credit
-Thank you Krzysztof Gabis for creating this wonderful library. All I did was add the meson build file to better integrate into projects.
-[Gabis' parson repo](https://github.com/kgabis/parson) 
+## Contributing
+
+I will always merge *working* bug fixes. However, if you want to add something new to the API, please create an "issue" on github for this first so we can discuss if it should end up in the library before you start implementing it.
+Remember to follow parson's code style and write appropriate tests.
+
+## My other projects
+* [ape](https://github.com/kgabis/ape) - simple programming language implemented in C library
+* [kgflags](https://github.com/kgabis/kgflags) - easy to use command-line flag parsing library   
+* [agnes](https://github.com/kgabis/agnes) - header-only NES emulation library
 
 ## License
 [The MIT License (MIT)](http://opensource.org/licenses/mit-license.php)
