@@ -382,7 +382,8 @@ static parson_bool_t is_decimal(const char *string, size_t length) {
     if (length > 2 && !strncmp(string, "-0", 2) && string[2] != '.') {
         return PARSON_FALSE;
     }
-    while (length--) {
+    while (length) {
+        length--;
         if (strchr("xX", string[length])) {
             return PARSON_FALSE;
         }
