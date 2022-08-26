@@ -17,6 +17,18 @@ and copy parson.h and parson.c to you source code tree.
 
 Run ```make test``` to compile and run tests.
 
+Alternatively, you can build and install parson using [vcpkg](https://github.com/Microsoft/vcpkg/) dependency manager:
+
+```
+git clone https://github.com/Microsoft/vcpkg.git
+cd vcpkg
+./bootstrap-vcpkg.sh # "./bootstrap-vcpkg.bat" for powershell
+./vcpkg integrate install
+./vcpkg install parson
+```
+
+The parson port in vcpkg is kept up to date by Microsoft team members and community contributors. If the version is out of date, please [create an issue or pull request](https://github.com/Microsoft/vcpkg) on the vcpkg repository.
+
 ## Examples
 ### Parsing JSON
 Here is a function, which prints basic commit info (date, sha and author) from a github repository.  
