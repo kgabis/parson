@@ -193,7 +193,6 @@ static JSON_Value *  parse_value(const char **string, size_t nesting);
 static int json_serialize_to_buffer_r(const JSON_Value *value, char *buf, int level, parson_bool_t is_pretty, char *num_buf);
 static int json_serialize_string(const char *string, size_t len, char *buf);
 static int append_indent(char *buf, int level);
-static int append_string(char *buf, const char *string);
 
 /* Various */
 static char * read_file(const char * filename) {
@@ -1095,9 +1094,14 @@ static JSON_Value * parse_null_value(const char **string) {
 }
 
 /* Serialization */
-#define APPEND_STRING(str) do { written = append_string(buf, (str));\
-                                if (written < 0) { return -1; }\
-                                if (buf != NULL) { buf += written; }\
+
+/* APPEND_STRING() is only called on static const strings */
+#define APPEND_STRING(str) do { (written) = SIZEOF_TOKEN(str);\
+                                if ((buf) != NULL) {\
+                                    memcpy((buf), (str), (written));\
+                                    buf[(written)] = '\0';\
+                                    buf += (written);\
+                                }\
                                 written_total += written; } while(0)
 
 #define APPEND_INDENT(level) do { written = append_indent(buf, (level));\
@@ -1322,13 +1326,6 @@ static int append_indent(char *buf, int level) {
         APPEND_STRING("    ");
     }
     return written_total;
-}
-
-static int append_string(char *buf, const char *string) {
-    if (buf == NULL) {
-        return (int)strlen(string);
-    }
-    return sprintf(buf, "%s", string);
 }
 
 #undef APPEND_STRING
