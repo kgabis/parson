@@ -67,6 +67,16 @@ typedef int JSON_Status;
 typedef void * (*JSON_Malloc_Function)(size_t);
 typedef void   (*JSON_Free_Function)(void *);
 
+/* Serializer function hook/callback that can be used instead of the
+   of the default one (sprintf()). It should have the same return
+   values as sprintf(). It has been found that sprintf() can be slow
+   on some embedded systems when needing to convert double to string,
+   so this gives users the ability to adapt their own version of
+   the serializer (for this type of data). Similarly as sprintf()
+   if 'buf' is null, the function should return the number of
+   bytes that should be allocated, but no more than PARSON_NUM_BUF_SIZE. */
+typedef int    (*JSON_Float_Serializer_Function)(double num, char *buf);
+
 /* Call only once, before calling any other function from parson API. If not called, malloc and free
    from stdlib will be used for all allocations */
 void json_set_allocation_functions(JSON_Malloc_Function malloc_fun, JSON_Free_Function free_fun);
@@ -79,6 +89,10 @@ void json_set_escape_slashes(int escape_slashes);
    Make sure it can't serialize to a string longer than PARSON_NUM_BUF_SIZE.
    If format is null then the default format is used. */
 void json_set_float_serialization_format(const char *format);
+
+/* Sets a function that will be used for float serialization of numbers.
+   If format is null then the default format is used. */
+void json_set_float_serialization_function(JSON_Float_Serializer_Function func);
 
 /* Parses first JSON value in a file, returns NULL in case of error */
 JSON_Value * json_parse_file(const char *filename);

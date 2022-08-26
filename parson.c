@@ -94,6 +94,8 @@ static int parson_escape_slashes = 1;
 
 static char *parson_float_format = NULL;
 
+static JSON_Float_Serializer_Function parson_float_serializer_function = NULL;
+
 #define IS_CONT(b) (((unsigned char)(b) & 0xC0) == 0x80) /* is utf-8 continuation byte */
 
 typedef int parson_bool_t;
@@ -1232,7 +1234,9 @@ static int json_serialize_to_buffer_r(const JSON_Value *value, char *buf, int le
             if (buf != NULL) {
                 num_buf = buf;
             }
-            if (parson_float_format) {
+            if (parson_float_serializer_function) {
+                written = parson_float_serializer_function(num, num_buf);
+            } else if (parson_float_format) {
                 written = sprintf(num_buf, parson_float_format, num);
             } else {
                 written = sprintf(num_buf, PARSON_DEFAULT_FLOAT_FORMAT, num);
@@ -2440,4 +2444,8 @@ void json_set_float_serialization_format(const char *format) {
         return;
     }
     parson_float_format = parson_strdup(format);
+}
+
+void json_set_float_serialization_function(JSON_Float_Serializer_Function func) {
+    parson_float_serializer_function = func;
 }
