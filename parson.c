@@ -192,7 +192,6 @@ static JSON_Value *  parse_value(const char **string, size_t nesting);
 /* Serialization */
 static int json_serialize_to_buffer_r(const JSON_Value *value, char *buf, int level, parson_bool_t is_pretty, char *num_buf);
 static int json_serialize_string(const char *string, size_t len, char *buf);
-static int append_indent(char *buf, int level);
 
 /* Various */
 static char * read_file(const char * filename) {
@@ -1104,9 +1103,16 @@ static JSON_Value * parse_null_value(const char **string) {
                                 }\
                                 written_total += written; } while(0)
 
-#define APPEND_INDENT(level) do { written = append_indent(buf, (level));\
-                                  if (written < 0) { return -1; }\
-                                  if (buf != NULL) { buf += written; }\
+#define INDENT_STR ("    ")
+#define APPEND_INDENT(level) do { written = SIZEOF_TOKEN(INDENT_STR) * (level);\
+                                  if (written > 0 && buf != NULL) {\
+                                      int i;\
+                                      for (i = 0; i < level; i++) {\
+                                          memcpy((buf), INDENT_STR, SIZEOF_TOKEN(INDENT_STR));\
+                                          buf += SIZEOF_TOKEN(INDENT_STR);\
+                                      }\
+                                      buf[(written)] = '\0';\
+                                  }\
                                   written_total += written; } while(0)
 
 static int json_serialize_to_buffer_r(const JSON_Value *value, char *buf, int level, parson_bool_t is_pretty, char *num_buf)
@@ -1316,15 +1322,6 @@ static int json_serialize_string(const char *string, size_t len, char *buf) {
         }
     }
     APPEND_STRING("\"");
-    return written_total;
-}
-
-static int append_indent(char *buf, int level) {
-    int i;
-    int written = -1, written_total = 0;
-    for (i = 0; i < level; i++) {
-        APPEND_STRING("    ");
-    }
     return written_total;
 }
 
