@@ -376,10 +376,12 @@ static int is_valid_utf8(const char *string, size_t string_len) {
 }
 
 static parson_bool_t is_decimal(const char *string, size_t length) {
-    if (length > 1 && string[0] == '0' && string[1] != '.') {
+    if (length > 1 && string[0] == '0' && 
+	(string[1] != '.' && string[1] != 'e' && string[1] != 'E') {
         return PARSON_FALSE;
     }
-    if (length > 2 && !strncmp(string, "-0", 2) && string[2] != '.') {
+    if (length > 2 && !strncmp(string, "-0", 2) && 
+	(string[2] != '.' && string[2] != 'e' && string[2] != 'E') {
         return PARSON_FALSE;
     }
     while (length--) {
