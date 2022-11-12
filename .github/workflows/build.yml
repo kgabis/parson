@@ -9,5 +9,5 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - name: Run the 'make test'
-      run: make test
+    - name: Run the 'make all'
+      run: make all
