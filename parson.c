@@ -1,7 +1,7 @@
 /*
  SPDX-License-Identifier: MIT
 
- Parson 1.4.0 (https://github.com/kgabis/parson)
+ Parson 1.5.0 (https://github.com/kgabis/parson)
  Copyright (c) 2012 - 2022 Krzysztof Gabis
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -31,7 +31,7 @@
 #include "parson.h"
 
 #define PARSON_IMPL_VERSION_MAJOR 1
-#define PARSON_IMPL_VERSION_MINOR 4
+#define PARSON_IMPL_VERSION_MINOR 5
 #define PARSON_IMPL_VERSION_PATCH 0
 
 #if (PARSON_VERSION_MAJOR != PARSON_IMPL_VERSION_MAJOR)\
@@ -71,6 +71,10 @@
 #define PARSON_NUM_BUF_SIZE 64 /* double printed with "%1.17g" shouldn't be longer than 25 bytes so let's be paranoid and use 64 */
 #endif
 
+#ifndef PARSON_INDENT_STR
+#define PARSON_INDENT_STR "    "
+#endif
+
 #define SIZEOF_TOKEN(a)       (sizeof(a) - 1)
 #define SKIP_CHAR(str)        ((*str)++)
 #define SKIP_WHITESPACES(str) while (isspace((unsigned char)(**str))) { SKIP_CHAR(str); }
@@ -94,7 +98,7 @@ static int parson_escape_slashes = 1;
 
 static char *parson_float_format = NULL;
 
-static JSON_Float_Serializer_Function parson_float_serializer_function = NULL;
+static JSON_Number_Serialization_Function parson_number_serialization_function = NULL;
 
 #define IS_CONT(b) (((unsigned char)(b) & 0xC0) == 0x80) /* is utf-8 continuation byte */
 
@@ -1096,26 +1100,26 @@ static JSON_Value * parse_null_value(const char **string) {
 
 /* Serialization */
 
-/* APPEND_STRING() is only called on static const strings */
-#define APPEND_STRING(str) do { (written) = SIZEOF_TOKEN(str);\
-                                if ((buf) != NULL) {\
-                                    memcpy((buf), (str), (written));\
-                                    buf[(written)] = '\0';\
-                                    buf += (written);\
+/*  APPEND_STRING() is only called on string literals.
+    It's a bit hacky because it makes plenty of assumptions about the external state
+    and should eventually be tidied up into a function (same goes for APPEND_INDENT)
+ */
+#define APPEND_STRING(str) do {\
+                                written = SIZEOF_TOKEN((str));\
+                                if (buf != NULL) {\
+                                    memcpy(buf, (str), written);\
+                                    buf[written] = '\0';\
+                                    buf += written;\
                                 }\
-                                written_total += written; } while(0)
+                                written_total += written;\
+                            } while (0)
 
-#define INDENT_STR ("    ")
-#define APPEND_INDENT(level) do { written = SIZEOF_TOKEN(INDENT_STR) * (level);\
-                                  if (written > 0 && buf != NULL) {\
-                                      int i;\
-                                      for (i = 0; i < level; i++) {\
-                                          memcpy((buf), INDENT_STR, SIZEOF_TOKEN(INDENT_STR));\
-                                          buf += SIZEOF_TOKEN(INDENT_STR);\
-                                      }\
-                                      buf[(written)] = '\0';\
-                                  }\
-                                  written_total += written; } while(0)
+#define APPEND_INDENT(level) do {\
+                                int level_i = 0;\
+                                for (level_i = 0; level_i < (level); level_i++) {\
+                                    APPEND_STRING(PARSON_INDENT_STR);\
+                                }\
+                            } while (0)
 
 static int json_serialize_to_buffer_r(const JSON_Value *value, char *buf, int level, parson_bool_t is_pretty, char *num_buf)
 {
@@ -1130,8 +1134,8 @@ static int json_serialize_to_buffer_r(const JSON_Value *value, char *buf, int le
 
     switch (json_value_get_type(value)) {
         case JSONArray:
-            array = value->value.array;
-            count = array->count;
+            array = json_value_get_array(value);
+            count = json_array_get_count(array);
             APPEND_STRING("[");
             if (count > 0 && is_pretty) {
                 APPEND_STRING("\n");
@@ -1140,7 +1144,7 @@ static int json_serialize_to_buffer_r(const JSON_Value *value, char *buf, int le
                 if (is_pretty) {
                     APPEND_INDENT(level+1);
                 }
-                temp_value = array->items[i];
+                temp_value = json_array_get_value(array, i);
                 written = json_serialize_to_buffer_r(temp_value, buf, level+1, is_pretty, num_buf);
                 if (written < 0) {
                     return -1;
@@ -1162,14 +1166,14 @@ static int json_serialize_to_buffer_r(const JSON_Value *value, char *buf, int le
             APPEND_STRING("]");
             return written_total;
         case JSONObject:
-            object = value->value.object;
-            count  = object->count;
+            object = json_value_get_object(value);
+            count  = json_object_get_count(object);
             APPEND_STRING("{");
             if (count > 0 && is_pretty) {
                 APPEND_STRING("\n");
             }
             for (i = 0; i < count; i++) {
-                key = object->names[i];
+                key = json_object_get_name(object, i);
                 if (key == NULL) {
                     return -1;
                 }
@@ -1189,7 +1193,7 @@ static int json_serialize_to_buffer_r(const JSON_Value *value, char *buf, int le
                 if (is_pretty) {
                     APPEND_STRING(" ");
                 }
-                temp_value = object->values[i];
+                temp_value = json_object_get_value_at(object, i);
                 written = json_serialize_to_buffer_r(temp_value, buf, level+1, is_pretty, num_buf);
                 if (written < 0) {
                     return -1;
@@ -1211,8 +1215,11 @@ static int json_serialize_to_buffer_r(const JSON_Value *value, char *buf, int le
             APPEND_STRING("}");
             return written_total;
         case JSONString:
-            string = value->value.string.chars;
-            len = value->value.string.length;
+            string = json_value_get_string(value);
+            if (string == NULL) {
+                return -1;
+            }
+            len = json_value_get_string_len(value);
             written = json_serialize_string(string, len, buf);
             if (written < 0) {
                 return -1;
@@ -1223,19 +1230,19 @@ static int json_serialize_to_buffer_r(const JSON_Value *value, char *buf, int le
             written_total += written;
             return written_total;
         case JSONBoolean:
-            if (value->value.boolean) {
+            if (json_value_get_boolean(value)) {
                 APPEND_STRING("true");
             } else {
                 APPEND_STRING("false");
             }
             return written_total;
         case JSONNumber:
-            num = value->value.number;
+            num = json_value_get_number(value);
             if (buf != NULL) {
                 num_buf = buf;
             }
-            if (parson_float_serializer_function) {
-                written = parson_float_serializer_function(num, num_buf);
+            if (parson_number_serialization_function) {
+                written = parson_number_serialization_function(num, num_buf);
             } else if (parson_float_format) {
                 written = sprintf(num_buf, parson_float_format, num);
             } else {
@@ -2446,6 +2453,6 @@ void json_set_float_serialization_format(const char *format) {
     parson_float_format = parson_strdup(format);
 }
 
-void json_set_float_serialization_function(JSON_Float_Serializer_Function func) {
-    parson_float_serializer_function = func;
+void json_set_number_serialization_function(JSON_Number_Serialization_Function func) {
+    parson_number_serialization_function = func;
 }

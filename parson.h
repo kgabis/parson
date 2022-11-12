@@ -1,7 +1,7 @@
 /*
  SPDX-License-Identifier: MIT
 
- Parson 1.4.0 (https://github.com/kgabis/parson)
+ Parson 1.5.0 (https://github.com/kgabis/parson)
  Copyright (c) 2012 - 2022 Krzysztof Gabis
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -35,10 +35,10 @@ extern "C"
 #endif
 
 #define PARSON_VERSION_MAJOR 1
-#define PARSON_VERSION_MINOR 4
+#define PARSON_VERSION_MINOR 5
 #define PARSON_VERSION_PATCH 0
 
-#define PARSON_VERSION_STRING "1.4.0"
+#define PARSON_VERSION_STRING "1.5.0"
 
 #include <stddef.h>   /* size_t */
 
@@ -67,15 +67,11 @@ typedef int JSON_Status;
 typedef void * (*JSON_Malloc_Function)(size_t);
 typedef void   (*JSON_Free_Function)(void *);
 
-/* Serializer function hook/callback that can be used instead of the
-   of the default one (sprintf()). It should have the same return
-   values as sprintf(). It has been found that sprintf() can be slow
-   on some embedded systems when needing to convert double to string,
-   so this gives users the ability to adapt their own version of
-   the serializer (for this type of data). Similarly as sprintf()
-   if 'buf' is null, the function should return the number of
-   bytes that should be allocated, but no more than PARSON_NUM_BUF_SIZE. */
-typedef int    (*JSON_Float_Serializer_Function)(double num, char *buf);
+/* A function used for serializing numbers (see json_set_number_serialization_function).
+   If 'buf' is null then it should return number of bytes that would've been written 
+   (but not more than PARSON_NUM_BUF_SIZE).
+*/
+typedef int (*JSON_Number_Serialization_Function)(double num, char *buf);
 
 /* Call only once, before calling any other function from parson API. If not called, malloc and free
    from stdlib will be used for all allocations */
@@ -90,9 +86,9 @@ void json_set_escape_slashes(int escape_slashes);
    If format is null then the default format is used. */
 void json_set_float_serialization_format(const char *format);
 
-/* Sets a function that will be used for float serialization of numbers.
-   If format is null then the default format is used. */
-void json_set_float_serialization_function(JSON_Float_Serializer_Function func);
+/* Sets a function that will be used for serialization of numbers.
+   If function is null then the default serialization function is used. */
+void json_set_number_serialization_function(JSON_Number_Serialization_Function fun);
 
 /* Parses first JSON value in a file, returns NULL in case of error */
 JSON_Value * json_parse_file(const char *filename);
