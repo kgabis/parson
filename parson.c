@@ -1,7 +1,7 @@
 /*
  SPDX-License-Identifier: MIT
 
- Parson 1.4.0 (https://github.com/kgabis/parson)
+ Parson 1.5.0 (https://github.com/kgabis/parson)
  Copyright (c) 2012 - 2022 Krzysztof Gabis
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -31,7 +31,7 @@
 #include "parson.h"
 
 #define PARSON_IMPL_VERSION_MAJOR 1
-#define PARSON_IMPL_VERSION_MINOR 4
+#define PARSON_IMPL_VERSION_MINOR 5
 #define PARSON_IMPL_VERSION_PATCH 0
 
 #if (PARSON_VERSION_MAJOR != PARSON_IMPL_VERSION_MAJOR)\
@@ -71,6 +71,10 @@
 #define PARSON_NUM_BUF_SIZE 64 /* double printed with "%1.17g" shouldn't be longer than 25 bytes so let's be paranoid and use 64 */
 #endif
 
+#ifndef PARSON_INDENT_STR
+#define PARSON_INDENT_STR "    "
+#endif
+
 #define SIZEOF_TOKEN(a)       (sizeof(a) - 1)
 #define SKIP_CHAR(str)        ((*str)++)
 #define SKIP_WHITESPACES(str) while (isspace((unsigned char)(**str))) { SKIP_CHAR(str); }
@@ -93,6 +97,8 @@ static JSON_Free_Function parson_free = free;
 static int parson_escape_slashes = 1;
 
 static char *parson_float_format = NULL;
+
+static JSON_Number_Serialization_Function parson_number_serialization_function = NULL;
 
 #define IS_CONT(b) (((unsigned char)(b) & 0xC0) == 0x80) /* is utf-8 continuation byte */
 
@@ -192,8 +198,6 @@ static JSON_Value *  parse_value(const char **string, size_t nesting);
 /* Serialization */
 static int json_serialize_to_buffer_r(const JSON_Value *value, char *buf, int level, parson_bool_t is_pretty, char *num_buf);
 static int json_serialize_string(const char *string, size_t len, char *buf);
-static int append_indent(char *buf, int level);
-static int append_string(char *buf, const char *string);
 
 /* Various */
 static char * read_file(const char * filename) {
@@ -1095,15 +1099,27 @@ static JSON_Value * parse_null_value(const char **string) {
 }
 
 /* Serialization */
-#define APPEND_STRING(str) do { written = append_string(buf, (str));\
-                                if (written < 0) { return -1; }\
-                                if (buf != NULL) { buf += written; }\
-                                written_total += written; } while(0)
 
-#define APPEND_INDENT(level) do { written = append_indent(buf, (level));\
-                                  if (written < 0) { return -1; }\
-                                  if (buf != NULL) { buf += written; }\
-                                  written_total += written; } while(0)
+/*  APPEND_STRING() is only called on string literals.
+    It's a bit hacky because it makes plenty of assumptions about the external state
+    and should eventually be tidied up into a function (same goes for APPEND_INDENT)
+ */
+#define APPEND_STRING(str) do {\
+                                written = SIZEOF_TOKEN((str));\
+                                if (buf != NULL) {\
+                                    memcpy(buf, (str), written);\
+                                    buf[written] = '\0';\
+                                    buf += written;\
+                                }\
+                                written_total += written;\
+                            } while (0)
+
+#define APPEND_INDENT(level) do {\
+                                int level_i = 0;\
+                                for (level_i = 0; level_i < (level); level_i++) {\
+                                    APPEND_STRING(PARSON_INDENT_STR);\
+                                }\
+                            } while (0)
 
 static int json_serialize_to_buffer_r(const JSON_Value *value, char *buf, int level, parson_bool_t is_pretty, char *num_buf)
 {
@@ -1225,7 +1241,9 @@ static int json_serialize_to_buffer_r(const JSON_Value *value, char *buf, int le
             if (buf != NULL) {
                 num_buf = buf;
             }
-            if (parson_float_format) {
+            if (parson_number_serialization_function) {
+                written = parson_number_serialization_function(num, num_buf);
+            } else if (parson_float_format) {
                 written = sprintf(num_buf, parson_float_format, num);
             } else {
                 written = sprintf(num_buf, PARSON_DEFAULT_FLOAT_FORMAT, num);
@@ -1313,22 +1331,6 @@ static int json_serialize_string(const char *string, size_t len, char *buf) {
     }
     APPEND_STRING("\"");
     return written_total;
-}
-
-static int append_indent(char *buf, int level) {
-    int i;
-    int written = -1, written_total = 0;
-    for (i = 0; i < level; i++) {
-        APPEND_STRING("    ");
-    }
-    return written_total;
-}
-
-static int append_string(char *buf, const char *string) {
-    if (buf == NULL) {
-        return (int)strlen(string);
-    }
-    return sprintf(buf, "%s", string);
 }
 
 #undef APPEND_STRING
@@ -2449,4 +2451,8 @@ void json_set_float_serialization_format(const char *format) {
         return;
     }
     parson_float_format = parson_strdup(format);
+}
+
+void json_set_number_serialization_function(JSON_Number_Serialization_Function func) {
+    parson_number_serialization_function = func;
 }

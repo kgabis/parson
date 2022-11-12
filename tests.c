@@ -63,6 +63,7 @@ void test_suite_11(void); /* Additional things that require testing */
 void test_memory_leaks(void);
 void test_failing_allocations(void);
 void test_custom_number_format(void);
+void test_custom_number_serialization_function(void);
 
 void print_commits_info(const char *username, const char *repo);
 void persistence_example(void);
@@ -132,6 +133,7 @@ int tests_main(int argc, char *argv[]) {
     test_memory_leaks();
     test_failing_allocations();
     test_custom_number_format();
+    test_custom_number_serialization_function();
 
     printf("Tests failed: %d\n", g_tests_failed);
     printf("Tests passed: %d\n", g_tests_passed);
@@ -700,6 +702,28 @@ void test_custom_number_format() {
     json_set_float_serialization_format("%.1f");
     serialized = json_serialize_to_string(val);
     TEST(STREQ(serialized, "0.6"));
+    json_free_serialized_string(serialized);
+    json_value_free(val);
+}
+
+static int custom_serialization_func_called = 0;
+static int custom_serialization_func(double num, char *buf) {
+    char num_buf[32];
+    custom_serialization_func_called = 1;
+    if (buf == NULL)
+        buf = num_buf;
+    return sprintf(buf, "%.1f", num);
+}
+
+void test_custom_number_serialization_function() {
+    /* We just test that custom_serialization_func() gets called, not it's performance */
+    char *serialized = NULL;
+    JSON_Value *val = json_value_init_number(0.6);
+    json_set_number_serialization_function(custom_serialization_func);
+    serialized = json_serialize_to_string(val);
+    TEST(STREQ(serialized, "0.6"));
+    TEST(custom_serialization_func_called);
+    json_set_number_serialization_function(NULL);
     json_free_serialized_string(serialized);
     json_value_free(val);
 }
