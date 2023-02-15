@@ -1,8 +1,8 @@
 /*
  SPDX-License-Identifier: MIT
 
- Parson 1.5.0 (https://github.com/kgabis/parson)
- Copyright (c) 2012 - 2022 Krzysztof Gabis
+ Parson 1.5.1 (https://github.com/kgabis/parson)
+ Copyright (c) 2012 - 2023 Krzysztof Gabis
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated documentation files (the "Software"), to deal
@@ -32,7 +32,7 @@
 
 #define PARSON_IMPL_VERSION_MAJOR 1
 #define PARSON_IMPL_VERSION_MINOR 5
-#define PARSON_IMPL_VERSION_PATCH 0
+#define PARSON_IMPL_VERSION_PATCH 1
 
 #if (PARSON_VERSION_MAJOR != PARSON_IMPL_VERSION_MAJOR)\
 || (PARSON_VERSION_MINOR != PARSON_IMPL_VERSION_MINOR)\
@@ -2274,9 +2274,15 @@ JSON_Status json_object_clear(JSON_Object *object) {
     }
     for (i = 0; i < json_object_get_count(object); i++) {
         parson_free(object->names[i]);
+        object->names[i] = NULL;
+        
         json_value_free(object->values[i]);
+        object->values[i] = NULL;
     }
     object->count = 0;
+    for (i = 0; i < object->cell_capacity; i++) {
+        object->cells[i] = OBJECT_INVALID_IX;
+    }
     return JSONSuccess;
 }
 
@@ -2445,6 +2451,7 @@ void json_set_escape_slashes(int escape_slashes) {
 void json_set_float_serialization_format(const char *format) {
     if (parson_float_format) {
         parson_free(parson_float_format);
+        parson_float_format = NULL;
     }
     if (!format) {
         parson_float_format = NULL;

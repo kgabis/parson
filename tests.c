@@ -2,7 +2,7 @@
  SPDX-License-Identifier: MIT
 
  Parson (https://github.com/kgabis/parson)
- Copyright (c) 2012 - 2022 Krzysztof Gabis
+ Copyright (c) 2012 - 2023 Krzysztof Gabis
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated documentation files (the "Software"), to deal
@@ -64,6 +64,7 @@ void test_memory_leaks(void);
 void test_failing_allocations(void);
 void test_custom_number_format(void);
 void test_custom_number_serialization_function(void);
+void test_object_clear(void);
 
 void print_commits_info(const char *username, const char *repo);
 void persistence_example(void);
@@ -134,6 +135,7 @@ int tests_main(int argc, char *argv[]) {
     test_failing_allocations();
     test_custom_number_format();
     test_custom_number_serialization_function();
+    test_object_clear();
 
     printf("Tests failed: %d\n", g_tests_failed);
     printf("Tests passed: %d\n", g_tests_passed);
@@ -691,19 +693,24 @@ void test_failing_allocations() {
         }
     }
 
-    json_set_allocation_functions(malloc, free);
+    json_set_allocation_functions(counted_malloc, counted_free);
     printf("OK (tested %d failing allocations)\n", n - 1);
     g_tests_passed++;
 }
 
 void test_custom_number_format() {
-    char *serialized = NULL;
-    JSON_Value *val = json_value_init_number(0.6);
-    json_set_float_serialization_format("%.1f");
-    serialized = json_serialize_to_string(val);
-    TEST(STREQ(serialized, "0.6"));
-    json_free_serialized_string(serialized);
-    json_value_free(val);
+    g_malloc_count = 0;
+    {
+        char *serialized = NULL;
+        JSON_Value *val = json_value_init_number(0.6);
+        json_set_float_serialization_format("%.1f");
+        serialized = json_serialize_to_string(val);
+        json_set_float_serialization_format(NULL);
+        TEST(STREQ(serialized, "0.6"));
+        json_free_serialized_string(serialized);
+        json_value_free(val);
+    }
+    TEST(g_malloc_count == 0);
 }
 
 static int custom_serialization_func_called = 0;
@@ -716,16 +723,33 @@ static int custom_serialization_func(double num, char *buf) {
 }
 
 void test_custom_number_serialization_function() {
-    /* We just test that custom_serialization_func() gets called, not it's performance */
-    char *serialized = NULL;
-    JSON_Value *val = json_value_init_number(0.6);
-    json_set_number_serialization_function(custom_serialization_func);
-    serialized = json_serialize_to_string(val);
-    TEST(STREQ(serialized, "0.6"));
-    TEST(custom_serialization_func_called);
-    json_set_number_serialization_function(NULL);
-    json_free_serialized_string(serialized);
-    json_value_free(val);
+    g_malloc_count = 0;
+    {
+        /* We just test that custom_serialization_func() gets called, not it's performance */
+        char *serialized = NULL;
+        JSON_Value *val = json_value_init_number(0.6);
+        json_set_number_serialization_function(custom_serialization_func);
+        serialized = json_serialize_to_string(val);
+        TEST(STREQ(serialized, "0.6"));
+        TEST(custom_serialization_func_called);
+        json_set_number_serialization_function(NULL);
+        json_free_serialized_string(serialized);
+        json_value_free(val);
+    }
+    TEST(g_malloc_count == 0);
+}
+
+void test_object_clear() {
+    g_malloc_count = 0;
+    {
+        JSON_Value *val = json_value_init_object();
+        JSON_Object *obj = json_value_get_object(val);
+        json_object_set_string(obj, "foo", "bar");
+        json_object_clear(obj);
+        TEST(json_object_get_value(obj, "foo") == NULL);
+        json_value_free(val);
+    }
+    TEST(g_malloc_count == 0);
 }
 
 void print_commits_info(const char *username, const char *repo) {
