@@ -1,8 +1,10 @@
 .DS_Store
-test
+.vscode
+*.dSYM
 *.o
-testcpp
-tests/test_2_serialized.txt
-tests/test_2_serialized_pretty.txt
-test_hash_collisions
 build/**
+test
+test_hash_collisions
+testcpp
+tests/test_2_serialized_pretty.txt
+tests/test_2_serialized.txt
