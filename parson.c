@@ -441,7 +441,7 @@ static JSON_Status json_object_init(JSON_Object *object, size_t capacity) {
 
     object->count = 0;
     object->cell_capacity = capacity;
-    object->item_capacity = (unsigned int)(capacity * 0.7f);
+    object->item_capacity = (unsigned int)(capacity * 0.7);
 
     if (capacity == 0) {
         return JSONSuccess;
