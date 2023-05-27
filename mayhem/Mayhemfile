@@ -1,0 +1,13 @@
+image: ghcr.io/arka16/parson:latest
+duration: 1200
+project: parson
+target: parson
+tasks:
+    - name: exploitability_factors
+    - name: behavior_testing
+    - name: regression_testing
+    - name: coverage_analysis
+cmds:
+  - cmd: /test @@
+    env: {}
+    filepath: test_2_comments.txt
