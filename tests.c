@@ -369,7 +369,7 @@ void test_suite_3(void) {
     TEST(g_malloc_count == 0);
 }
 
-void test_suite_4() {
+void test_suite_4(void) {
     const char *filename = "test_2.txt";
     JSON_Value *a = NULL, *a_copy = NULL;
     a = json_parse_file(get_file_path(filename));
@@ -603,7 +603,7 @@ void test_suite_10(void) {
     TEST(g_malloc_count == 0);
 }
 
-void test_suite_11() {
+void test_suite_11(void) {
     const char * array_with_slashes = "[\"a/b/c\"]";
     const char * array_with_escaped_slashes = "[\"a\\/b\\/c\"]";
     char *serialized = NULL;
@@ -621,7 +621,7 @@ void test_suite_11() {
     TEST(STREQ(array_with_escaped_slashes, serialized));
 }
 
-void test_memory_leaks() {
+void test_memory_leaks(void) {
     g_malloc_count = 0;
 
     TEST(json_object_set_string(NULL, "lorem", "ipsum") == JSONFailure);
@@ -634,7 +634,7 @@ void test_memory_leaks() {
     TEST(g_malloc_count == 0);
 }
 
-void test_failing_allocations() {
+void test_failing_allocations(void) {
     const char *filename = "test_2.txt";
     JSON_Value *root_value = NULL;
     JSON_Object *root_object = NULL;
@@ -698,7 +698,7 @@ void test_failing_allocations() {
     g_tests_passed++;
 }
 
-void test_custom_number_format() {
+void test_custom_number_format(void) {
     g_malloc_count = 0;
     {
         char *serialized = NULL;
@@ -722,7 +722,7 @@ static int custom_serialization_func(double num, char *buf) {
     return sprintf(buf, "%.1f", num);
 }
 
-void test_custom_number_serialization_function() {
+void test_custom_number_serialization_function(void) {
     g_malloc_count = 0;
     {
         /* We just test that custom_serialization_func() gets called, not it's performance */
@@ -739,7 +739,7 @@ void test_custom_number_serialization_function() {
     TEST(g_malloc_count == 0);
 }
 
-void test_object_clear() {
+void test_object_clear(void) {
     g_malloc_count = 0;
     {
         JSON_Value *val = json_value_init_object();
