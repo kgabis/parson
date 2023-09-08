@@ -68,7 +68,7 @@ typedef void * (*JSON_Malloc_Function)(size_t);
 typedef void   (*JSON_Free_Function)(void *);
 
 /* A function used for serializing numbers (see json_set_number_serialization_function).
-   If 'buf' is null then it should return number of bytes that would've been written 
+   If 'buf' is null then it should return number of bytes that would've been written
    (but not more than PARSON_NUM_BUF_SIZE).
 */
 typedef int (*JSON_Number_Serialization_Function)(double num, char *buf);
@@ -239,22 +239,27 @@ JSON_Status json_array_append_null(JSON_Array *array);
 /*
  *JSON Value
  */
-JSON_Value * json_value_init_object (void);
-JSON_Value * json_value_init_array  (void);
-JSON_Value * json_value_init_string (const char *string); /* copies passed string */
-JSON_Value * json_value_init_string_with_len(const char *string, size_t length); /* copies passed string, length shouldn't include last null character */
-JSON_Value * json_value_init_number (double number);
-JSON_Value * json_value_init_boolean(int boolean);
-JSON_Value * json_value_init_null   (void);
-JSON_Value * json_value_deep_copy   (const JSON_Value *value);
-void         json_value_free        (JSON_Value *value);
+JSON_Value * json_value_init_object                   (void);
+JSON_Value * json_value_init_array                    (void);
+JSON_Value * json_value_init_string                   (const char *string); /* copies passed string */
+JSON_Value * json_value_init_string_with_len          (const char *string, size_t length); /* copies passed string, length shouldn't include last null character */
+JSON_Value * json_value_init_number                   (double number);
+JSON_Value * json_value_init_number_as_string         (const char *number);
+JSON_Value * json_value_init_number_as_string_with_len(const char *number_as_string, size_t number_as_string_length);
+JSON_Value * json_value_init_boolean                  (int boolean);
+JSON_Value * json_value_init_null                     (void);
+JSON_Value * json_value_deep_copy                     (const JSON_Value *value);
+void         json_value_free                          (JSON_Value *value);
 
-JSON_Value_Type json_value_get_type   (const JSON_Value *value);
-JSON_Object *   json_value_get_object (const JSON_Value *value);
-JSON_Array  *   json_value_get_array  (const JSON_Value *value);
-const char  *   json_value_get_string (const JSON_Value *value);
-size_t          json_value_get_string_len(const JSON_Value *value); /* doesn't account for last null character */
-double          json_value_get_number (const JSON_Value *value);
+JSON_Value_Type json_value_get_type                (const JSON_Value *value);
+JSON_Object *   json_value_get_object              (const JSON_Value *value);
+JSON_Array  *   json_value_get_array               (const JSON_Value *value);
+const char  *   json_value_get_string              (const JSON_Value *value);
+size_t          json_value_get_string_len          (const JSON_Value *value); /* doesn't account for last null character */
+double          json_value_get_number              (const JSON_Value *value);
+const char *    json_value_get_number_as_string    (const JSON_Value *value);
+size_t          json_value_get_number_as_string_len(const JSON_Value *value);
+
 int             json_value_get_boolean(const JSON_Value *value);
 JSON_Value  *   json_value_get_parent (const JSON_Value *value);
 
