@@ -26,6 +26,10 @@
 #define _CRT_SECURE_NO_WARNINGS
 #endif
 
+#if defined(__APPLE__) && defined(__clang__)
+    #pragma clang diagnostic ignored "-Wdeprecated-declarations"
+#endif
+
 #include "parson.h"
 
 #include <assert.h>

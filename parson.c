@@ -1,7 +1,7 @@
 /*
  SPDX-License-Identifier: MIT
 
- Parson 1.5.2 (https://github.com/kgabis/parson)
+ Parson 1.5.3 (https://github.com/kgabis/parson)
  Copyright (c) 2012 - 2023 Krzysztof Gabis
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -32,7 +32,7 @@
 
 #define PARSON_IMPL_VERSION_MAJOR 1
 #define PARSON_IMPL_VERSION_MINOR 5
-#define PARSON_IMPL_VERSION_PATCH 2
+#define PARSON_IMPL_VERSION_PATCH 3
 
 #if (PARSON_VERSION_MAJOR != PARSON_IMPL_VERSION_MAJOR)\
 || (PARSON_VERSION_MINOR != PARSON_IMPL_VERSION_MINOR)\
@@ -40,6 +40,7 @@
 #error "parson version mismatch between parson.c and parson.h"
 #endif
 
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -152,6 +153,8 @@ static char * read_file(const char *filename);
 static void   remove_comments(char *string, const char *start_token, const char *end_token);
 static char * parson_strndup(const char *string, size_t n);
 static char * parson_strdup(const char *string);
+static int    parson_sprintf(char * s, const char * format, ...);
+
 static int    hex_char_to_int(char c);
 static JSON_Status parse_utf16_hex(const char *string, unsigned int *result);
 static int         num_bytes_in_utf8_sequence(unsigned char c);
@@ -281,6 +284,25 @@ static char * parson_strndup(const char *string, size_t n) {
 
 static char * parson_strdup(const char *string) {
     return parson_strndup(string, strlen(string));
+}
+
+static int parson_sprintf(char * s, const char * format, ...) {
+    int result;
+    va_list args;
+    va_start(args, format);
+    
+    #if defined(__APPLE__) && defined(__clang__)
+        #pragma clang diagnostic push
+        #pragma clang diagnostic ignored "-Wdeprecated-declarations"
+    #endif
+        result = vsprintf(s, format, args);
+    #if defined(__APPLE__) && defined(__clang__)
+        #pragma clang diagnostic pop
+    #endif
+
+    va_end(args);
+    return result;
+
 }
 
 static int hex_char_to_int(char c) {
@@ -1243,10 +1265,9 @@ static int json_serialize_to_buffer_r(const JSON_Value *value, char *buf, int le
             }
             if (parson_number_serialization_function) {
                 written = parson_number_serialization_function(num, num_buf);
-            } else if (parson_float_format) {
-                written = sprintf(num_buf, parson_float_format, num);
             } else {
-                written = sprintf(num_buf, PARSON_DEFAULT_FLOAT_FORMAT, num);
+                const char *float_format = parson_float_format ? parson_float_format : PARSON_DEFAULT_FLOAT_FORMAT;
+                written = parson_sprintf(num_buf, float_format, num);
             }
             if (written < 0) {
                 return -1;

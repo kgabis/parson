@@ -1,8 +1,8 @@
 CC = gcc
-CFLAGS = -O0 -g -Wall -Wextra -Wno-deprecated-declarations -std=c89 -pedantic-errors -DTESTS_MAIN
+CFLAGS = -O0 -g -Wall -Wextra -std=c89 -pedantic-errors -DTESTS_MAIN
 
 CPPC = g++
-CPPFLAGS = -O0 -g -Wall -Wextra -Wno-deprecated-declarations -DTESTS_MAIN 
+CPPFLAGS = -O0 -g -Wall -Wextra -DTESTS_MAIN 
 
 all: test testcpp test_hash_collisions
 

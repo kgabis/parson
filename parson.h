@@ -1,7 +1,7 @@
 /*
  SPDX-License-Identifier: MIT
 
- Parson 1.5.2 (https://github.com/kgabis/parson)
+ Parson 1.5.3 (https://github.com/kgabis/parson)
  Copyright (c) 2012 - 2023 Krzysztof Gabis
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -36,9 +36,9 @@ extern "C"
 
 #define PARSON_VERSION_MAJOR 1
 #define PARSON_VERSION_MINOR 5
-#define PARSON_VERSION_PATCH 2
+#define PARSON_VERSION_PATCH 3
 
-#define PARSON_VERSION_STRING "1.5.2"
+#define PARSON_VERSION_STRING "1.5.3"
 
 #include <stddef.h>   /* size_t */
 
