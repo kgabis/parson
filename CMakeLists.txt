@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.5)
 project(parson C)
 
+set(C_STANDARD 89)
+
 include (GNUInstallDirs)
 
 set(PARSON_VERSION 1.5.3)
