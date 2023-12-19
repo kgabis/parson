@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.5)
 project(parson C)
 
+set(C_STANDARD 89)
+
 include (GNUInstallDirs)
 
 set(PARSON_VERSION 1.5.3)
@@ -27,3 +29,8 @@ install(
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}
 )
 
+enable_testing()
+add_executable(json_test ${CMAKE_SOURCE_DIR}/tests.c)
+add_definitions(-DTESTS_MAIN)
+target_link_libraries(json_test PUBLIC parson)
+add_test(NAME json_tests COMMAND json_test WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
