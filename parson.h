@@ -41,6 +41,7 @@ extern "C"
 #define PARSON_VERSION_STRING "1.5.3"
 
 #include <stddef.h>   /* size_t */
+#include <stdbool.h> /* bool */
 
 /* Types and enums */
 typedef struct json_object_t JSON_Object;
@@ -68,7 +69,7 @@ typedef void * (*JSON_Malloc_Function)(size_t);
 typedef void   (*JSON_Free_Function)(void *);
 
 /* A function used for serializing numbers (see json_set_number_serialization_function).
-   If 'buf' is null then it should return number of bytes that would've been written 
+   If 'buf' is null then it should return number of bytes that would've been written
    (but not more than PARSON_NUM_BUF_SIZE).
 */
 typedef int (*JSON_Number_Serialization_Function)(double num, char *buf);
@@ -266,6 +267,58 @@ const char  *   json_string (const JSON_Value *value);
 size_t          json_string_len(const JSON_Value *value); /* doesn't account for last null character */
 double          json_number (const JSON_Value *value);
 int             json_boolean(const JSON_Value *value);
+
+/* Check if schema validated by json type */
+bool is_json(JSON_Value *schema);
+
+/**
+* @param value Serialization of value to string.
+* @param is_pretty Pretty serialization, if set `true`.
+*/
+char *json_serialize(JSON_Value *value, bool is_pretty);
+
+/**
+* @param text Parses first JSON value in a text, returns NULL in case of error.
+* @param is_commented Ignores comments (/ * * / and //), if set `true`.
+*/
+JSON_Value *json_decode(const char *text, bool is_commented);
+
+/**
+* Creates json value `object` using a format like `printf` for each value to key.
+*
+* @param desc format string:
+* * '`.`' indicate next format character will use dot function to record value for key name with dot,
+* * '`a`' begin array encoding, every item `value` will be appended, until '`e`' is place in format desc,
+* * '`e`' end array encoding,
+* * '`n`' record `null` value for key, *DO NOT PLACE `NULL` IN ARGUMENTS*,
+* * '`f`' record `float/double` number for key,
+* * '`d`' record `signed` number for key,
+* * '`i`' record `unsigned` number for key,
+* * '`b`' record `boolean` value for key,
+* * '`s`' record `string` value for key,
+* * '`v`' record `JSON_Value` for key,
+* @param arguments use `kv(key,value)` for pairs, *DO NOT PROVIDE FOR NULL, ONLY KEY*
+*/
+JSON_Value *json_encode(const char *desc, ...);
+
+/**
+* Creates json value `array` using a format like `printf` for each value to index.
+*
+* @param desc format string:
+* * '`n`' record `null` value for index, *DO NOT PLACE `NULL` IN ARGUMENTS*,
+* * '`f`' record `float/double` number for index,
+* * '`d`' record `signed` number for index,
+* * '`i`' record `unsigned` number for index,
+* * '`b`' record `boolean` value for index,
+* * '`s`' record `string` value for index,
+* * '`v`' record `JSON_Value` for index,
+* @param arguments indexed by `desc` format order, *DO NOT PROVIDE FOR NULL*
+*/
+JSON_Value *json_for(const char *desc, ...);
+
+#ifndef kv
+#define kv(key, value) (key), (value)
+#endif
 
 #ifdef __cplusplus
 }
