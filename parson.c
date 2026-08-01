@@ -402,11 +402,20 @@ static int is_valid_utf8(const char *string, size_t string_len) {
 }
 
 static parson_bool_t is_decimal(const char *string, size_t length) {
+    size_t i;
     if (length > 1 && string[0] == '0' && string[1] != '.') {
         return PARSON_FALSE;
     }
     if (length > 2 && !strncmp(string, "-0", 2) && string[2] != '.') {
         return PARSON_FALSE;
+    }
+    /* RFC 8259 §6: frac = decimal-point 1*DIGIT
+       A decimal point must be followed by at least one digit [0-9].
+       strtod(3) accepts "1." as valid C but JSON does not permit it. */
+    for (i = 0; i < length; i++) {
+        if (string[i] == '.' && (i + 1 >= length || string[i + 1] < '0' || string[i + 1] > '9')) {
+            return PARSON_FALSE;
+        }
     }
     while (length--) {
         if (strchr("xX", string[length])) {
