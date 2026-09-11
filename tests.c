@@ -33,6 +33,7 @@
 #include "parson.h"
 
 #include <assert.h>
+#include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -66,6 +67,7 @@ void test_suite_10(void); /* Testing for memory leaks */
 void test_suite_11(void); /* Additional things that require testing */
 void test_memory_leaks(void);
 void test_failing_allocations(void);
+void test_number_parsing_is_locale_independent(void);
 void test_custom_number_format(void);
 void test_custom_number_serialization_function(void);
 void test_object_clear(void);
@@ -137,6 +139,7 @@ int tests_main(int argc, char *argv[]) {
     test_suite_11();
     test_memory_leaks();
     test_failing_allocations();
+    test_number_parsing_is_locale_independent();
     test_custom_number_format();
     test_custom_number_serialization_function();
     test_object_clear();
@@ -700,6 +703,58 @@ void test_failing_allocations(void) {
     json_set_allocation_functions(counted_malloc, counted_free);
     printf("OK (tested %d failing allocations)\n", n - 1);
     g_tests_passed++;
+}
+
+/* In locales where LC_NUMERIC uses a comma as the decimal separator, strtod() consumes commas
+ * that belong to the JSON grammar (not to the number being parsed), so a perfectly valid
+ * document with more than one numeric member fails to parse. This was reported in
+ * https://github.com/kgabis/parson/issues/219 and is opt-in fixed by building with
+ * PARSON_USE_STRTOD_L defined (see parson.c, parse_number_value()/parson_strtod()). */
+void test_number_parsing_is_locale_independent(void) {
+    static const char *comma_decimal_locales[] = {
+        "de_DE.UTF-8", "de_DE", "da_DK.UTF-8", "da_DK", "fr_FR.UTF-8", "fr_FR"
+    };
+    char previous_locale[64];
+    const char *queried_locale = setlocale(LC_NUMERIC, NULL);
+    JSON_Value *value = NULL;
+    size_t i = 0;
+    int locale_found = 0;
+
+    if (queried_locale != NULL) {
+        strncpy(previous_locale, queried_locale, sizeof(previous_locale) - 1);
+        previous_locale[sizeof(previous_locale) - 1] = '\0';
+    } else {
+        strcpy(previous_locale, "C");
+    }
+
+    for (i = 0; i < sizeof(comma_decimal_locales) / sizeof(comma_decimal_locales[0]); i++) {
+        if (setlocale(LC_NUMERIC, comma_decimal_locales[i]) != NULL) {
+            locale_found = 1;
+            break;
+        }
+    }
+
+    if (!locale_found) {
+        printf("Skipping locale-independent number parsing test (no comma-decimal locale installed)\n");
+        return;
+    }
+
+    value = json_parse_string("{\"a\":1,\"b\":2}");
+
+#ifdef PARSON_USE_STRTOD_L
+    TEST(value != NULL);
+    if (value != NULL) {
+        TEST(json_object_get_number(json_object(value), "a") == 1);
+        TEST(json_object_get_number(json_object(value), "b") == 2);
+    }
+#else
+    /* Without PARSON_USE_STRTOD_L this is the documented pre-existing behavior: the comma
+     * decimal separator swallows the object's member separator and parsing fails. */
+    TEST(value == NULL);
+#endif
+
+    json_value_free(value);
+    setlocale(LC_NUMERIC, previous_locale);
 }
 
 void test_custom_number_format(void) {

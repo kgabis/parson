@@ -28,6 +28,14 @@
 #endif /* _CRT_SECURE_NO_WARNINGS */
 #endif /* _MSC_VER */
 
+/* When PARSON_USE_STRTOD_L is defined, number parsing uses a locale-independent variant of
+ * strtod() instead of relying on the global LC_NUMERIC locale (see below, near parson_strtod()).
+ * On glibc, the strtod_l() prototype is only visible when _GNU_SOURCE is defined, and that has
+ * to happen before any system header pulls in its own copy of <stdlib.h>. */
+#if defined(PARSON_USE_STRTOD_L) && defined(__linux__) && !defined(_GNU_SOURCE)
+#define _GNU_SOURCE
+#endif /* PARSON_USE_STRTOD_L && __linux__ && !_GNU_SOURCE */
+
 #include "parson.h"
 
 #define PARSON_IMPL_VERSION_MAJOR 1
@@ -47,6 +55,13 @@
 #include <ctype.h>
 #include <math.h>
 #include <errno.h>
+
+#ifdef PARSON_USE_STRTOD_L
+#include <locale.h>
+#if defined(__APPLE__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__NetBSD__) || defined(__DragonFly__)
+#include <xlocale.h> /* strtod_l on BSD-derived libc, including macOS */
+#endif
+#endif /* PARSON_USE_STRTOD_L */
 
 /* Apparently sscanf is not implemented in some "standard" libraries, so don't use it, if you
  * don't have to. */
@@ -1096,11 +1111,45 @@ static JSON_Value * parse_boolean_value(const char **string) {
     return NULL;
 }
 
+/* strtod() parses the decimal point (and, on some platforms, the digit grouping separator)
+ * according to the LC_NUMERIC category of the current locale. In locales where the decimal
+ * point is a comma, "1,5" parses as 1.5, and worse, a document such as {"a":1,"b":2} gets
+ * misparsed because strtod() happily consumes the comma that was meant to separate object
+ * members, leaving the rest of the parser out of sync (see
+ * https://github.com/kgabis/parson/issues/219). Defining PARSON_USE_STRTOD_L switches number
+ * parsing to a locale-independent strtod_l()/_strtod_l() call instead, so JSON numbers are
+ * always parsed the same way regardless of the caller's locale. This is opt-in (rather than
+ * the default) because strtod_l() isn't standard C, and its availability/headers differ
+ * between platforms. */
+#ifdef PARSON_USE_STRTOD_L
+#if defined(_MSC_VER)
+static double parson_strtod(const char *string, char **end) {
+    static _locale_t c_locale = NULL;
+    if (c_locale == NULL) {
+        c_locale = _create_locale(LC_ALL, "C");
+    }
+    return _strtod_l(string, end, c_locale);
+}
+#else
+static double parson_strtod(const char *string, char **end) {
+    static locale_t c_locale = (locale_t)0;
+    if (c_locale == (locale_t)0) {
+        c_locale = newlocale(LC_ALL_MASK, "C", (locale_t)0);
+    }
+    return strtod_l(string, end, c_locale);
+}
+#endif /* _MSC_VER */
+#else /* !PARSON_USE_STRTOD_L */
+static double parson_strtod(const char *string, char **end) {
+    return strtod(string, end);
+}
+#endif /* PARSON_USE_STRTOD_L */
+
 static JSON_Value * parse_number_value(const char **string) {
     char *end;
     double number = 0;
     errno = 0;
-    number = strtod(*string, &end);
+    number = parson_strtod(*string, &end);
     if (errno == ERANGE && (number <= -HUGE_VAL || number >= HUGE_VAL)) {
         return NULL;
     }
