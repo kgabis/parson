@@ -498,6 +498,52 @@ void test_suite_5(void) {
     TEST(json_object_set_string(obj, "single surrogate 2", "\xed\xaf\xbf") == JSONFailure);
     TEST(json_object_set_string(obj, "single surrogate 3", "\xed\xbf\xbf") == JSONFailure);
 
+    /* A multi-byte UTF-8 lead byte with its continuation bytes cut off right
+     * at the end of the buffer used to make the validator read past it.
+     * Allocate the strings with malloc so that address sanitizers can catch
+     * an out-of-bounds read; every one of these strings is exactly as long
+     * as the sequence claims to need, minus the bytes that are missing. */
+    {
+        static const char truncated_2_byte[] = { (char)0xc2 };             /* needs 1 more byte */
+        static const char truncated_3_byte_1[] = { (char)0xe2, (char)0x82 }; /* needs 1 more byte */
+        static const char truncated_3_byte_0[] = { (char)0xe2 };            /* needs 2 more bytes */
+        static const char truncated_4_byte_2[] = { (char)0xf0, (char)0x9f, (char)0x98 }; /* needs 1 more byte */
+        static const char truncated_4_byte_0[] = { (char)0xf0 };            /* needs 3 more bytes */
+        static const struct {
+            const char *bytes;
+            size_t      len;
+        } truncated_cases[] = {
+            { truncated_2_byte,   sizeof(truncated_2_byte) },
+            { truncated_3_byte_1, sizeof(truncated_3_byte_1) },
+            { truncated_3_byte_0, sizeof(truncated_3_byte_0) },
+            { truncated_4_byte_2, sizeof(truncated_4_byte_2) },
+            { truncated_4_byte_0, sizeof(truncated_4_byte_0) },
+        };
+        size_t i = 0;
+        for (i = 0; i < sizeof(truncated_cases) / sizeof(truncated_cases[0]); i++) {
+            char *heap_copy = (char*)malloc(truncated_cases[i].len);
+            JSON_Value *bad_value = NULL;
+            memcpy(heap_copy, truncated_cases[i].bytes, truncated_cases[i].len);
+            bad_value = json_value_init_string_with_len(heap_copy, truncated_cases[i].len);
+            TEST(bad_value == NULL);
+            free(heap_copy);
+        }
+    }
+
+    /* A valid 4-byte sequence occupying the whole (exactly sized) buffer
+     * should still be accepted. */
+    {
+        static const char emoji[] = { (char)0xf0, (char)0x9f, (char)0x98, (char)0x80 }; /* U+1F600 */
+        char *heap_copy = (char*)malloc(sizeof(emoji));
+        JSON_Value *good_value = NULL;
+        memcpy(heap_copy, emoji, sizeof(emoji));
+        good_value = json_value_init_string_with_len(heap_copy, sizeof(emoji));
+        TEST(good_value != NULL);
+        TEST(good_value != NULL && json_value_get_string_len(good_value) == sizeof(emoji));
+        json_value_free(good_value);
+        free(heap_copy);
+    }
+
     /* Testing removing values from array, order of the elements should be preserved */
     remove_test_val = json_parse_string("[1, 2, 3, 4, 5]");
     remove_test_arr = json_array(remove_test_val);
