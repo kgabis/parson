@@ -64,6 +64,7 @@ void test_suite_8(void); /* Test serialization */
 void test_suite_9(void); /* Test serialization (pretty) */
 void test_suite_10(void); /* Testing for memory leaks */
 void test_suite_11(void); /* Additional things that require testing */
+void test_suite_12(void); /* Reading past string's end */
 void test_memory_leaks(void);
 void test_failing_allocations(void);
 void test_custom_number_format(void);
@@ -135,6 +136,7 @@ int tests_main(int argc, char *argv[]) {
     test_suite_9();
     test_suite_10();
     test_suite_11();
+    test_suite_12();
     test_memory_leaks();
     test_failing_allocations();
     test_custom_number_format();
@@ -623,6 +625,37 @@ void test_suite_11(void) {
     json_set_escape_slashes(1);
     serialized = json_serialize_to_string(value);
     TEST(STREQ(array_with_escaped_slashes, serialized));
+}
+
+void test_suite_12(void) {
+    static const char buf_no_prefix[] = "\xf0\x9f\x98\x80";
+    static const char buf_4_byte[] = "abcd\xf0\x9f\x98\x80";
+    static const char buf_3_byte[] = "ab\xe2\x82\xac";
+    static const char buf_2_byte[] = "ab\xc2\xa9";
+    JSON_Value *value = NULL;
+    
+    TEST(json_value_init_string_with_len(buf_no_prefix, 1) == NULL);
+    TEST(json_value_init_string_with_len(buf_no_prefix, 2) == NULL);
+    TEST(json_value_init_string_with_len(buf_no_prefix, 3) == NULL);
+    TEST(json_value_init_string_with_len(buf_4_byte, 5) == NULL);
+    TEST(json_value_init_string_with_len(buf_4_byte, 6) == NULL);
+    TEST(json_value_init_string_with_len(buf_4_byte, 7) == NULL);
+    TEST(json_value_init_string_with_len(buf_3_byte, 3) == NULL);
+    TEST(json_value_init_string_with_len(buf_3_byte, 4) == NULL);
+    TEST(json_value_init_string_with_len(buf_2_byte, 3) == NULL);
+
+    value = json_value_init_string_with_len(buf_no_prefix, 4);
+    TEST(value != NULL && json_value_get_string_len(value) == 4);
+    json_value_free(value);
+    value = json_value_init_string_with_len(buf_4_byte, 8);
+    TEST(value != NULL && json_value_get_string_len(value) == 8);
+    json_value_free(value);
+    value = json_value_init_string_with_len(buf_3_byte, 5);
+    TEST(value != NULL && json_value_get_string_len(value) == 5);
+    json_value_free(value);
+    value = json_value_init_string_with_len(buf_2_byte, 4);
+    TEST(value != NULL && json_value_get_string_len(value) == 4);
+    json_value_free(value);
 }
 
 void test_memory_leaks(void) {
