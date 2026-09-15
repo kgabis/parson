@@ -64,6 +64,7 @@ void test_suite_8(void); /* Test serialization */
 void test_suite_9(void); /* Test serialization (pretty) */
 void test_suite_10(void); /* Testing for memory leaks */
 void test_suite_11(void); /* Additional things that require testing */
+void test_suite_12(void); /* Reading past string's end */
 void test_memory_leaks(void);
 void test_failing_allocations(void);
 void test_custom_number_format(void);
@@ -135,6 +136,7 @@ int tests_main(int argc, char *argv[]) {
     test_suite_9();
     test_suite_10();
     test_suite_11();
+    test_suite_12();
     test_memory_leaks();
     test_failing_allocations();
     test_custom_number_format();
@@ -498,52 +500,6 @@ void test_suite_5(void) {
     TEST(json_object_set_string(obj, "single surrogate 2", "\xed\xaf\xbf") == JSONFailure);
     TEST(json_object_set_string(obj, "single surrogate 3", "\xed\xbf\xbf") == JSONFailure);
 
-    /* A multi-byte UTF-8 lead byte with its continuation bytes cut off right
-     * at the end of the buffer used to make the validator read past it.
-     * Allocate the strings with malloc so that address sanitizers can catch
-     * an out-of-bounds read; every one of these strings is exactly as long
-     * as the sequence claims to need, minus the bytes that are missing. */
-    {
-        static const char truncated_2_byte[] = { (char)0xc2 };             /* needs 1 more byte */
-        static const char truncated_3_byte_1[] = { (char)0xe2, (char)0x82 }; /* needs 1 more byte */
-        static const char truncated_3_byte_0[] = { (char)0xe2 };            /* needs 2 more bytes */
-        static const char truncated_4_byte_2[] = { (char)0xf0, (char)0x9f, (char)0x98 }; /* needs 1 more byte */
-        static const char truncated_4_byte_0[] = { (char)0xf0 };            /* needs 3 more bytes */
-        static const struct {
-            const char *bytes;
-            size_t      len;
-        } truncated_cases[] = {
-            { truncated_2_byte,   sizeof(truncated_2_byte) },
-            { truncated_3_byte_1, sizeof(truncated_3_byte_1) },
-            { truncated_3_byte_0, sizeof(truncated_3_byte_0) },
-            { truncated_4_byte_2, sizeof(truncated_4_byte_2) },
-            { truncated_4_byte_0, sizeof(truncated_4_byte_0) },
-        };
-        size_t i = 0;
-        for (i = 0; i < sizeof(truncated_cases) / sizeof(truncated_cases[0]); i++) {
-            char *heap_copy = (char*)malloc(truncated_cases[i].len);
-            JSON_Value *bad_value = NULL;
-            memcpy(heap_copy, truncated_cases[i].bytes, truncated_cases[i].len);
-            bad_value = json_value_init_string_with_len(heap_copy, truncated_cases[i].len);
-            TEST(bad_value == NULL);
-            free(heap_copy);
-        }
-    }
-
-    /* A valid 4-byte sequence occupying the whole (exactly sized) buffer
-     * should still be accepted. */
-    {
-        static const char emoji[] = { (char)0xf0, (char)0x9f, (char)0x98, (char)0x80 }; /* U+1F600 */
-        char *heap_copy = (char*)malloc(sizeof(emoji));
-        JSON_Value *good_value = NULL;
-        memcpy(heap_copy, emoji, sizeof(emoji));
-        good_value = json_value_init_string_with_len(heap_copy, sizeof(emoji));
-        TEST(good_value != NULL);
-        TEST(good_value != NULL && json_value_get_string_len(good_value) == sizeof(emoji));
-        json_value_free(good_value);
-        free(heap_copy);
-    }
-
     /* Testing removing values from array, order of the elements should be preserved */
     remove_test_val = json_parse_string("[1, 2, 3, 4, 5]");
     remove_test_arr = json_array(remove_test_val);
@@ -669,6 +625,37 @@ void test_suite_11(void) {
     json_set_escape_slashes(1);
     serialized = json_serialize_to_string(value);
     TEST(STREQ(array_with_escaped_slashes, serialized));
+}
+
+void test_suite_12(void) {
+    static const char buf_no_prefix[] = "\xf0\x9f\x98\x80";
+    static const char buf_4_byte[] = "abcd\xf0\x9f\x98\x80";
+    static const char buf_3_byte[] = "ab\xe2\x82\xac";
+    static const char buf_2_byte[] = "ab\xc2\xa9";
+    JSON_Value *value = NULL;
+    
+    TEST(json_value_init_string_with_len(buf_no_prefix, 1) == NULL);
+    TEST(json_value_init_string_with_len(buf_no_prefix, 2) == NULL);
+    TEST(json_value_init_string_with_len(buf_no_prefix, 3) == NULL);
+    TEST(json_value_init_string_with_len(buf_4_byte, 5) == NULL);
+    TEST(json_value_init_string_with_len(buf_4_byte, 6) == NULL);
+    TEST(json_value_init_string_with_len(buf_4_byte, 7) == NULL);
+    TEST(json_value_init_string_with_len(buf_3_byte, 3) == NULL);
+    TEST(json_value_init_string_with_len(buf_3_byte, 4) == NULL);
+    TEST(json_value_init_string_with_len(buf_2_byte, 3) == NULL);
+
+    value = json_value_init_string_with_len(buf_no_prefix, 4);
+    TEST(value != NULL && json_value_get_string_len(value) == 4);
+    json_value_free(value);
+    value = json_value_init_string_with_len(buf_4_byte, 8);
+    TEST(value != NULL && json_value_get_string_len(value) == 8);
+    json_value_free(value);
+    value = json_value_init_string_with_len(buf_3_byte, 5);
+    TEST(value != NULL && json_value_get_string_len(value) == 5);
+    json_value_free(value);
+    value = json_value_init_string_with_len(buf_2_byte, 4);
+    TEST(value != NULL && json_value_get_string_len(value) == 4);
+    json_value_free(value);
 }
 
 void test_memory_leaks(void) {

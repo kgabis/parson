@@ -155,10 +155,10 @@ static char * parson_strndup(const char *string, size_t n);
 static char * parson_strdup(const char *string);
 static int    parson_sprintf(char * s, const char * format, ...);
 
-static int    hex_char_to_int(char c);
-static JSON_Status parse_utf16_hex(const char *string, unsigned int *result);
-static int         num_bytes_in_utf8_sequence(unsigned char c);
-static JSON_Status   verify_utf8_sequence(const unsigned char *string, int *len, size_t remaining_len);
+static int           hex_char_to_int(char c);
+static JSON_Status   parse_utf16_hex(const char *string, unsigned int *result);
+static int           num_bytes_in_utf8_sequence(unsigned char c);
+static JSON_Status   verify_utf8_sequence(const unsigned char *string, size_t string_len, int *out_seq_len);
 static parson_bool_t is_valid_utf8(const char *string, size_t string_len);
 static parson_bool_t is_decimal(const char *string, size_t length);
 static unsigned long hash_string(const char *string, size_t n);
@@ -347,27 +347,26 @@ static int num_bytes_in_utf8_sequence(unsigned char c) {
     return 0; /* won't happen */
 }
 
-static JSON_Status verify_utf8_sequence(const unsigned char *string, int *len, size_t remaining_len) {
+static JSON_Status verify_utf8_sequence(const unsigned char *string, size_t string_len, int *out_seq_len) {
     unsigned int cp = 0;
-    *len = num_bytes_in_utf8_sequence(string[0]);
+    int seq_len = -1;
 
-    /* Don't look at string[1..*len-1] unless we know that many bytes
-       are still within the caller's buffer, otherwise a truncated
-       multi-byte sequence at the end of the input reads past it. */
-    if (*len == 0 || (size_t)(*len) > remaining_len) {
+    *out_seq_len = -1;
+
+    seq_len = num_bytes_in_utf8_sequence(string[0]);
+
+    if ((size_t)seq_len > string_len) {
         return JSONFailure;
-    }
-
-    if (*len == 1) {
+    } else if (seq_len == 1) {
         cp = string[0];
-    } else if (*len == 2 && IS_CONT(string[1])) {
+    } else if (seq_len == 2 && IS_CONT(string[1])) {
         cp = string[0] & 0x1F;
         cp = (cp << 6) | (string[1] & 0x3F);
-    } else if (*len == 3 && IS_CONT(string[1]) && IS_CONT(string[2])) {
+    } else if (seq_len == 3 && IS_CONT(string[1]) && IS_CONT(string[2])) {
         cp = ((unsigned char)string[0]) & 0xF;
         cp = (cp << 6) | (string[1] & 0x3F);
         cp = (cp << 6) | (string[2] & 0x3F);
-    } else if (*len == 4 && IS_CONT(string[1]) && IS_CONT(string[2]) && IS_CONT(string[3])) {
+    } else if (seq_len == 4 && IS_CONT(string[1]) && IS_CONT(string[2]) && IS_CONT(string[3])) {
         cp = string[0] & 0x7;
         cp = (cp << 6) | (string[1] & 0x3F);
         cp = (cp << 6) | (string[2] & 0x3F);
@@ -377,9 +376,9 @@ static JSON_Status verify_utf8_sequence(const unsigned char *string, int *len, s
     }
 
     /* overlong encodings */
-    if ((cp < 0x80    && *len > 1) ||
-        (cp < 0x800   && *len > 2) ||
-        (cp < 0x10000 && *len > 3)) {
+    if ((cp < 0x80    && seq_len > 1) ||
+        (cp < 0x800   && seq_len > 2) ||
+        (cp < 0x10000 && seq_len > 3)) {
         return JSONFailure;
     }
 
@@ -393,17 +392,19 @@ static JSON_Status verify_utf8_sequence(const unsigned char *string, int *len, s
         return JSONFailure;
     }
 
+    *out_seq_len = seq_len;
+
     return JSONSuccess;
 }
 
-static int is_valid_utf8(const char *string, size_t string_len) {
-    int len = 0;
+static parson_bool_t is_valid_utf8(const char *string, size_t string_len) {
+    int seq_len = 0;
     const char *string_end =  string + string_len;
     while (string < string_end) {
-        if (verify_utf8_sequence((const unsigned char*)string, &len, (size_t)(string_end - string)) != JSONSuccess) {
+        if (verify_utf8_sequence((const unsigned char*)string, (size_t)(string_end - string), &seq_len) != JSONSuccess) {
             return PARSON_FALSE;
         }
-        string += len;
+        string += seq_len;
     }
     return PARSON_TRUE;
 }
