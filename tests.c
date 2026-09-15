@@ -2,7 +2,7 @@
  SPDX-License-Identifier: MIT
 
  Parson (https://github.com/kgabis/parson)
- Copyright (c) 2012 - 2023 Krzysztof Gabis
+ Copyright (c) 2012 - 2026 Krzysztof Gabis
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated documentation files (the "Software"), to deal
