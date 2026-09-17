@@ -65,7 +65,7 @@
 #define MAX_NESTING       2048
 
 #ifndef PARSON_DEFAULT_FLOAT_FORMAT
-#define PARSON_DEFAULT_FLOAT_FORMAT "%1.17g" /* do not increase precision without incresing NUM_BUF_SIZE */
+#define PARSON_DEFAULT_FLOAT_FORMAT "%1.17g" /* do not increase precision without increasing NUM_BUF_SIZE */
 #endif
 
 #ifndef PARSON_NUM_BUF_SIZE
