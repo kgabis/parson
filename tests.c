@@ -317,6 +317,12 @@ void test_suite_3(void) {
     TEST(json_parse_string("false") != NULL);
     TEST(json_parse_string("\"string\"") != NULL);
     TEST(json_parse_string("123") != NULL);
+    TEST(json_parse_string("0e5") != NULL);
+    TEST(json_parse_string("0E5") != NULL);
+    TEST(json_parse_string("0e+5") != NULL);
+    TEST(json_parse_string("-0e-5") != NULL);
+    TEST(json_parse_string("[0e1, -0E1]") != NULL);
+    TEST(json_number(json_parse_string("0e5")) == 0);
     TEST(json_parse_string("[\"lorem\",]") != NULL);
     TEST(json_parse_string("{\"lorem\":\"ipsum\",}") != NULL);
 
@@ -330,6 +336,14 @@ void test_suite_3(void) {
     g_malloc_count = 0;
     TEST(json_parse_string(NULL) == NULL);
     TEST(json_parse_string("") == NULL); /* empty string */
+    TEST(json_parse_string("-") == NULL);
+    TEST(json_parse_string("--1") == NULL);
+    TEST(json_parse_string("-e5") == NULL);
+    TEST(json_parse_string("00") == NULL);
+    TEST(json_parse_string("00e5") == NULL);
+    TEST(json_parse_string("-01") == NULL);
+    TEST(json_parse_string("-01e5") == NULL);
+    TEST(json_parse_string("0x10") == NULL);
     TEST(json_parse_string("{lorem:ipsum}") == NULL);
     TEST(json_parse_string("{\"lorem\":\"ipsum\",]") == NULL);
     TEST(json_parse_string("{\"lorem\":\"ipsum\",,}") == NULL);

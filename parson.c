@@ -410,10 +410,13 @@ static parson_bool_t is_valid_utf8(const char *string, size_t string_len) {
 }
 
 static parson_bool_t is_decimal(const char *string, size_t length) {
-    if (length > 1 && string[0] == '0' && string[1] != '.') {
+    if (length == 0) { /* strtod found no number, e.g. a lone minus sign */
         return PARSON_FALSE;
     }
-    if (length > 2 && !strncmp(string, "-0", 2) && string[2] != '.') {
+    if (length > 1 && string[0] == '0' && isdigit((unsigned char)string[1])) {
+        return PARSON_FALSE;
+    }
+    if (length > 2 && !strncmp(string, "-0", 2) && isdigit((unsigned char)string[2])) {
         return PARSON_FALSE;
     }
     while (length--) {
