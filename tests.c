@@ -55,6 +55,7 @@ void test_suite_1(void); /* Test 3 files from json.org + serialization*/
 void test_suite_2(JSON_Value *value); /* Test correctness of parsed values */
 void test_suite_2_no_comments(void);
 void test_suite_2_with_comments(void);
+void test_suite_2_mixed_comments(void); /* Test mixing block and line comments */
 void test_suite_3(void); /* Test parsing valid and invalid strings */
 void test_suite_4(void); /* Test deep copy function */
 void test_suite_5(void); /* Test building json values from scratch */
@@ -127,6 +128,7 @@ int tests_main(int argc, char *argv[]) {
     test_suite_1();
     test_suite_2_no_comments();
     test_suite_2_with_comments();
+    test_suite_2_mixed_comments();
     test_suite_3();
     test_suite_4();
     test_suite_5();
@@ -305,6 +307,45 @@ void test_suite_2_with_comments(void) {
     test_suite_2(root_value);
     TEST(json_value_equals(root_value, json_parse_string(json_serialize_to_string(root_value))));
     TEST(json_value_equals(root_value, json_parse_string(json_serialize_to_string_pretty(root_value))));
+    json_value_free(root_value);
+}
+
+void test_suite_2_mixed_comments(void) {
+    JSON_Value *root_value = NULL;
+    JSON_Object *root_object = NULL;
+
+    /* A block comment opener inside a line comment must not swallow data */
+    root_value = json_parse_string_with_comments(
+        "{\n"
+        "  \"a\": 1, // matches src/*.c\n"
+        "  \"b\": 2, /* required */\n"
+        "  \"c\": 3\n"
+        "}");
+    root_object = json_object(root_value);
+    TEST(root_object != NULL);
+    TEST(json_object_get_count(root_object) == 3);
+    TEST(DBL_EQ(json_object_get_number(root_object, "b"), 2));
+    json_value_free(root_value);
+
+    /* A lone quote inside a line comment must not hide a block comment */
+    root_value = json_parse_string_with_comments(
+        "{\n"
+        "  \"a\": 1, // 5\" screen\n"
+        "  \"b\": /* px */ 2\n"
+        "}");
+    root_object = json_object(root_value);
+    TEST(root_object != NULL);
+    TEST(DBL_EQ(json_object_get_number(root_object, "b"), 2));
+    json_value_free(root_value);
+
+    /* A line comment opener inside a block comment is just comment text */
+    root_value = json_parse_string_with_comments("[1, /* see http://x */ 2]");
+    TEST(json_array_get_count(json_array(root_value)) == 2);
+    json_value_free(root_value);
+
+    /* Comment markers inside strings are preserved */
+    root_value = json_parse_string_with_comments("{\"u\": \"http://a/*b*/\"} // done");
+    TEST(STREQ(json_object_get_string(json_object(root_value), "u"), "http://a/*b*/"));
     json_value_free(root_value);
 }
 
