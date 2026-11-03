@@ -150,7 +150,7 @@ struct json_array_t {
 
 /* Various */
 static char * read_file(const char *filename);
-static void   remove_comments(char *string, const char *start_token, const char *end_token);
+static void   remove_comments(char *string);
 static char * parson_strndup(const char *string, size_t n);
 static char * parson_strdup(const char *string);
 static int    parson_sprintf(char * s, const char * format, ...);
@@ -236,38 +236,38 @@ static char * read_file(const char * filename) {
     return file_contents;
 }
 
-static void remove_comments(char *string, const char *start_token, const char *end_token) {
+static void remove_comments(char *string) {
+    /* Strips block and line comments in a single pass. Handling both styles
+       at once keeps a comment of one style from being misread as code by the
+       other (e.g. a block comment opener or a lone quote in a line comment). */
     parson_bool_t in_string = PARSON_FALSE, escaped = PARSON_FALSE;
-    size_t i;
-    char *ptr = NULL, current_char;
-    size_t start_token_len = strlen(start_token);
-    size_t end_token_len = strlen(end_token);
-    if (start_token_len == 0 || end_token_len == 0) {
-        return;
-    }
-    while ((current_char = *string) != '\0') {
-        if (current_char == '\\' && !escaped) {
-            escaped = PARSON_TRUE;
+    char *end = NULL;
+    while (*string != '\0') {
+        if (in_string) {
+            if (escaped) {
+                escaped = PARSON_FALSE;
+            } else if (*string == '\\') {
+                escaped = PARSON_TRUE;
+            } else if (*string == '\"') {
+                in_string = PARSON_FALSE;
+            }
             string++;
-            continue;
-        } else if (current_char == '\"' && !escaped) {
-            in_string = !in_string;
-        } else if (!in_string && strncmp(string, start_token, start_token_len) == 0) {
-            for(i = 0; i < start_token_len; i++) {
-                string[i] = ' ';
+        } else if (*string == '\"') {
+            in_string = PARSON_TRUE;
+            string++;
+        } else if (string[0] == '/' && string[1] == '*') {
+            end = strstr(string + 2, "*/");
+            end = end ? end + 2 : string + strlen(string);
+            while (string < end) {
+                *string++ = ' ';
             }
-            string = string + start_token_len;
-            ptr = strstr(string, end_token);
-            if (!ptr) {
-                return;
+        } else if (string[0] == '/' && string[1] == '/') {
+            while (*string != '\0' && *string != '\n') {
+                *string++ = ' ';
             }
-            for (i = 0; i < (ptr - string) + end_token_len; i++) {
-                string[i] = ' ';
-            }
-            string = ptr + end_token_len - 1;
+        } else {
+            string++;
         }
-        escaped = PARSON_FALSE;
-        string++;
     }
 }
 
@@ -1405,8 +1405,7 @@ JSON_Value * json_parse_string_with_comments(const char *string) {
     if (string_mutable_copy == NULL) {
         return NULL;
     }
-    remove_comments(string_mutable_copy, "/*", "*/");
-    remove_comments(string_mutable_copy, "//", "\n");
+    remove_comments(string_mutable_copy);
     string_mutable_copy_ptr = string_mutable_copy;
     result = parse_value((const char**)&string_mutable_copy_ptr, 0);
     parson_free(string_mutable_copy);
