@@ -70,6 +70,7 @@ void test_failing_allocations(void);
 void test_custom_number_format(void);
 void test_custom_number_serialization_function(void);
 void test_object_clear(void);
+void test_serialization_size_overflow(void);
 
 void print_commits_info(const char *username, const char *repo);
 void persistence_example(void);
@@ -142,6 +143,7 @@ int tests_main(int argc, char *argv[]) {
     test_custom_number_format();
     test_custom_number_serialization_function();
     test_object_clear();
+    test_serialization_size_overflow();
 
     printf("Tests failed: %d\n", g_tests_failed);
     printf("Tests passed: %d\n", g_tests_passed);
@@ -787,6 +789,45 @@ void test_object_clear(void) {
         json_value_free(val);
     }
     TEST(g_malloc_count == 0);
+}
+
+void test_serialization_size_overflow(void) {
+    /* Regression test: serialization size used to be counted in int, which
+       overflowed (UB) and wrapped past INT_MAX, making
+       json_serialization_size_pretty return 0 or a small positive value and
+       json_serialize_to_string_pretty overflow a too-small heap buffer.
+       Structure: root array of 128 chains, each chain is 2048 nested
+       single-element arrays whose innermost array is empty.
+       True sizes (verified against an independent 64-bit counter and an
+       actual serialization): pretty 2148532226 bytes + NUL (> INT_MAX),
+       compact 524417 bytes + NUL. */
+    JSON_Value *root = json_value_init_array();
+    JSON_Value *chain = NULL, *parent = NULL;
+    int i = 0, d = 0;
+    TEST(root != NULL);
+    for (i = 0; i < 128; i++) {
+        chain = json_value_init_array();
+        for (d = 1; d < 2048; d++) {
+            parent = json_value_init_array();
+            if (parent == NULL || json_array_append_value(json_value_get_array(parent), chain) != JSONSuccess) {
+                json_value_free(parent);
+                json_value_free(chain);
+                json_value_free(root);
+                TEST(parent != NULL);
+                return;
+            }
+            chain = parent;
+        }
+        if (json_array_append_value(json_value_get_array(root), chain) != JSONSuccess) {
+            json_value_free(chain);
+            json_value_free(root);
+            TEST(0);
+            return;
+        }
+    }
+    TEST(json_serialization_size_pretty(root) == 2148532227UL);
+    TEST(json_serialization_size(root) == 524418);
+    json_value_free(root);
 }
 
 void print_commits_info(const char *username, const char *repo) {
