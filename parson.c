@@ -199,8 +199,8 @@ static JSON_Value *  parse_null_value(const char **string);
 static JSON_Value *  parse_value(const char **string, size_t nesting);
 
 /* Serialization */
-static int json_serialize_to_buffer_r(const JSON_Value *value, char *buf, int level, parson_bool_t is_pretty, char *num_buf);
-static int json_serialize_string(const char *string, size_t len, char *buf);
+static size_t json_serialize_to_buffer_r(const JSON_Value *value, char *buf, int level, parson_bool_t is_pretty, char *num_buf);
+static size_t json_serialize_string(const char *string, size_t len, char *buf);
 
 /* Various */
 static char * read_file(const char * filename) {
@@ -1132,7 +1132,8 @@ static JSON_Value * parse_null_value(const char **string) {
 
 /*  APPEND_STRING() is only called on string literals.
     It's a bit hacky because it makes plenty of assumptions about the external state
-    and should eventually be tidied up into a function (same goes for APPEND_INDENT)
+    and should eventually be tidied up into a function (same goes for APPEND_INDENT).
+    (size_t)-1 is reserved as the error value, so the running total must stay below it.
  */
 #define APPEND_STRING(str) do {\
                                 written = SIZEOF_TOKEN((str));\
@@ -1140,6 +1141,9 @@ static JSON_Value * parse_null_value(const char **string) {
                                     memcpy(buf, (str), written);\
                                     buf[written] = '\0';\
                                     buf += written;\
+                                }\
+                                if (written_total >= (size_t)-1 - written) {\
+                                    return (size_t)-1;\
                                 }\
                                 written_total += written;\
                             } while (0)
@@ -1151,7 +1155,9 @@ static JSON_Value * parse_null_value(const char **string) {
                                 }\
                             } while (0)
 
-static int json_serialize_to_buffer_r(const JSON_Value *value, char *buf, int level, parson_bool_t is_pretty, char *num_buf)
+/* Returns the number of bytes written (or that would be written when buf is NULL),
+   or (size_t)-1 on failure (including size overflow). */
+static size_t json_serialize_to_buffer_r(const JSON_Value *value, char *buf, int level, parson_bool_t is_pretty, char *num_buf)
 {
     const char *key = NULL, *string = NULL;
     JSON_Value *temp_value = NULL;
@@ -1159,7 +1165,8 @@ static int json_serialize_to_buffer_r(const JSON_Value *value, char *buf, int le
     JSON_Object *object = NULL;
     size_t i = 0, count = 0;
     double num = 0.0;
-    int written = -1, written_total = 0;
+    size_t written = 0, written_total = 0;
+    int num_written = -1;
     size_t len = 0;
 
     switch (json_value_get_type(value)) {
@@ -1176,11 +1183,14 @@ static int json_serialize_to_buffer_r(const JSON_Value *value, char *buf, int le
                 }
                 temp_value = json_array_get_value(array, i);
                 written = json_serialize_to_buffer_r(temp_value, buf, level+1, is_pretty, num_buf);
-                if (written < 0) {
-                    return -1;
+                if (written == (size_t)-1) {
+                    return (size_t)-1;
                 }
                 if (buf != NULL) {
                     buf += written;
+                }
+                if (written_total >= (size_t)-1 - written) {
+                    return (size_t)-1;
                 }
                 written_total += written;
                 if (i < (count - 1)) {
@@ -1205,18 +1215,21 @@ static int json_serialize_to_buffer_r(const JSON_Value *value, char *buf, int le
             for (i = 0; i < count; i++) {
                 key = json_object_get_name(object, i);
                 if (key == NULL) {
-                    return -1;
+                    return (size_t)-1;
                 }
                 if (is_pretty) {
                     APPEND_INDENT(level+1);
                 }
                 /* We do not support key names with embedded \0 chars */
                 written = json_serialize_string(key, strlen(key), buf);
-                if (written < 0) {
-                    return -1;
+                if (written == (size_t)-1) {
+                    return (size_t)-1;
                 }
                 if (buf != NULL) {
                     buf += written;
+                }
+                if (written_total >= (size_t)-1 - written) {
+                    return (size_t)-1;
                 }
                 written_total += written;
                 APPEND_STRING(":");
@@ -1225,11 +1238,14 @@ static int json_serialize_to_buffer_r(const JSON_Value *value, char *buf, int le
                 }
                 temp_value = json_object_get_value_at(object, i);
                 written = json_serialize_to_buffer_r(temp_value, buf, level+1, is_pretty, num_buf);
-                if (written < 0) {
-                    return -1;
+                if (written == (size_t)-1) {
+                    return (size_t)-1;
                 }
                 if (buf != NULL) {
                     buf += written;
+                }
+                if (written_total >= (size_t)-1 - written) {
+                    return (size_t)-1;
                 }
                 written_total += written;
                 if (i < (count - 1)) {
@@ -1247,12 +1263,12 @@ static int json_serialize_to_buffer_r(const JSON_Value *value, char *buf, int le
         case JSONString:
             string = json_value_get_string(value);
             if (string == NULL) {
-                return -1;
+                return (size_t)-1;
             }
             len = json_value_get_string_len(value);
             written = json_serialize_string(string, len, buf);
-            if (written < 0) {
-                return -1;
+            if (written == (size_t)-1) {
+                return (size_t)-1;
             }
             if (buf != NULL) {
                 buf += written;
@@ -1272,14 +1288,15 @@ static int json_serialize_to_buffer_r(const JSON_Value *value, char *buf, int le
                 num_buf = buf;
             }
             if (parson_number_serialization_function) {
-                written = parson_number_serialization_function(num, num_buf);
+                num_written = parson_number_serialization_function(num, num_buf);
             } else {
                 const char *float_format = parson_float_format ? parson_float_format : PARSON_DEFAULT_FLOAT_FORMAT;
-                written = parson_sprintf(num_buf, float_format, num);
+                num_written = parson_sprintf(num_buf, float_format, num);
             }
-            if (written < 0) {
-                return -1;
+            if (num_written < 0) {
+                return (size_t)-1;
             }
+            written = (size_t)num_written;
             if (buf != NULL) {
                 buf += written;
             }
@@ -1289,16 +1306,18 @@ static int json_serialize_to_buffer_r(const JSON_Value *value, char *buf, int le
             APPEND_STRING("null");
             return written_total;
         case JSONError:
-            return -1;
+            return (size_t)-1;
         default:
-            return -1;
+            return (size_t)-1;
     }
 }
 
-static int json_serialize_string(const char *string, size_t len, char *buf) {
+/* Returns the number of bytes written (or that would be written when buf is NULL),
+   or (size_t)-1 on size overflow. */
+static size_t json_serialize_string(const char *string, size_t len, char *buf) {
     size_t i = 0;
     char c = '\0';
-    int written = -1, written_total = 0;
+    size_t written = 0, written_total = 0;
     APPEND_STRING("\"");
     for (i = 0; i < len; i++) {
         c = string[i];
@@ -1353,6 +1372,9 @@ static int json_serialize_string(const char *string, size_t len, char *buf) {
                 if (buf != NULL) {
                     buf[0] = c;
                     buf += 1;
+                }
+                if (written_total >= (size_t)-1 - 1) {
+                    return (size_t)-1;
                 }
                 written_total += 1;
                 break;
@@ -1806,18 +1828,18 @@ JSON_Value * json_value_deep_copy(const JSON_Value *value) {
 
 size_t json_serialization_size(const JSON_Value *value) {
     char num_buf[PARSON_NUM_BUF_SIZE]; /* recursively allocating buffer on stack is a bad idea, so let's do it only once */
-    int res = json_serialize_to_buffer_r(value, NULL, 0, PARSON_FALSE, num_buf);
-    return res < 0 ? 0 : (size_t)(res) + 1;
+    size_t res = json_serialize_to_buffer_r(value, NULL, 0, PARSON_FALSE, num_buf);
+    return res == (size_t)-1 ? 0 : res + 1;
 }
 
 JSON_Status json_serialize_to_buffer(const JSON_Value *value, char *buf, size_t buf_size_in_bytes) {
-    int written = -1;
+    size_t written = 0;
     size_t needed_size_in_bytes = json_serialization_size(value);
     if (needed_size_in_bytes == 0 || buf_size_in_bytes < needed_size_in_bytes) {
         return JSONFailure;
     }
     written = json_serialize_to_buffer_r(value, buf, 0, PARSON_FALSE, NULL);
-    if (written < 0) {
+    if (written == (size_t)-1) {
         return JSONFailure;
     }
     return JSONSuccess;
@@ -1866,18 +1888,18 @@ char * json_serialize_to_string(const JSON_Value *value) {
 
 size_t json_serialization_size_pretty(const JSON_Value *value) {
     char num_buf[PARSON_NUM_BUF_SIZE]; /* recursively allocating buffer on stack is a bad idea, so let's do it only once */
-    int res = json_serialize_to_buffer_r(value, NULL, 0, PARSON_TRUE, num_buf);
-    return res < 0 ? 0 : (size_t)(res) + 1;
+    size_t res = json_serialize_to_buffer_r(value, NULL, 0, PARSON_TRUE, num_buf);
+    return res == (size_t)-1 ? 0 : res + 1;
 }
 
 JSON_Status json_serialize_to_buffer_pretty(const JSON_Value *value, char *buf, size_t buf_size_in_bytes) {
-    int written = -1;
+    size_t written = 0;
     size_t needed_size_in_bytes = json_serialization_size_pretty(value);
     if (needed_size_in_bytes == 0 || buf_size_in_bytes < needed_size_in_bytes) {
         return JSONFailure;
     }
     written = json_serialize_to_buffer_r(value, buf, 0, PARSON_TRUE, NULL);
-    if (written < 0) {
+    if (written == (size_t)-1) {
         return JSONFailure;
     }
     return JSONSuccess;
