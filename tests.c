@@ -70,6 +70,7 @@ void test_failing_allocations(void);
 void test_custom_number_format(void);
 void test_custom_number_serialization_function(void);
 void test_object_clear(void);
+void test_number_grammar(void);
 
 void print_commits_info(const char *username, const char *repo);
 void persistence_example(void);
@@ -142,6 +143,7 @@ int tests_main(int argc, char *argv[]) {
     test_custom_number_format();
     test_custom_number_serialization_function();
     test_object_clear();
+    test_number_grammar();
 
     printf("Tests failed: %d\n", g_tests_failed);
     printf("Tests passed: %d\n", g_tests_passed);
@@ -369,6 +371,10 @@ void test_suite_3(void) {
     TEST(json_parse_string("[-07]") == NULL);
     TEST(json_parse_string("[-007]") == NULL);
     TEST(json_parse_string("[-07.0]") == NULL);
+    TEST(json_parse_string("[1.]") == NULL);      /* a digit is required after the decimal point */
+    TEST(json_parse_string("[-.5]") == NULL);     /* a digit is required before the decimal point */
+    TEST(json_parse_string("[1.e5]") == NULL);
+    TEST(json_parse_string("{\"a\":1.}") == NULL);
     TEST(json_parse_string("[\"\\uDF67\\uD834\"]") == NULL); /* wrong order surrogate pair */
     TEST(json_parse_string("[1.7976931348623157e309]") == NULL);
     TEST(json_parse_string("[-1.7976931348623157e309]") == NULL);
@@ -786,6 +792,38 @@ void test_object_clear(void) {
         TEST(json_object_get_value(obj, "foo") == NULL);
         json_value_free(val);
     }
+    TEST(g_malloc_count == 0);
+}
+
+void test_number_grammar(void) {
+    /* Numbers with a zero integer part and an exponent are valid JSON (RFC 8259, section 6). */
+    struct { const char *text; double expected; } valid[] = {
+        {"[0e0]", 0.0}, {"[0E0]", 0.0}, {"[0e5]", 0.0}, {"[-0e5]", 0.0}, {"[0e+5]", 0.0}, {"[0e-5]", 0.0},
+        {"[0.0e5]", 0.0}, {"[10e2]", 1000.0}, {"[-1.5E-1]", -0.15}, {"[0.5]", 0.5}, {"[-0.5]", -0.5}
+    };
+    size_t i;
+    g_malloc_count = 0;
+    for (i = 0; i < sizeof(valid) / sizeof(valid[0]); i++) {
+        JSON_Value *val = json_parse_string(valid[i].text);
+        TEST(val != NULL);
+        if (val != NULL) {
+            TEST(DBL_EQ(json_array_get_number(json_value_get_array(val), 0), valid[i].expected));
+            json_value_free(val);
+        }
+    }
+    {
+        JSON_Value *val = json_parse_string("{\"a\":0e1}");
+        TEST(val != NULL);
+        json_value_free(val);
+    }
+    TEST(json_parse_string("[0e]") == NULL);
+    TEST(json_parse_string("[0e+]") == NULL);
+    TEST(json_parse_string("[00e1]") == NULL);
+    TEST(json_parse_string("[-]") == NULL);
+    TEST(json_parse_string("-") == NULL);
+    TEST(json_parse_string("[0x1p3]") == NULL);
+    TEST(json_parse_string("[-inf]") == NULL);
+    TEST(json_parse_string("[-nan]") == NULL);
     TEST(g_malloc_count == 0);
 }
 

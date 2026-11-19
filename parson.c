@@ -410,18 +410,49 @@ static parson_bool_t is_valid_utf8(const char *string, size_t string_len) {
 }
 
 static parson_bool_t is_decimal(const char *string, size_t length) {
-    if (length > 1 && string[0] == '0' && string[1] != '.') {
+    /* Checks that the whole span is a number as defined by the JSON grammar (RFC 8259, section 6):
+       [ "-" ] ( "0" / digit1-9 *digit ) [ "." 1*digit ] [ ( "e" / "E" ) [ "+" / "-" ] 1*digit ]
+       strtod() accepts more than that (hex, "inf", "nan", "1.", "-.5", "1.e5"). */
+    size_t i = 0, start = 0;
+    if (i < length && string[i] == '-') {
+        i++;
+    }
+    if (i >= length) {
         return PARSON_FALSE;
     }
-    if (length > 2 && !strncmp(string, "-0", 2) && string[2] != '.') {
+    if (string[i] == '0') {
+        i++;
+    } else if (string[i] >= '1' && string[i] <= '9') {
+        while (i < length && string[i] >= '0' && string[i] <= '9') {
+            i++;
+        }
+    } else {
         return PARSON_FALSE;
     }
-    while (length--) {
-        if (strchr("xX", string[length])) {
+    if (i < length && string[i] == '.') {
+        i++;
+        start = i;
+        while (i < length && string[i] >= '0' && string[i] <= '9') {
+            i++;
+        }
+        if (i == start) {
             return PARSON_FALSE;
         }
     }
-    return PARSON_TRUE;
+    if (i < length && (string[i] == 'e' || string[i] == 'E')) {
+        i++;
+        if (i < length && (string[i] == '+' || string[i] == '-')) {
+            i++;
+        }
+        start = i;
+        while (i < length && string[i] >= '0' && string[i] <= '9') {
+            i++;
+        }
+        if (i == start) {
+            return PARSON_FALSE;
+        }
+    }
+    return i == length ? PARSON_TRUE : PARSON_FALSE;
 }
 
 static unsigned long hash_string(const char *string, size_t n) {
