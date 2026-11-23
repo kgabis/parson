@@ -1254,9 +1254,6 @@ static int json_serialize_to_buffer_r(const JSON_Value *value, char *buf, int le
             if (written < 0) {
                 return -1;
             }
-            if (buf != NULL) {
-                buf += written;
-            }
             written_total += written;
             return written_total;
         case JSONBoolean:
@@ -1279,9 +1276,6 @@ static int json_serialize_to_buffer_r(const JSON_Value *value, char *buf, int le
             }
             if (written < 0) {
                 return -1;
-            }
-            if (buf != NULL) {
-                buf += written;
             }
             written_total += written;
             return written_total;
