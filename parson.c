@@ -657,7 +657,7 @@ static JSON_Status json_object_remove_internal(JSON_Object *object, const char *
     size_t k = 0;
     JSON_Value *val = NULL;
 
-    if (object == NULL) {
+    if (object == NULL || name == NULL) {
         return JSONFailure;
     }
 
@@ -708,7 +708,11 @@ static JSON_Status json_object_remove_internal(JSON_Object *object, const char *
 static JSON_Status json_object_dotremove_internal(JSON_Object *object, const char *name, parson_bool_t free_value) {
     JSON_Value *temp_value = NULL;
     JSON_Object *temp_object = NULL;
-    const char *dot_pos = strchr(name, '.');
+    const char *dot_pos = NULL;
+    if (object == NULL || name == NULL) {
+        return JSONFailure;
+    }
+    dot_pos = strchr(name, '.');
     if (!dot_pos) {
         return json_object_remove_internal(object, name, free_value);
     }
@@ -1401,6 +1405,9 @@ JSON_Value * json_parse_string(const char *string) {
 JSON_Value * json_parse_string_with_comments(const char *string) {
     JSON_Value *result = NULL;
     char *string_mutable_copy = NULL, *string_mutable_copy_ptr = NULL;
+    if (string == NULL) {
+        return NULL;
+    }
     string_mutable_copy = parson_strdup(string);
     if (string_mutable_copy == NULL) {
         return NULL;
@@ -1447,7 +1454,11 @@ int json_object_get_boolean(const JSON_Object *object, const char *name) {
 }
 
 JSON_Value * json_object_dotget_value(const JSON_Object *object, const char *name) {
-    const char *dot_position = strchr(name, '.');
+    const char *dot_position = NULL;
+    if (object == NULL || name == NULL) {
+        return NULL;
+    }
+    dot_position = strchr(name, '.');
     if (!dot_position) {
         return json_object_get_value(object, name);
     }

@@ -65,6 +65,7 @@ void test_suite_9(void); /* Test serialization (pretty) */
 void test_suite_10(void); /* Testing for memory leaks */
 void test_suite_11(void); /* Additional things that require testing */
 void test_suite_12(void); /* Reading past string's end */
+void test_null_arguments(void);
 void test_memory_leaks(void);
 void test_failing_allocations(void);
 void test_custom_number_format(void);
@@ -137,6 +138,7 @@ int tests_main(int argc, char *argv[]) {
     test_suite_10();
     test_suite_11();
     test_suite_12();
+    test_null_arguments();
     test_memory_leaks();
     test_failing_allocations();
     test_custom_number_format();
@@ -656,6 +658,50 @@ void test_suite_12(void) {
     value = json_value_init_string_with_len(buf_2_byte, 4);
     TEST(value != NULL && json_value_get_string_len(value) == 4);
     json_value_free(value);
+}
+
+void test_null_arguments(void) {
+    JSON_Value *root_value = NULL;
+    JSON_Object *object = NULL;
+    int malloc_count = g_malloc_count;
+
+    TEST(json_parse_string_with_comments(NULL) == NULL);
+    TEST(g_malloc_count == malloc_count);
+
+    root_value = json_parse_string("{\"\":0,\"value\":1,\"nested\":{\"value\":2}}");
+    object = json_value_get_object(root_value);
+    TEST(object != NULL);
+
+    TEST(json_object_dotget_value(object, NULL) == NULL);
+    TEST(json_object_dotget_value(NULL, NULL) == NULL);
+    TEST(json_object_dotget_value(NULL, "value") == NULL);
+    TEST(json_object_dotget_value(NULL, "nested.value") == NULL);
+    TEST(json_object_dotget_string(object, NULL) == NULL);
+    TEST(json_object_dotget_string_len(object, NULL) == 0);
+    TEST(json_object_dotget_number(object, NULL) == 0);
+    TEST(json_object_dotget_object(object, NULL) == NULL);
+    TEST(json_object_dotget_array(object, NULL) == NULL);
+    TEST(json_object_dotget_boolean(object, NULL) == -1);
+
+    TEST(json_object_remove(object, NULL) == JSONFailure);
+    TEST(json_object_remove(NULL, NULL) == JSONFailure);
+    TEST(json_object_remove(NULL, "value") == JSONFailure);
+    TEST(json_object_dotremove(object, NULL) == JSONFailure);
+    TEST(json_object_dotremove(NULL, NULL) == JSONFailure);
+    TEST(json_object_dotremove(NULL, "value") == JSONFailure);
+    TEST(json_object_dotremove(NULL, "nested.value") == JSONFailure);
+
+    TEST(json_object_get_count(object) == 3);
+    TEST(json_object_dotget_value(object, "") != NULL);
+    TEST(DBL_EQ(json_object_dotget_number(object, "value"), 1));
+    TEST(DBL_EQ(json_object_dotget_number(object, "nested.value"), 2));
+    TEST(json_object_dotremove(object, "nested.value") == JSONSuccess);
+    TEST(json_object_get_count(json_object_get_object(object, "nested")) == 0);
+    TEST(json_object_remove(object, "value") == JSONSuccess);
+    TEST(json_object_dotremove(object, "") == JSONSuccess);
+    TEST(json_object_get_count(object) == 1);
+    json_value_free(root_value);
+    TEST(g_malloc_count == malloc_count);
 }
 
 void test_memory_leaks(void) {
